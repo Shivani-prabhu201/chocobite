@@ -1,0 +1,206 @@
+{% extends "admin/base.html" %}
+{% block title %}Settings — ChocoBite Admin{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+.settings-grid { display:grid; grid-template-columns:320px 1fr; gap:24px; align-items:start; }
+.settings-card { background:var(--jet2); border:1px solid rgba(212,130,10,0.12); border-radius:12px; padding:24px; }
+.settings-card h3 { font-family:'Cinzel',serif; font-size:13px; color:var(--gold2); letter-spacing:1px; margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid rgba(212,130,10,0.1); }
+.field { margin-bottom:18px; }
+.field label { display:block; font-size:11px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; font-family:'Cinzel',serif; margin-bottom:7px; }
+.field input { width:100%; background:var(--jet3); border:1px solid rgba(212,130,10,0.2); border-radius:8px; padding:11px 14px; color:var(--text); font-family:'Crimson Text',serif; font-size:15px; outline:none; transition:border-color .2s; }
+.field input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,130,10,0.1); }
+.strength-bar-wrap { height:4px; background:var(--jet4); border-radius:2px; margin-top:8px; overflow:hidden; }
+.strength-bar { height:100%; border-radius:2px; width:0; transition:width .3s, background .3s; }
+.strength-label { font-size:11px; margin-top:5px; }
+.strength-rules { margin-top:10px; display:flex; flex-direction:column; gap:4px; }
+.rule { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+.rule.pass { color:#6fcf97; }
+.rule svg { flex-shrink:0; }
+.msg-box { padding:10px 14px; border-radius:8px; font-size:13px; margin-top:14px; display:none; }
+.msg-success { background:rgba(45,122,79,0.15); border:1px solid rgba(111,207,151,0.3); color:#6fcf97; }
+.msg-error   { background:rgba(139,26,26,0.15); border:1px solid rgba(224,64,64,0.3); color:#e04040; }
+.profile-info-row { display:flex; align-items:center; gap:14px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:14px; }
+.profile-info-row:last-child { border-bottom:none; }
+.pil { color:var(--muted); width:100px; font-size:12px; text-transform:uppercase; letter-spacing:1px; font-family:'Cinzel',serif; }
+.piv { color:var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-grid">
+
+    <!-- Profile info -->
+    <div class="settings-card">
+        <h3>Admin Profile</h3>
+        <div class="profile-info-row">
+            <span class="pil">Name</span>
+            <span class="piv">{{ admin_name }}</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="pil">Role</span>
+            <span class="piv" style="color:var(--gold)">{{ admin_role }}</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="pil">Email</span>
+            <span class="piv" id="adminEmailDisplay" style="font-size:13px">—</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="pil">Last Login</span>
+            <span class="piv" id="adminLastLogin" style="font-size:12px;color:var(--muted)">—</span>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(212,130,10,0.1)">
+            <a href="/admin/logout" style="display:flex;align-items:center;gap:8px;
+                padding:10px 14px;background:rgba(139,26,26,0.1);border:1px solid rgba(224,64,64,0.25);
+                border-radius:8px;color:#e04040;font-size:13px;text-decoration:none;
+                transition:all .2s;font-family:'Cinzel',serif;letter-spacing:0.5px"
+                onmouseover="this.style.background='rgba(139,26,26,0.2)'"
+                onmouseout="this.style.background='rgba(139,26,26,0.1)'">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Sign Out — Return to Store
+            </a>
+        </div>
+    </div>
+
+    <!-- Change password -->
+    <div class="settings-card">
+        <h3>🔐 Change Password</h3>
+
+        <div class="field">
+            <label>Current Password</label>
+            <input type="password" id="curPw" placeholder="Enter current password">
+        </div>
+
+        <div class="field">
+            <label>New Password</label>
+            <input type="password" id="newPw" placeholder="Min 8 characters" oninput="checkStrength(this.value)">
+            <div class="strength-bar-wrap"><div class="strength-bar" id="strengthBar"></div></div>
+            <div class="strength-label" id="strengthLabel" style="color:var(--muted)"></div>
+            <div class="strength-rules" id="strengthRules">
+                <div class="rule" id="r-len">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/></svg>
+                    At least 8 characters
+                </div>
+                <div class="rule" id="r-upper">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/></svg>
+                    One uppercase letter
+                </div>
+                <div class="rule" id="r-num">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/></svg>
+                    One number
+                </div>
+                <div class="rule" id="r-spec">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/></svg>
+                    One special character (!@#$...)
+                </div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Confirm New Password</label>
+            <input type="password" id="conPw" placeholder="Re-enter new password">
+        </div>
+
+        <button class="btn-gold" onclick="changePassword()" id="changePwBtn">Update Password</button>
+
+        <div class="msg-box msg-success" id="pwSuccess"></div>
+        <div class="msg-box msg-error"   id="pwError"></div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var TICK = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" fill="#2d7a4f"/><path d="M3.5 6l1.8 1.8L8.5 4.5" stroke="#6fcf97" stroke-width="1.5" stroke-linecap="round"/></svg>';
+var CIRC = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/></svg>';
+
+function checkStrength(pw) {
+    var len   = pw.length >= 8;
+    var upper = /[A-Z]/.test(pw);
+    var num   = /[0-9]/.test(pw);
+    var spec  = /[^A-Za-z0-9]/.test(pw);
+    var score = [len, upper, num, spec].filter(Boolean).length;
+
+    var bar   = document.getElementById('strengthBar');
+    var label = document.getElementById('strengthLabel');
+    var pcts  = [0, 25, 50, 75, 100];
+    var colors = ['', '#e04040', '#e07840', '#d4820a', '#6fcf97'];
+    var labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+
+    bar.style.width     = pcts[score] + '%';
+    bar.style.background = colors[score];
+    label.textContent   = pw ? labels[score] : '';
+    label.style.color   = colors[score];
+
+    var rules = {len, upper, num, spec};
+    var ids   = ['r-len','r-upper','r-num','r-spec'];
+    ids.forEach(function(id, i) {
+        var pass = Object.values(rules)[i];
+        var el   = document.getElementById(id);
+        el.classList.toggle('pass', pass);
+        el.querySelector('svg').outerHTML; // force update
+        el.innerHTML = (pass ? TICK : CIRC) + el.textContent.trim();
+    });
+}
+
+async function changePassword() {
+    var cur  = document.getElementById('curPw').value;
+    var nw   = document.getElementById('newPw').value;
+    var con  = document.getElementById('conPw').value;
+    var btn  = document.getElementById('changePwBtn');
+    var succ = document.getElementById('pwSuccess');
+    var err  = document.getElementById('pwError');
+
+    succ.style.display = 'none';
+    err.style.display  = 'none';
+
+    if (!cur || !nw || !con) { showErr('Please fill all fields.'); return; }
+    if (nw !== con) { showErr('New passwords do not match.'); return; }
+    if (nw.length < 8) { showErr('Password must be at least 8 characters.'); return; }
+
+    btn.disabled     = true;
+    btn.textContent  = 'Updating…';
+
+    var res  = await fetch('/admin/api/change-password', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({current_password:cur, new_password:nw, confirm_password:con})
+    });
+    var data = await res.json();
+
+    btn.disabled    = false;
+    btn.textContent = 'Update Password';
+
+    if (data.success) {
+        succ.textContent = '✓ ' + data.message + ' A confirmation email has been sent.';
+        succ.style.display = 'block';
+        document.getElementById('curPw').value = '';
+        document.getElementById('newPw').value = '';
+        document.getElementById('conPw').value = '';
+        document.getElementById('strengthBar').style.width = '0';
+        document.getElementById('strengthLabel').textContent = '';
+    } else {
+        showErr(data.message);
+    }
+}
+
+function showErr(msg) {
+    var el = document.getElementById('pwError');
+    el.textContent = '✕ ' + msg;
+    el.style.display = 'block';
+}
+
+// Load admin profile info from dedicated endpoint
+fetch('/admin/api/profile').then(function(r){ return r.json(); }).then(function(d) {
+    if (!d.success) return;
+    var emailEl = document.getElementById('adminEmailDisplay');
+    var loginEl = document.getElementById('adminLastLogin');
+    if (emailEl) emailEl.textContent = d.email || '—';
+    if (loginEl) loginEl.textContent = d.last_login || 'First login';
+}).catch(function(){});
+</script>
+{% endblock %}

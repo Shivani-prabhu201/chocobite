@@ -1,0 +1,762 @@
+{% extends "admin/base.html" %}
+{% block title %}Products — ChocoBite Admin{% endblock %}
+{% block page_title %}Product Management{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.prod-toolbar { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+.prod-toolbar input, .prod-toolbar select {
+    background:var(--jet3); border:1px solid rgba(212,130,10,0.2); border-radius:8px;
+    padding:9px 14px; color:var(--text); font-family:'Crimson Text',serif;
+    font-size:14px; outline:none; transition:border-color .2s; }
+.prod-toolbar input:focus, .prod-toolbar select:focus { border-color:var(--gold); }
+.prod-toolbar input { min-width:200px; }
+
+/* ── Product table ───────────────────────────────────────────────────────── */
+.prod-img-thumb { width:44px; height:44px; object-fit:cover; border-radius:6px;
+    border:1px solid rgba(212,130,10,0.2); }
+.prod-img-placeholder { width:44px; height:44px; border-radius:6px; background:var(--jet3);
+    border:1px solid rgba(212,130,10,0.1); display:flex; align-items:center;
+    justify-content:center; font-size:18px; color:var(--muted); }
+
+.stock-ok   { color:#6fcf97; font-weight:700; }
+.stock-warn { color:#d4820a; font-weight:700; }  /* < 20 — show warning */
+.stock-alert{ color:#e04040; font-weight:700; animation:stockPulse 1.5s infinite; } /* < 7 — alert */
+@keyframes stockPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+.toggle-switch { position:relative; width:36px; height:20px; display:inline-block; cursor:pointer; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-track { position:absolute; inset:0; background:var(--jet4);
+    border-radius:20px; transition:.2s; border:1px solid rgba(212,130,10,0.2); }
+.toggle-track::before { content:""; position:absolute; width:14px; height:14px;
+    background:#555; border-radius:50%; bottom:2px; left:2px; transition:.2s; }
+input:checked + .toggle-track { background:rgba(45,122,79,0.4); border-color:#2d7a4f; }
+input:checked + .toggle-track::before { background:#6fcf97; transform:translateX(16px); }
+
+/* ── Modal ───────────────────────────────────────────────────────────────── */
+.modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:6000;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    animation:fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal-box { background:var(--jet2); border:1px solid rgba(212,130,10,0.2);
+    border-radius:16px; width:100%; max-width:680px; max-height:90vh;
+    overflow-y:auto; position:relative; }
+.modal-box::before { content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent); border-radius:16px 16px 0 0; }
+.modal-header { padding:22px 24px 16px; display:flex; align-items:center;
+    justify-content:space-between; border-bottom:1px solid rgba(212,130,10,0.1); }
+.modal-header h3 { font-family:'Cinzel',serif; font-size:15px; color:var(--gold2); letter-spacing:1px; }
+.modal-close { background:none; border:none; color:var(--muted); font-size:20px;
+    cursor:pointer; padding:0; line-height:1; }
+.modal-close:hover { color:var(--text); }
+.modal-body { padding:22px 24px; }
+.modal-footer { padding:16px 24px; border-top:1px solid rgba(212,130,10,0.1);
+    display:flex; gap:10px; justify-content:flex-end; }
+
+/* ── Form fields ─────────────────────────────────────────────────────────── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-grid .full { grid-column: 1/-1; }
+.field-group { display:flex; flex-direction:column; gap:5px; }
+.field-group label { font-size:10px; color:var(--muted); letter-spacing:1.5px;
+    text-transform:uppercase; font-family:'Cinzel',serif; }
+.field-group input, .field-group select, .field-group textarea {
+    background:var(--jet3); border:1px solid rgba(212,130,10,0.18); border-radius:8px;
+    padding:9px 12px; color:var(--text); font-family:'Crimson Text',serif;
+    font-size:14px; outline:none; transition:border-color .2s; width:100%; }
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+    border-color:var(--gold); box-shadow:0 0 0 2px rgba(212,130,10,0.08); }
+.field-group textarea { resize:vertical; min-height:72px; }
+.field-group select option { background:var(--jet3); }
+
+/* Image preview */
+.img-preview-wrap { margin-top:8px; }
+.img-preview { width:100%; height:120px; object-fit:contain;
+    border-radius:8px; border:1px solid rgba(212,130,10,0.15); background:var(--jet3);
+    display:none; }
+.img-preview.show { display:block; }
+.img-hint { font-size:11px; color:var(--muted); margin-top:6px; line-height:1.5; }
+.img-hint code { background:var(--jet3); color:var(--gold); padding:1px 5px;
+    border-radius:4px; font-size:10px; }
+
+/* Sugar-free toggle row */
+.toggle-row { display:flex; align-items:center; gap:10px; padding:4px 0; }
+.toggle-row span { font-size:14px; color:var(--text); }
+
+/* Form section header */
+.form-section { font-size:10px; color:var(--gold); letter-spacing:2px; text-transform:uppercase;
+    font-family:'Cinzel',serif; padding:10px 0 4px; border-bottom:1px solid rgba(212,130,10,0.08);
+    margin:6px 0 10px; grid-column:1/-1; }
+
+/* Stock threshold badges on table */
+.stock-badge { display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; }
+.inv-action-btn { background:transparent; border:1px solid rgba(212,130,10,0.2);
+    color:var(--muted); border-radius:6px; padding:4px 10px; font-size:11px;
+    cursor:pointer; font-family:'Cinzel',serif; transition:all .2s; white-space:nowrap; }
+.inv-action-btn:hover { border-color:var(--gold); color:var(--gold); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Toolbar -->
+<div class="prod-toolbar">
+    <input type="text" id="searchProd" placeholder="Search products…" oninput="debounceLoad()">
+    <select id="catFilter" onchange="loadProducts()">
+        <option value="">All Categories</option>
+        <option value="1">Cocoa Beans & Chips</option>
+        <option value="2">Choco Powder</option>
+        <option value="3">Flavoured Chocolates</option>
+    </select>
+    <select id="statusFilter" onchange="loadProducts()">
+        <option value="">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+    </select>
+    <button class="btn-gold" onclick="openAddModal()">+ Add Product</button>
+    <button class="btn-ghost" onclick="loadProducts()">↺ Refresh</button>
+</div>
+
+<div style="font-size:13px;color:var(--muted);margin-bottom:12px" id="prodCount"></div>
+
+<!-- Stock alert banner — shown when any product < 7 -->
+<div id="stockAlertBanner" style="display:none;background:rgba(139,26,26,0.15);
+    border:1px solid rgba(224,64,64,0.3);border-radius:10px;padding:12px 18px;
+    margin-bottom:16px;color:#e04040;font-size:13px;display:none;align-items:center;gap:10px">
+    <span style="font-size:18px">🚨</span>
+    <span id="stockAlertText"></span>
+    <a href="/admin/inventory" style="margin-left:auto;color:var(--gold);font-size:12px;
+        white-space:nowrap">Update Stock →</a>
+</div>
+
+<!-- Products table -->
+<div class="admin-card" style="padding:0">
+    <div style="overflow-x:auto">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Pack</th>
+                    <th>Sugar-Free</th>
+                    <th>Visible</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="productsBody">
+                <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══ ADD / EDIT MODAL ════════════════════════════════════════════════════ -->
+<div id="productModal" class="modal-bg" style="display:none">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add Product</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editProductId">
+            <div class="form-grid">
+
+                <!-- ── Basic Info ─────────────────────────────── -->
+                <div class="form-section">Basic Information</div>
+
+                <div class="field-group full">
+                    <label>Product Name *</label>
+                    <input type="text" id="fName" placeholder="e.g. GloryBean Dark Nibs">
+                </div>
+                <div class="field-group">
+                    <label>Tagline</label>
+                    <input type="text" id="fTagline" placeholder="Short catchy line">
+                </div>
+                <div class="field-group">
+                    <label>Weight</label>
+                    <input type="text" id="fWeight" placeholder="e.g. 150g">
+                </div>
+                <div class="field-group full">
+                    <label>Description</label>
+                    <textarea id="fDesc" placeholder="Full product description"></textarea>
+                </div>
+                <div class="field-group full">
+                    <label>Why This Product</label>
+                    <textarea id="fWhy" placeholder="Why should the customer buy this?"></textarea>
+                </div>
+                <div class="field-group full">
+                    <label>Health Benefits</label>
+                    <input type="text" id="fHealth" placeholder="e.g. High in antioxidants, dairy-free">
+                </div>
+
+                <!-- ── Pricing ────────────────────────────────── -->
+                <div class="form-section">Pricing & Category</div>
+
+                <div class="field-group">
+                    <label>Price (₹) *</label>
+                    <input type="number" id="fPrice" min="0" step="0.01" placeholder="299">
+                </div>
+                <div class="field-group">
+                    <label>MRP (₹) — leave blank to match price</label>
+                    <input type="number" id="fMRP" min="0" step="0.01" placeholder="349">
+                </div>
+                <div class="field-group">
+                    <label>Price per 100g (display only)</label>
+                    <input type="text" id="fPer100g" placeholder="e.g. ₹199 / 100g">
+                </div>
+                <div class="field-group">
+                    <label>Category *</label>
+                    <select id="fCategory">
+                        <option value="">Select category…</option>
+                        <option value="1">Cocoa Beans & Chips</option>
+                        <option value="2">Choco Powder</option>
+                        <option value="3">Flavoured Chocolates</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Pack Type</label>
+                    <select id="fPackType">
+                        <option value="">None</option>
+                        <option value="Pocket Pack">Pocket Pack ★</option>
+                        <option value="Premium">Premium 👑</option>
+                        <option value="Party Pack">Party Pack L</option>
+                        <option value="Large">Large</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Rating (0–5)</label>
+                    <input type="number" id="fRating" min="0" max="5" step="0.1" placeholder="4.5">
+                </div>
+                <div class="field-group">
+                    <label>Stock Quantity</label>
+                    <input type="number" id="fStock" min="0" placeholder="0">
+                </div>
+                <div class="field-group">
+                    <label>&nbsp;</label>
+                    <div class="toggle-row" style="margin-top:6px">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fSugarless">
+                            <span class="toggle-track"></span>
+                        </label>
+                        <span>Sugar-Free product</span>
+                    </div>
+                </div>
+
+                <!-- ── Image ──────────────────────────────────── -->
+                <div class="form-section">Product Image</div>
+
+                <div class="field-group full">
+                    <!-- CHANGED: Image field now has both file upload and URL input -->
+                    <label>Upload Image from Computer</label>
+                    <!-- ADDED: File input for direct computer upload -->
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+                        <input type="file" id="fImageFile" accept=".jpg,.jpeg,.png,.webp,.gif"
+                               style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border:1px solid rgba(212,130,10,0.25);border-radius:8px;padding:8px 12px;color:var(--text);font-family:inherit;font-size:13px;cursor:pointer;"
+                               onchange="handleImageFile(this)">
+                        <span id="imgUploadStatus" style="font-size:12px;color:var(--muted)"></span>
+                    </div>
+
+                    <!-- KEPT: URL input as alternative -->
+                    <label style="margin-top:8px;display:block">Or paste Image URL</label>
+                    <input type="text" id="fImageUrl"
+                           placeholder="/static/images/your_photo.jpg  or  https://..."
+                           oninput="previewImage(this.value)">
+
+                    <div class="img-preview-wrap">
+                        <img id="imgPreview" class="img-preview" alt="Preview"
+                             onerror="this.classList.remove('show')">
+                    </div>
+                    <div class="img-hint" style="margin-top:8px">
+                        Supported formats: .jpg .jpeg .png .webp .gif
+                    </div>
+                </div>
+
+                <!-- Delivery Pincodes section -->
+                <div class="form-section">Delivery Availability</div>
+
+                <div class="field-group full">
+                    <label>Delivery Pincodes
+                        <span style="font-weight:400;color:var(--muted);font-family:var(--font-body);font-size:12px"> &mdash; comma-separated 6-digit codes. Leave blank = available everywhere.</span>
+                    </label>
+                    <input type="text" id="fPincodes"
+                           placeholder="e.g. 576201, 574201, 576202"
+                           oninput="validatePincodeField(this.value)">
+                    <div id="pincodeFieldHint" style="font-size:12px;margin-top:6px;min-height:16px;line-height:1.7"></div>
+                    <div style="margin-top:8px;font-size:12px;color:var(--muted);line-height:1.6"><span style="color:#6fcf97">&#9679;</span> Udupi region: pincodes starting with <strong style="color:var(--gold)">574xxx</strong> or <strong style="color:var(--gold)">576xxx</strong> &mdash; all others are <span style="color:#64b5f6">Other Region</span>.</div>
+                </div>
+
+            </div><!-- /.form-grid -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn-gold" id="saveBtn" onclick="saveProduct()">Save Product</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var allProducts = [];
+var _debounce   = null;
+
+function debounceLoad() {
+    clearTimeout(_debounce);
+    _debounce = setTimeout(loadProducts, 350);
+}
+
+const CAT_NAMES = {1:'Cocoa Beans & Chips', 2:'Choco Powder', 3:'Flavoured Chocolates'};
+
+// ── Load products from admin API ──────────────────────────────────────────────
+/* ---- Pincode helpers ---- */
+var UDUPI_PREFIXES = ['576', '574'];
+
+/* ---- Pin entry can be a full 6-digit code OR a prefix pattern like 576xxx ----
+   Validation only ever checks the first 3 digits (the prefix).
+   A token is 'complete' when it is exactly 6 chars (digits or trailing x/X).
+   Examples:  576xxx  574xxx  576201  574199  560001
+------------------------------------------------------------------- */
+
+function getPrefix(token) {
+    /* Returns first 3 digits of a token, whether it is 576xxx or 576201 */
+    return token.slice(0, 3);
+}
+
+function isValidToken(p) {
+    /* Must be exactly 6 chars: digits optionally followed by x/X */
+    return /^[0-9]{3}[0-9xX]{3}$/.test(p);
+}
+
+function isUdupiPin(token) {
+    /* Check only the first 3 digits against Udupi prefixes */
+    return UDUPI_PREFIXES.indexOf(getPrefix(token)) !== -1;
+}
+
+function normalizeToken(p) {
+    /* Store prefix patterns as '576xxx'; full codes as-is */
+    if (/[xX]/.test(p)) return p.slice(0,3) + 'xxx';
+    return p;
+}
+
+function parsePincodes(raw) {
+    /* Accepts comma-separated tokens like: 576xxx, 574xxx, 576201, 560001 */
+    if (!raw || !raw.trim()) return [];
+    var result = [];
+    raw.split(',').forEach(function(p) {
+        p = p.trim();
+        if (isValidToken(p)) result.push(normalizeToken(p));
+    });
+    return result;
+}
+
+function validatePincodeField(raw) {
+    var el = document.getElementById('pincodeFieldHint');
+    if (!el) return;
+    var input = raw || '';
+    if (!input.trim()) {
+        el.innerHTML = '<span style="color:var(--muted)">No pincodes set &mdash; product will be available everywhere.</span>';
+        return;
+    }
+    var tokens = input.split(',').map(function(p){ return p.trim(); }).filter(Boolean);
+    var udupi = [], other = [], partial = [], invalid = [];
+    tokens.forEach(function(p) {
+        if (p.length < 6) { partial.push(p); return; }  // still typing
+        if (!isValidToken(p)) { invalid.push(p); return; }
+        var norm = normalizeToken(p);
+        if (isUdupiPin(p)) udupi.push(norm);
+        else               other.push(norm);
+    });
+    var parts = [];
+    if (udupi.length)   parts.push('<span style="color:#6fcf97">&#10003; Udupi region: ' + udupi.join(', ') + '</span>');
+    if (other.length)   parts.push('<span style="color:#64b5f6">&#9679; Other region: ' + other.join(', ') + '</span>');
+    if (partial.length) parts.push('<span style="color:#e07840">&#8230; Still typing: ' + partial.join(', ') + '</span>');
+    if (invalid.length) parts.push('<span style="color:#e04040">&#10007; Invalid (use digits or e.g. 576xxx): ' + invalid.join(', ') + '</span>');
+    el.innerHTML = parts.join('<br>');
+}
+
+async function loadProducts() {
+    var search = document.getElementById('searchProd').value.trim();
+    var cat    = document.getElementById('catFilter').value;
+    var status = document.getElementById('statusFilter').value;
+    var params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (cat)    params.set('category', cat);
+    if (status) params.set('status', status);
+
+    document.getElementById('productsBody').innerHTML =
+        '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Loading…</td></tr>';
+
+    var res  = await fetch('/admin/api/products?' + params);
+    var data = await res.json();
+    allProducts = data.products || [];
+    renderProducts(allProducts);
+    checkStockAlerts(allProducts);
+}
+
+// ── Render product rows ───────────────────────────────────────────────────────
+function renderProducts(prods) {
+    document.getElementById('prodCount').textContent =
+        prods.length + ' product' + (prods.length !== 1 ? 's' : '');
+
+    if (!prods.length) {
+        document.getElementById('productsBody').innerHTML =
+            '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">No products found.</td></tr>';
+        return;
+    }
+
+    document.getElementById('productsBody').innerHTML = prods.map(function(p) {
+        // Image cell
+        var imgCell = p.image_url
+            ? '<img src="' + p.image_url + '" class="prod-img-thumb" onerror="this.style.display=\'none\'">'
+            : '<div class="prod-img-placeholder">🍫</div>';
+
+        // Stock display with thresholds
+        var qty = p.stock_quantity || 0;
+        var stockHtml;
+        if (qty === 0) {
+            stockHtml = '<span class="stock-badge stock-alert">🚫 0</span>';
+        } else if (qty < 7) {
+            // < 7 = ALERT (red pulsing)
+            stockHtml = '<span class="stock-badge stock-alert">⚠ ' + qty + '</span>' +
+                '<div style="font-size:9px;color:#e04040">ALERT</div>';
+        } else if (qty < 20) {
+            // < 20 = WARNING (orange)
+            stockHtml = '<span class="stock-badge stock-warn">⚡ ' + qty + '</span>' +
+                '<div style="font-size:9px;color:#d4820a">Low</div>';
+        } else {
+            stockHtml = '<span class="stock-badge stock-ok">' + qty + '</span>';
+        }
+
+        // Active toggle
+        var isActive = p.is_active !== false;
+        var toggleHtml = '<label class="toggle-switch">' +
+            '<input type="checkbox" ' + (isActive ? 'checked' : '') +
+            ' onchange="toggleVisibility(\'' + p.product_id + '\', this.checked)">' +
+            '<span class="toggle-track"></span></label>';
+
+        // Sugar free badge
+        var sfBadge = p.is_sugarless
+            ? '<span style="color:#6fcf97;font-size:11px">✓ Yes</span>'
+            : '<span style="color:var(--muted);font-size:11px">No</span>';
+
+        // Inactive row styling
+        var rowStyle = isActive ? '' : 'opacity:0.45;';
+
+        return '<tr style="' + rowStyle + '">' +
+            '<td>' + imgCell + '</td>' +
+            '<td>' +
+                '<div style="font-size:13px;font-weight:600;color:' + (isActive?'var(--text)':'var(--muted)') + '">' + p.name + '</div>' +
+                '<div style="font-size:11px;color:var(--muted)">' + (p.tagline||'') + '</div>' +
+                '<div style="font-size:11px;color:var(--gold)">₹' + p.price + (p.mrp && p.mrp > p.price ? ' <s style="color:var(--muted);font-size:10px">₹'+p.mrp+'</s>' : '') + '</div>' +
+            '</td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (CAT_NAMES[p.category_id]||'—') + '</td>' +
+            '<td style="color:var(--gold2);font-weight:600">₹' + p.price + '</td>' +
+            '<td>' + stockHtml + '</td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (p.pack_type||'—') + '</td>' +
+            '<td>' + sfBadge + '</td>' +
+            '<td>' + toggleHtml + '</td>' +
+            '<td>' +
+                '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+                '<button class="inv-action-btn" onclick="openEditModal(\'' + p.product_id + '\')">✏ Edit</button>' +
+                '<button class="inv-action-btn" onclick="updateStock(\'' + p.product_id + '\',\'' + encodeURI(p.name) + '\')" style="color:#6fcf97;border-color:rgba(111,207,151,0.25)">+ Stock</button>' +
+                '<button class="inv-action-btn" onclick="confirmDelete(\'' + p.product_id + '\')" style="color:#e04040;border-color:rgba(224,64,64,0.25)">🗑</button>' +
+                '</div>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+// ── Stock alert banner ────────────────────────────────────────────────────────
+function checkStockAlerts(prods) {
+    var alerts = prods.filter(function(p){ return (p.stock_quantity||0) < 7; });
+    var banner = document.getElementById('stockAlertBanner');
+    if (alerts.length) {
+        document.getElementById('stockAlertText').innerHTML =
+            '<strong>' + alerts.length + ' product' + (alerts.length>1?'s':'') +
+            ' critically low (&lt;7 units):</strong> ' +
+            alerts.map(function(p){ return p.name + ' (' + (p.stock_quantity||0) + ')'; }).join(', ');
+        banner.style.display = 'flex';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+// ── Toggle visibility ─────────────────────────────────────────────────────────
+async function toggleVisibility(id, active) {
+    var res  = await fetch('/admin/api/product/toggle-visibility', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({product_id:id, active:active})
+    });
+    var data = await res.json();
+    adminToast(data.message, data.success ? 'success' : 'error');
+    if (data.success) loadProducts();
+}
+
+// ── Image preview ─────────────────────────────────────────────────────────────
+/* ADDED: handles file upload to /admin/api/upload-image
+   sets fImageUrl and previews the image after upload */
+async function handleImageFile(input) {
+    var statusEl = document.getElementById('imgUploadStatus');
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    statusEl.textContent = 'Uploading...';
+    statusEl.style.color = 'var(--muted)';
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        var res  = await fetch('/admin/api/upload-image', {
+            method: 'POST',
+            body:   formData
+        });
+        var data = await res.json();
+        if (data.success) {
+            // CHANGE: fills the URL field and shows preview
+            document.getElementById('fImageUrl').value = data.url;
+            previewImage(data.url);
+            statusEl.textContent = 'Uploaded!';
+            statusEl.style.color = '#6fcf97';
+        } else {
+            statusEl.textContent = data.message || 'Upload failed';
+            statusEl.style.color = '#e04040';
+        }
+    } catch(e) {
+        statusEl.textContent = 'Upload error. Try again.';
+        statusEl.style.color = '#e04040';
+    }
+}
+
+function previewImage(url) {
+    var img = document.getElementById('imgPreview');
+    if (!url) { img.classList.remove('show'); return; }
+    img.src = url;
+    img.classList.add('show');
+}
+
+// ── Open Add modal ────────────────────────────────────────────────────────────
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add New Product';
+    document.getElementById('saveBtn').textContent    = 'Add Product';
+    document.getElementById('editProductId').value    = '';
+    clearForm();
+    document.getElementById('productModal').style.display = 'flex';
+}
+
+// ── Open Edit modal ───────────────────────────────────────────────────────────
+function openEditModal(productId) {
+    var p = allProducts.find(function(x){ return x.product_id === productId; });
+    if (!p) return;
+
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('saveBtn').textContent    = 'Save Changes';
+    document.getElementById('editProductId').value    = productId;
+
+    document.getElementById('fName').value      = p.name || '';
+    document.getElementById('fTagline').value   = p.tagline || '';
+    document.getElementById('fWeight').value    = p.weight || '';
+    document.getElementById('fDesc').value      = p.description || '';
+    document.getElementById('fWhy').value       = p.why_this || '';
+    document.getElementById('fHealth').value    = p.health_benefits || '';
+    document.getElementById('fPrice').value     = p.price || '';
+    document.getElementById('fMRP').value       = p.mrp || '';
+    document.getElementById('fPer100g').value   = p.price_per_100g || '';
+    document.getElementById('fCategory').value  = p.category_id || '';
+    document.getElementById('fPackType').value  = p.pack_type || '';
+    document.getElementById('fRating').value    = p.rating || '4.5';
+    document.getElementById('fStock').value     = p.stock_quantity || 0;
+    document.getElementById('fSugarless').checked = !!p.is_sugarless;
+    document.getElementById('fImageUrl').value  = p.image_url || '';
+    previewImage(p.image_url || '');
+
+    // Populate delivery pincodes
+    var pins = Array.isArray(p.delivery_pincodes) ? p.delivery_pincodes.join(', ') : (p.delivery_pincodes || '');
+    document.getElementById('fPincodes').value = pins;
+    validatePincodeField(pins);
+
+    document.getElementById('productModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('productModal').style.display = 'none';
+    clearForm();
+}
+
+function clearForm() {
+    ['fName','fTagline','fWeight','fDesc','fWhy','fHealth','fPrice','fMRP',
+     'fPer100g','fRating','fImageUrl','fPer100g'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('fCategory').value   = '';
+    document.getElementById('fPackType').value   = '';
+    document.getElementById('fStock').value      = '0';
+    document.getElementById('fRating').value     = '4.5';
+    document.getElementById('fSugarless').checked = false;
+    document.getElementById('imgPreview').classList.remove('show');
+    document.getElementById('editProductId').value = '';
+    document.getElementById('fPincodes').value = '';
+    document.getElementById('pincodeFieldHint').innerHTML = '';
+    // CHANGE: also clear file input and upload status
+    document.getElementById('fImageFile').value = '';
+    document.getElementById('imgUploadStatus').textContent = '';
+}
+
+// ── Save (add or edit) ────────────────────────────────────────────────────────
+var _saving = false;
+async function saveProduct() {
+    if (_saving) return;
+
+    var name  = document.getElementById('fName').value.trim();
+    var price = document.getElementById('fPrice').value;
+    var cat   = document.getElementById('fCategory').value;
+
+    if (!name)  { adminToast('Product name is required', 'error'); return; }
+    if (!price) { adminToast('Price is required', 'error'); return; }
+    if (!cat)   { adminToast('Please select a category', 'error'); return; }
+
+    _saving = true;
+    var btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    var editId = document.getElementById('editProductId').value;
+    var url    = editId ? '/admin/api/product/edit' : '/admin/api/product/add';
+    var payload = {
+        product_id:     editId,
+        name:           name,
+        tagline:        document.getElementById('fTagline').value.trim(),
+        weight:         document.getElementById('fWeight').value.trim(),
+        description:    document.getElementById('fDesc').value.trim(),
+        why_this:       document.getElementById('fWhy').value.trim(),
+        health_benefits:document.getElementById('fHealth').value.trim(),
+        price:          parseFloat(price),
+        mrp:            parseFloat(document.getElementById('fMRP').value||price),
+        price_per_100g: document.getElementById('fPer100g').value.trim(),
+        category_id:    parseInt(cat),
+        pack_type:      document.getElementById('fPackType').value,
+        rating:         parseFloat(document.getElementById('fRating').value||4.5),
+        stock_quantity: parseInt(document.getElementById('fStock').value||0),
+        is_sugarless:      document.getElementById('fSugarless').checked,
+        image_url:         document.getElementById('fImageUrl').value.trim(),
+        delivery_pincodes: parsePincodes(document.getElementById('fPincodes').value),
+    };
+
+    var res  = await fetch(url, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+    });
+    var data = await res.json();
+
+    _saving = false;
+    btn.disabled = false;
+    btn.textContent = editId ? 'Save Changes' : 'Add Product';
+
+    adminToast(data.message, data.success ? 'success' : 'error');
+    if (data.success) { closeModal(); loadProducts(); }
+}
+
+// ── Confirm delete (soft) ─────────────────────────────────────────────────────
+function confirmDelete(id) {
+    var p = allProducts.find(function(x){ return x.product_id === id; });
+    var name = p ? p.name : 'this product';
+    // Use the shared confirm modal from admin_orders
+    if (typeof showConfirm === 'function') {
+        showConfirm('Hide "' + name + '" from the store? (Soft delete — can be restored)', async function() {
+            var res  = await fetch('/admin/api/product/delete', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({product_id:id})
+            });
+            var data = await res.json();
+            adminToast(data.message, data.success ? 'success' : 'error');
+            if (data.success) loadProducts();
+        }, '🗑');
+    }
+}
+
+// ── Quick stock update ────────────────────────────────────────────────────────
+function updateStock(id, name) {
+    var decodedName = decodeURI(name);
+    var p    = allProducts.find(function(x){ return x.product_id === id; });
+    var curr = p ? (p.stock_quantity||0) : 0;
+
+    // Build a small inline prompt modal
+    var existing = document.getElementById('stockPromptOverlay');
+    if (existing) existing.remove();
+
+    var ov = document.createElement('div');
+    ov.id  = 'stockPromptOverlay';
+    ov.className = 'modal-bg';
+    ov.style.zIndex = '7000';
+    ov.innerHTML =
+        '<div class="modal-box" style="max-width:360px">' +
+            '<div class="modal-header"><h3>Update Stock</h3>' +
+                '<button class="modal-close" onclick="document.getElementById(\'stockPromptOverlay\').remove()">✕</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+                '<div style="font-size:14px;color:var(--text);margin-bottom:14px">' + decodedName + '</div>' +
+                '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Current stock: <strong style="color:var(--gold2)">' + curr + ' units</strong></div>' +
+                '<div class="field-group" style="margin-bottom:12px">' +
+                    '<label>Action</label>' +
+                    '<select id="stockAction"><option value="add">Add to current stock</option><option value="set">Set exact quantity</option></select>' +
+                '</div>' +
+                '<div class="field-group">' +
+                    '<label>Quantity</label>' +
+                    '<input type="number" id="stockQty" min="0" value="0" style="font-size:16px">' +
+                '</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+                '<button class="btn-ghost" onclick="document.getElementById(\'stockPromptOverlay\').remove()">Cancel</button>' +
+                '<button class="btn-gold" onclick="submitStockUpdate(\'' + id + '\')">Update</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+    document.getElementById('stockQty').focus();
+}
+
+async function submitStockUpdate(id) {
+    var action = document.getElementById('stockAction').value;
+    var qty    = parseInt(document.getElementById('stockQty').value||0);
+    var res    = await fetch('/admin/api/product/stock-update', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({product_id:id, action:action, quantity:qty})
+    });
+    var data = await res.json();
+    document.getElementById('stockPromptOverlay').remove();
+    adminToast(data.message, data.success ? 'success' : 'error');
+    if (data.success) loadProducts();
+}
+
+// Close modal on backdrop click
+document.getElementById('productModal').addEventListener('click', function(e){
+    if (e.target === this) closeModal();
+});
+
+// ── Confirm helper (if not already defined by admin_orders.html) ──────────────
+if (typeof showConfirm === 'undefined') {
+    window.showConfirm = function(msg, onOk, icon) {
+        var ov = document.createElement('div');
+        ov.className = 'modal-bg';
+        ov.style.zIndex = '9999';
+        ov.innerHTML =
+            '<div class="modal-box" style="max-width:360px">' +
+            '<div class="modal-body" style="text-align:center;padding:30px 24px">' +
+            '<div style="font-size:28px;margin-bottom:12px">' + (icon||'⚙️') + '</div>' +
+            '<div style="color:var(--text);font-size:15px;margin-bottom:22px">' + msg + '</div>' +
+            '<div style="display:flex;gap:10px">' +
+            '<button class="btn-ghost" style="flex:1" onclick="this.closest(\'.modal-bg\').remove()">Cancel</button>' +
+            '<button class="btn-gold" style="flex:1" id="cfOk">Confirm</button>' +
+            '</div></div></div>';
+        document.body.appendChild(ov);
+        ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+        ov.querySelector('#cfOk').onclick = function(){ ov.remove(); onOk(); };
+    };
+}
+
+loadProducts();
+</script>
+{% endblock %}

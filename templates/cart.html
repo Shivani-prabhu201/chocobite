@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}Cart - ChocoBite{% endblock %}
+{% block head %}
+<script src="https://js.stripe.com/v3/"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🛒 Your Cart</h1>
+    <p>Review your chocolates before checkout</p>
+</div>
+
+<div class="cart-page" id="cartPage">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+
+<div id="checkoutSection" class="checkout-section hidden">
+    <div class="checkout-form">
+        <h3>Delivery Details</h3>
+        <textarea id="cartAddress" placeholder="Enter full delivery address" rows="3"></textarea>
+
+        <label style="display:block;margin-top:12px;margin-bottom:5px;font-size:0.9rem;color:var(--text-muted,#9a8060)">Pincode <span style="color:#e04040">*</span></label>
+        <input type="text" id="cartPincode" placeholder="6-digit pincode" maxlength="6"
+            style="width:100%;padding:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(212,130,10,0.3);border-radius:8px;color:#f5e6c8;font-size:1rem;font-family:inherit;outline:none;box-sizing:border-box;"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6);cartChkPin(this.value)">
+        <div id="cartPinHint" style="font-size:12px;min-height:16px;margin-top:3px;margin-bottom:6px;"></div>
+
+        <label style="display:block;margin-top:8px;margin-bottom:5px;font-size:0.9rem;color:var(--text-muted,#9a8060)">Phone Number <span style="color:#e04040">*</span></label>
+        <input type="tel" id="cartPhone" placeholder="10-digit mobile number" maxlength="10"
+            style="width:100%;padding:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(212,130,10,0.3);border-radius:8px;color:#f5e6c8;font-size:1rem;font-family:inherit;outline:none;box-sizing:border-box;"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);cartChkPhone(this.value)">
+        <div id="cartPhoneHint" style="font-size:12px;min-height:16px;margin-top:3px;margin-bottom:10px;"></div>
+
+        <div class="cart-total" id="cartTotalDisplay"></div>
+        <div class="checkout-btns">
+            <button class="buy-opt cod"    onclick="cartCOD()">💵 Cash on Delivery</button>
+            <button class="buy-opt online" onclick="cartStripe()">💳 Pay Online</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cartItems = [];
+let selectedCartIds = new Set();
+
+function getSelectedItems() {
+    return cartItems.filter(function(item) { return selectedCartIds.has(item.cart_id); });
+}
+
+function updateSelectionUI() {
+    var selected = getSelectedItems();
+    var selTotal = selected.reduce(function(s, i){ return s + i.price * i.quantity; }, 0);
+    var selCount = selected.length;
+
+    // Update select-all checkbox state
+    var allChk = document.getElementById('selectAllChk');
+    if (allChk) {
+        allChk.checked = selCount > 0 && selCount === cartItems.length;
+        allChk.indeterminate = selCount > 0 && selCount < cartItems.length;
+    }
+
+    // Update buy-selected button and label
+    var buySelBtn = document.getElementById('buySelectedBtn');
+    var selLabel  = document.getElementById('selectionLabel');
+    if (buySelBtn) {
+        if (selCount > 0) {
+            buySelBtn.disabled = false;
+            buySelBtn.style.opacity = '1';
+            if (selLabel) selLabel.textContent = selCount + ' item' + (selCount > 1 ? 's' : '') + ' selected — ₹' + selTotal;
+        } else {
+            buySelBtn.disabled = true;
+            buySelBtn.style.opacity = '0.4';
+            if (selLabel) selLabel.textContent = 'Select items to buy together';
+        }
+    }
+
+    // Update checkout section visibility — only show when items are selected
+    var checkoutSec = document.getElementById('checkoutSection');
+    if (checkoutSec) {
+        checkoutSec.classList.toggle('hidden', selCount === 0);
+        // Update total in checkout to reflect selection
+        var totalDisplay = document.getElementById('cartTotalDisplay');
+        if (totalDisplay && selCount > 0) {
+            totalDisplay.innerHTML = '<strong>Selected Total: &#8377;' + selTotal + '</strong>';
+        }
+    }
+}
+
+function toggleSelectAll(checked) {
+    if (checked) {
+        cartItems.forEach(function(item){ selectedCartIds.add(item.cart_id); });
+    } else {
+        selectedCartIds.clear();
+    }
+    // Update individual checkboxes
+    cartItems.forEach(function(item) {
+        var chk = document.getElementById('chk-' + item.cart_id);
+        if (chk) chk.checked = checked;
+    });
+    updateSelectionUI();
+}
+
+function toggleItem(cartId, checked) {
+    if (checked) {
+        selectedCartIds.add(cartId);
+    } else {
+        selectedCartIds.delete(cartId);
+    }
+    updateSelectionUI();
+}
+
+async function loadCart() {
+    const cartPage = document.getElementById('cartPage');
+
+    // checkLoginStatus() is from main.js — safe here because block scripts runs after it
+    const status = await checkLoginStatus();
+    if (!status.logged_in) {
+        cartPage.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-icon">🔐</div>' +
+            '<h2>Please Login First</h2>' +
+            '<p>You need to login to view your cart</p>' +
+            '<button class="hero-btn primary" onclick="openAuthModal()">Login / Register</button>' +
+            '</div>';
+        return;
+    }
+
+    const res  = await fetch('/api/cart');
+    const data = await res.json();
+
+    // API returns: { success, cart: [ {cart_id, product_id, name, price, quantity, image_url, stock_quantity} ] }
+    cartItems = data.cart || [];
+    selectedCartIds.clear();
+
+    if (!cartItems.length) {
+        cartPage.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-icon">🛒</div>' +
+            '<h2>Your cart is empty</h2>' +
+            '<p>Explore our amazing chocolate collection!</p>' +
+            '<a href="/products" class="hero-btn primary">Shop Now</a>' +
+            '</div>';
+        document.getElementById('checkoutSection').classList.add('hidden');
+        return;
+    }
+
+    let total = 0;
+    const rows = cartItems.map(function(item) {
+        const subtotal = item.price * item.quantity;
+        total += subtotal;
+
+        // image_url is the field name returned by /api/cart
+        const img = item.image_url || 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=100';
+
+        // cart_id is what update/remove APIs need — NOT product_id
+        const cid = item.cart_id;
+
+        return (
+            '<div class="cart-item" id="cartitem-' + cid + '" style="display:flex;align-items:center;gap:10px;">' +
+            '<input type="checkbox" id="chk-' + cid + '" class="cart-item-chk"' +
+            ' style="width:18px;height:18px;accent-color:#d4820a;cursor:pointer;flex-shrink:0;"' +
+            ' onchange="toggleItem(\'' + cid + '\', this.checked)">' +
+            '<img src="' + img + '" alt="' + item.name + '" class="cart-item-img"' +
+            ' onerror="this.src=\'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=100\'">' +
+            '<div class="cart-item-info">' +
+            '<h3>' + item.name + '</h3>' +
+            '<p class="cart-item-price">&#8377;' + item.price + ' each</p>' +
+            '</div>' +
+            '<div class="cart-item-qty">' +
+            '<button onclick="updateQty(\'' + cid + '\',' + (item.quantity - 1) + ')">&#8722;</button>' +
+            '<span>' + item.quantity + '</span>' +
+            '<button onclick="updateQty(\'' + cid + '\',' + (item.quantity + 1) + ')">&#43;</button>' +
+            '</div>' +
+            '<div class="cart-item-subtotal">&#8377;' + subtotal + '</div>' +
+            '<button class="cart-remove" onclick="removeItem(\'' + cid + '\')">&#10005;</button>' +
+            '</div>'
+        );
+    });
+
+    // Select-all bar
+    var selectBar =
+        '<div id="selectAllBar" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(212,130,10,0.08);border:1px solid rgba(212,130,10,0.25);border-radius:10px;margin-bottom:12px;">' +
+        '<input type="checkbox" id="selectAllChk" style="width:18px;height:18px;accent-color:#d4820a;cursor:pointer;"' +
+        ' onchange="toggleSelectAll(this.checked)">' +
+        '<label for="selectAllChk" style="color:#f5e6c8;font-size:0.95rem;cursor:pointer;user-select:none;">Select All</label>' +
+        '<span style="color:#9a8060;font-size:0.85rem;margin-left:auto;" id="selectionLabel">Select items to buy together</span>' +
+        '<button id="buySelectedBtn" disabled' +
+        ' style="background:linear-gradient(135deg,#d4820a,#b36700);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;opacity:0.4;transition:opacity 0.2s;"' +
+        ' onclick="buySelected()">🛍️ Buy Selected</button>' +
+        '</div>';
+
+    cartPage.innerHTML = selectBar + '<div class="cart-items-list">' + rows.join('') + '</div>';
+    document.getElementById('checkoutSection').classList.add('hidden');
+    document.getElementById('cartTotalDisplay').innerHTML = '<strong>Total: &#8377;' + total + '</strong>';
+    updateCartBadge();
+}
+
+// Buy-selected: sets cartItems to only selected, then proceeds to checkout
+async function buySelected() {
+    var selected = getSelectedItems();
+    if (!selected.length) { showToast('Please select at least one item', 'error'); return; }
+    // Temporarily filter cartItems to selected only for checkout functions
+    cartItems = selected;
+    var selTotal = selected.reduce(function(s,i){ return s+i.price*i.quantity; }, 0);
+    document.getElementById('cartTotalDisplay').innerHTML = '<strong>Selected Total: &#8377;' + selTotal + '</strong>';
+    document.getElementById('checkoutSection').classList.remove('hidden');
+    document.getElementById('checkoutSection').scrollIntoView({behavior:'smooth', block:'start'});
+    showToast(selected.length + ' item(s) ready for checkout!', 'success');
+}
+
+// cart_id is sent — matches /api/cart/update which reads d.get("cart_id")
+async function updateQty(cartId, qty) {
+    await fetch('/api/cart/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cart_id: cartId, quantity: qty})
+    });
+    loadCart();
+    updateCartBadge();
+}
+
+// cart_id is sent — matches /api/cart/remove which reads request.get_json().get("cart_id")
+async function removeItem(cartId) {
+    await fetch('/api/cart/remove', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cart_id: cartId})
+    });
+    loadCart();
+    updateCartBadge();
+}
+
+/* ---- Pincode helpers for cart ---- */
+function cartIsUdupi(pin) { return /^(576|574)\d{3}$/.test(pin); }
+
+function cartChkPin(v) {
+    var el = document.getElementById('cartPinHint');
+    if (!v)           { el.innerHTML=''; return; }
+    if (v.length < 6) { el.innerHTML='<span style="color:#e07840">Enter all 6 digits</span>'; return; }
+    el.innerHTML = cartIsUdupi(v)
+        ? '<span style="color:#6fcf97">&#10003; Delivery available in your area!</span>'
+        : '<span style="color:#e04040">&#10007; Outside delivery zone (Udupi only)</span>';
+}
+function cartChkPhone(v) {
+    var el = document.getElementById('cartPhoneHint');
+    if (!v)            { el.innerHTML=''; return; }
+    if (v.length < 10) { el.innerHTML='<span style="color:#e07840">Must be exactly 10 digits</span>'; return; }
+    el.innerHTML='<span style="color:#6fcf97">&#10003; Looks good</span>';
+}
+
+function showCartRegionAlert(msg) {
+    var el = document.getElementById('cartRegionAlert');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'cartRegionAlert';
+        el.style.cssText =
+            'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-120px);'
+            + 'background:#1a0000;border:2px solid #e04040;color:#ffaaaa;'
+            + 'padding:14px 28px;border-radius:12px;font-size:14px;font-family:inherit;'
+            + 'z-index:99999;box-shadow:0 8px 32px rgba(0,0,0,0.85);'
+            + 'transition:transform 0.45s cubic-bezier(0.34,1.4,0.64,1),opacity 0.35s;'
+            + 'opacity:0;max-width:92vw;text-align:center;line-height:1.6;';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.transform = 'translateX(-50%) translateY(0)';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(function() {
+        el.style.transform = 'translateX(-50%) translateY(-120px)';
+        el.style.opacity = '0';
+    }, 5000);
+}
+
+async function validateCartDelivery() {
+    var address = document.getElementById('cartAddress').value.trim();
+    var pincode = document.getElementById('cartPincode').value.trim();
+    var phone   = document.getElementById('cartPhone').value.trim();
+    if (!address) { showToast('Please enter delivery address', 'error'); return null; }
+    if (pincode.length !== 6) { showCartRegionAlert('Please enter a valid 6-digit pincode.'); document.getElementById('cartPincode').focus(); return null; }
+    if (phone.length !== 10)  { showToast('Please enter a valid 10-digit phone number', 'error'); document.getElementById('cartPhone').focus(); return null; }
+    await fetch('/api/user/save-pincode', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pincode:pincode})}).catch(function(){});
+    if (!cartIsUdupi(pincode)) { showCartRegionAlert('Sorry - we deliver only within the Udupi region (pincodes 574xxx or 576xxx).'); return null; }
+    return {address: address, pincode: pincode, phone: phone};
+}
+
+var _codSubmitting = false;
+async function cartCOD() {
+    if (_codSubmitting) return;
+    var delivery = await validateCartDelivery();
+    if (!delivery) return;
+
+    _codSubmitting = true;
+    var codBtn = document.querySelector('[onclick="cartCOD()"]');
+    if (codBtn) { codBtn.disabled = true; codBtn.textContent = 'Placing order...'; }
+
+    var total = cartItems.reduce(function(s, i){ return s + i.price * i.quantity; }, 0);
+    var items = cartItems.map(function(i){
+        return {product_id: i.product_id, name: i.name, price: i.price, quantity: i.quantity};
+    });
+    try {
+        var res  = await fetch('/api/order/cod', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({items: items, address: delivery.address, phone: delivery.phone, pincode: delivery.pincode, total: total})
+        });
+        var data = await res.json();
+        showToast(
+            data.success ? 'Order placed! Confirmation sent to your email.' : data.message,
+            data.success ? 'success' : 'error'
+        );
+        if (data.success) { cartItems = []; loadCart(); }
+    } finally {
+        _codSubmitting = false;
+        if (codBtn) { codBtn.disabled = false; codBtn.textContent = 'Place Order (COD)'; }
+    }
+}
+
+async function cartPayOnline() {
+    var delivery = await validateCartDelivery();
+    if (!delivery) return;
+    var address = delivery.address;
+    var phone   = delivery.phone;
+    var pincode = delivery.pincode;
+
+    var total = cartItems.reduce(function(s, i){ return s + i.price * i.quantity; }, 0);
+    var items = cartItems.map(function(i){
+        return {product_id: i.product_id, name: i.name, price: i.price, quantity: i.quantity};
+    });
+
+    // Build dummy Razorpay iframe modal
+    let overlay = document.getElementById('rzpIframeOverlay');
+    if (overlay) overlay.remove();
+
+    overlay = document.createElement('div');
+    overlay.id = 'rzpIframeOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    overlay.innerHTML = '<iframe id="rzpIframe" src="/payment" style="border:none;border-radius:8px;width:100%;max-width:420px;height:620px;"></iframe>';
+    document.body.appendChild(overlay);
+
+    // Once iframe loads, send init config
+    document.getElementById('rzpIframe').onload = function() {
+        this.contentWindow.postMessage({
+            type: 'RZP_INIT',
+            config: {
+                amount:    total,
+                items:     items,
+                address:   address,
+                onSuccess: null,
+                onCancel:  null,
+            }
+        }, '*');
+    };
+
+    // Listen for success/cancel from iframe
+    window.addEventListener('message', function rzpListener(e) {
+        if (e.data && e.data.type === 'RZP_DONE') {
+            window.removeEventListener('message', rzpListener);
+            overlay.remove();
+            showToast('🎉 Payment successful! Order confirmation emailed.', 'success');
+            cartItems = []; loadCart();
+        }
+        if (e.data && e.data.type === 'RZP_CANCEL') {
+            window.removeEventListener('message', rzpListener);
+            overlay.remove();
+        }
+    });
+}
+// loadCart() runs after main.js is loaded (block scripts is after main.js in base.html)
+loadCart();
+</script>
+{% endblock %}

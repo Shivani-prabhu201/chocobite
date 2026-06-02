@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ChocoBite{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- AUTH MODAL -->
+<div id="authOverlay" class="modal-overlay hidden">
+    <div class="auth-modal">
+        <button class="modal-close" onclick="closeAuthModal()">✕</button>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="auth-form active">
+            <div class="auth-logo">
+                <img src="{{ url_for('static', filename='images/chocobitelogo.jpeg') }}"
+                     alt="ChocoBite" style="width:auto;height:48px;border-radius:8px;object-fit: contain;">
+            </div>
+            <h2>Welcome Back</h2>
+            <p class="auth-sub">Login to continue your chocolate journey</p>
+            <input type="email" id="loginEmail" placeholder="Email Address" class="auth-input">
+            <input type="password" id="loginPassword" placeholder="Password" class="auth-input">
+            <button class="auth-btn" onclick="submitLogin()">Login</button>
+            <p class="auth-switch">New here? <span onclick="switchToRegister()">Create Account</span></p>
+            <p class="auth-switch"><span onclick="switchToForgot()">Forgot Password?</span></p>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" class="auth-form">
+            <div class="auth-logo">
+                <img src="{{ url_for('static', filename='images/chocobitelogo.jpeg') }}"
+                     alt="ChocoBite" style="width:auto;height:48px;border-radius:8px;object-fit: contain;">
+            </div>
+            <h2>Join ChocoBite</h2>
+            <p class="auth-sub">Create your account to get started</p>
+
+            <input type="text"  id="regName"    placeholder="Full Name"                   class="auth-input" oninput="this.value=this.value.replace(/[0-9]/g,'')">
+            <input type="email" id="regEmail"   placeholder="Email Address"               class="auth-input">
+            <input type="tel"   id="regPhone"   placeholder="Phone Number (10 digits)"    class="auth-input" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+            <input type="text"  id="regAddress" placeholder="Delivery Address (optional)" class="auth-input">
+
+            <!-- Password + strength -->
+            <div class="pw-wrap">
+                <input type="password" id="regPassword" placeholder="Password" class="auth-input"
+                       oninput="checkRegStrength(this.value)">
+                <button type="button" class="pw-toggle" id="regPwEye"
+                        onclick="togglePw('regPassword','regPwEye')">&#128065;</button>
+            </div>
+
+            <!-- Strength bar -->
+            <div class="strength-track"><div class="strength-bar" id="regStrengthBar"></div></div>
+            <div class="strength-label" id="regStrengthLabel"></div>
+            <div class="strength-rules" id="regStrengthRules">
+                <div class="rule" id="rr-len">&#9711; At least 8 characters</div>
+                <div class="rule" id="rr-up" >&#9711; One uppercase letter (A-Z)</div>
+                <div class="rule" id="rr-num">&#9711; One number (0-9)</div>
+                <div class="rule" id="rr-spec">&#9711; One special character (!@#$...)</div>
+            </div>
+
+            <!-- Confirm password -->
+            <div class="pw-wrap">
+                <input type="password" id="regConfirm" placeholder="Confirm Password" class="auth-input"
+                       oninput="checkRegConfirm()">
+                <button type="button" class="pw-toggle" id="regCfEye"
+                        onclick="togglePw('regConfirm','regCfEye')">&#128065;</button>
+            </div>
+            <div class="confirm-msg" id="regConfirmMsg"></div>
+
+            <button class="auth-btn" onclick="submitRegister()">Create Account</button>
+            <p class="auth-switch">Already have an account? <span onclick="switchToLogin()">Login</span></p>
+        </div>
+
+        <!-- Forgot Password -->
+        <div id="forgotForm" class="auth-form">
+            <div class="auth-logo">🔐</div>
+            <h2>Reset Password</h2>
+            <p class="auth-sub">Enter your email to receive OTP</p>
+            <input type="email" id="forgotEmail" placeholder="Email Address" class="auth-input">
+            <button class="auth-btn" onclick="submitForgot()">Send OTP</button>
+            <div id="otpSection" class="hidden">
+                <input type="text" id="otpInput" placeholder="Enter OTP" class="auth-input">
+
+                <!-- New password + strength -->
+                <div class="pw-wrap">
+                    <input type="password" id="newPassword" placeholder="New Password" class="auth-input"
+                           oninput="checkResetStrength(this.value)">
+                    <button type="button" class="pw-toggle" id="resetPwEye"
+                            onclick="togglePw('newPassword','resetPwEye')">&#128065;</button>
+                </div>
+                <div class="strength-track"><div class="strength-bar" id="resetStrengthBar"></div></div>
+                <div class="strength-label" id="resetStrengthLabel"></div>
+                <div class="strength-rules" id="resetStrengthRules">
+                    <div class="rule" id="rs-len">&#9711; At least 8 characters</div>
+                    <div class="rule" id="rs-up" >&#9711; One uppercase letter (A-Z)</div>
+                    <div class="rule" id="rs-num">&#9711; One number (0-9)</div>
+                    <div class="rule" id="rs-spec">&#9711; One special character (!@#$...)</div>
+                </div>
+
+                <!-- Confirm new password -->
+                <div class="pw-wrap">
+                    <input type="password" id="confirmPassword" placeholder="Confirm New Password" class="auth-input"
+                           oninput="checkResetConfirm()">
+                    <button type="button" class="pw-toggle" id="resetCfEye"
+                            onclick="togglePw('confirmPassword','resetCfEye')">&#128065;</button>
+                </div>
+                <div class="confirm-msg" id="resetConfirmMsg"></div>
+
+                <button class="auth-btn" onclick="submitResetPassword()">Reset Password</button>
+            </div>
+            <p class="auth-switch"><span onclick="switchToLogin()">Back to Login</span></p>
+        </div>
+
+        <div id="authMessage" class="auth-message hidden"></div>
+    </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="nav-logo">
+        <a href="/" style="display:block;line-height:0;">
+            <img src="{{ url_for('static', filename='images/chocobitelogo.jpeg') }}"
+                 alt="ChocoBite"
+                 style="height:72px;width:auto;mix-blend-mode:screen;filter:brightness(1.05);display:block;">
+        </a>
+    </div>
+    <ul class="nav-links">
+        <li><a href="/" class="nav-link {% if request.endpoint=='home' %}active{% endif %}">Home</a></li>
+        <li><a href="/products" class="nav-link {% if request.endpoint=='products' %}active{% endif %}">Products</a></li>
+        <li><a href="/about" class="nav-link {% if request.endpoint=='about' %}active{% endif %}">About</a></li>
+        <li><a href="/contact" class="nav-link {% if request.endpoint=='contact' %}active{% endif %}">Contact</a></li>
+        <li><a href="/feedback" class="nav-link {% if request.endpoint=='feedback' %}active{% endif %}">Feedback</a></li>
+        <li><a href="/customize" class="nav-link customize-nav-link {% if request.endpoint=='customize_page' %}active{% endif %}">✦ Customize</a></li>
+        <li>
+            <a href="/orders" class="nav-link orders-link {% if request.endpoint=='orders_page' %}active{% endif %}">
+                <span class="orders-nav-txt">Orders</span>
+            </a>
+        </li>
+        <li>
+            <a href="/cart" class="nav-link cart-link">
+                <span class="cart-icon">🛒</span>
+                <span class="cart-badge" id="cartBadge">0</span>
+            </a>
+        </li>
+        <li id="authNavItem">
+            <button class="nav-auth-btn" onclick="openAuthModal()" id="loginNavBtn">Login</button>
+            <div class="user-menu hidden" id="userMenu">
+                <span id="userGreeting">Hi, User</span>
+                <button class="nav-auth-btn logout-btn" onclick="submitLogout()">Logout</button>
+            </div>
+        </li>
+    </ul>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+</nav>
+
+<div id="mobileMenu" class="mobile-menu hidden">
+    <a href="/">Home</a>
+    <a href="/products">Products</a>
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+    <a href="/feedback">Feedback</a>
+    <a href="/customize">✦ Customize</a>
+    <a href="/orders">Orders 📦</a>
+    <a href="/cart">Cart 🛒</a>
+</div>
+
+{% block content %}{% endblock %}
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast" class="toast hidden"></div>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-brand">
+            <span class="footer-logo"><img src="{{ url_for('static', filename='images/chocobitelogo.jpeg') }}"
+                     alt="ChocoBite" style="width:auto;height:48px;border-radius:8px;object-fit: contain;"> ChocoBite</span>
+            <p>Premium chocolates crafted with passion</p>
+        </div>
+        <div class="footer-links">
+            <h4>Quick Links</h4>
+            <a href="/">Home</a>
+            <a href="/products">Products</a>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+        </div>
+        <div class="footer-contact">
+            <h4>Contact Us</h4>
+            <p>
+                <?xml version="1.0" encoding="utf-8"?><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 122.88 92.12" style="enable-background:new 0 0 122.88 92.12" xml:space="preserve"><style type="text/css">
+	.st0{fill:#EA4335;}
+	.st1{fill:#C5221F;}
+	.st2{fill:#FBBC04;}
+	.st3{fill:#34A853;}
+	.st4{fill:#4285F4;}
+    .footer-contact svg {
+    width: 24px;       /* control size */
+    height: auto;
+    fill: var(--gold); /* apply gold color */
+    opacity: 0.8;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px; /* spacing if text follows */
+}
+</style><g><path class="st4" d="M8.36,92.12h19.54V44.67L0,23.76v60.08C0,88.42,3.78,92.12,8.36,92.12L8.36,92.12z"/><path class="st3" d="M94.97,92.12h19.54c4.67,0,8.36-3.78,8.36-8.36v-60L94.97,44.67V92.12L94.97,92.12z"/><path class="st2" d="M94.97,8.4v36.27l27.91-20.91V12.58c0-10.37-11.82-16.25-20.11-10.05L94.97,8.4L94.97,8.4z"/><polygon class="st0" points="27.9,44.67 27.9,8.4 61.44,33.57 94.97,8.4 94.97,44.67 61.44,69.76 27.9,44.67"/><path class="st1" d="M0,12.58v11.18l27.91,20.91V8.4l-7.8-5.87C11.82-3.66,0,2.29,0,12.58L0,12.58z"/></g></svg>
+                hello@chocobite.in</p>
+            <p><svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.88 122.88"><defs><style>.cls-1{fill:#33a867;fill-rule:evenodd;}
+                .footer-contact svg {
+    width: 24px;       /* control size */
+    height: auto;
+    fill: var(--gold); /* apply gold color */
+    opacity: 0.8;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px; /* spacing if text follows */
+}
+</style></defs><title>accept-call</title><path class="cls-1" d="M61.44,0A61.46,61.46,0,1,1,18,18,61.21,61.21,0,0,1,61.44,0ZM48.1,56.19A49.35,49.35,0,0,0,55.39,66.4a41.25,41.25,0,0,0,11.55,8.51,1.14,1.14,0,0,0,1,0,4.48,4.48,0,0,0,1.39-1A16.91,16.91,0,0,0,70.6,72.4c1.85-2.44,4.15-5.47,7.39-4l.2.11L89,74.77l.11.07a4.84,4.84,0,0,1,2,4.2,11.43,11.43,0,0,1-1.58,5.37,11.06,11.06,0,0,1-5.2,4.6A23.63,23.63,0,0,1,78,90.75a21.69,21.69,0,0,1-9.8-.82,43.06,43.06,0,0,1-9.85-4.76L58.05,85c-1.6-1-3.33-2.07-5-3.33a62.69,62.69,0,0,1-16.65-18.9c-3.46-6.26-5.34-13-4.32-19.44a14,14,0,0,1,4.72-8.85A12.68,12.68,0,0,1,46.18,32a1.35,1.35,0,0,1,1.09.7L54.21,44.4a3.68,3.68,0,0,1,.59,3.92,7.71,7.71,0,0,1-2.66,3c-.37.32-.82.64-1.29,1-1.55,1.12-3.32,2.42-2.71,4l0-.05Z"/></svg>
+ +91 98765 43210</p>
+<p><?xml version="1.0" encoding="utf-8"?><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 86.96 122.88" style="enable-background:new 0 0 86.96 122.88" xml:space="preserve">
+    <style type="text/css">
+	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:#A60D0D;}
+	.st1{fill-rule:evenodd;clip-rule:evenodd;fill:#EA4335;}
+    .footer-contact svg {
+    width: 24px;       /* control size */
+    height: auto;
+    fill: var(--gold); /* apply gold color */
+    opacity: 0.8;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;}</style><g><path class="st1" d="M27.81,96.57c4.42,7.04,9.2,15.57,13.92,23.86c1.75,3.06,3.33,3.52,5.43-0.11c4.56-7.91,9.04-16.1,13.76-23.74 c14.33-23.19,37.78-45.8,19.13-77.01C63.49-8.14,18.45-5.18,4.98,20.62C-10.46,50.19,13.65,74.03,27.81,96.57L27.81,96.57z"/><path class="st0" d="M43.46,25.59c9.31,0,16.86,7.55,16.86,16.86s-7.55,16.86-16.86,16.86c-9.31,0-16.86-7.55-16.86-16.86 S34.15,25.59,43.46,25.59L43.46,25.59z"/></g></svg> Chocolate Street, Sweet City</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2024 ChocoBite. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

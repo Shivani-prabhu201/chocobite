@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}ChocoBite - Premium Chocolate{% endblock %}
+
+{% block content %}
+
+<section class="hero" id="heroSection">
+
+    <!-- VIDEO — always visible on all slides, loops, muted -->
+    <video id="heroBgVideo" autoplay muted loop playsinline
+           src="{{ url_for('static', filename='videos/chocobite.mp4') }}"
+           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;pointer-events:none;">
+    </video>
+
+    <!-- Overlay — keeps text readable over any video frame -->
+    <div id="heroOverlay"
+         style="position:absolute;inset:0;z-index:1;pointer-events:none;
+                background:linear-gradient(to bottom,
+                    rgba(0,0,0,0.50) 0%,
+                    rgba(0,0,0,0.25) 45%,
+                    rgba(0,0,0,0.55) 100%);"></div>
+
+    <div style="display:none;"><div id="sliderProgress"></div></div>
+
+    <!-- Slide content -->
+    <div class="slider-track" style="z-index:3;">
+
+        <div class="slide active" id="slide0">
+            <div class="slide-inner">
+                <span class="slide-eyebrow">&#10022; Premium Chocolates &#10022;</span>
+                <h1 class="slide-title">Explore the<br><em>Collection</em></h1>
+                <p class="slide-desc">Handcrafted chocolates from the world&#39;s finest cacao. Three categories, endless indulgence.</p>
+                <div class="slide-btns">
+                    <a href="/products" class="hero-btn primary">Shop Now</a>
+                    <a href="/products?cat=flavoured" class="hero-btn secondary">Flavoured Bars</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide1">
+            <div class="slide-inner">
+                <span class="slide-eyebrow">&#10022; Since 2020 &#10022;</span>
+                <h1 class="slide-title">Crafted with<br><em>Passion</em></h1>
+                <p class="slide-desc">Born from a love of real chocolate. Every bean sourced ethically, every bar made with care and craft.</p>
+                <div class="slide-btns">
+                    <a href="/about" class="hero-btn primary">Our Story</a>
+                    <a href="/products?cat=seeds" class="hero-btn secondary">Cacao Beans</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide2">
+            <div class="slide-inner">
+                <span class="slide-eyebrow">&#10022; GloryBean Collection &#10022;</span>
+                <h1 class="slide-title">Discover<br><em>GloryBean</em></h1>
+                <p class="slide-desc">Our finest line — whole roasted cacao beans, raw powders and artisan bars. Pure chocolate glory.</p>
+                <div class="slide-btns">
+                    <a href="/products" class="hero-btn primary">Shop GloryBean</a>
+                    <a href="/feedback" class="hero-btn secondary">Leave a Review</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Dots: absolute to hero (position:relative), centered at very bottom -->
+    <div id="heroDots" style="position:absolute;bottom:32px;left:0;right:0;display:flex;justify-content:center;gap:14px;z-index:10;">
+        <button class="sdot active" onclick="goSlide(0)" aria-label="Slide 1"></button>
+        <button class="sdot"        onclick="goSlide(1)" aria-label="Slide 2"></button>
+        <button class="sdot"        onclick="goSlide(2)" aria-label="Slide 3"></button>
+    </div>
+
+    <button class="slider-arrow prev" onclick="prevSlide()" style="z-index:10;">&#8249;</button>
+    <button class="slider-arrow next" onclick="nextSlide()" style="z-index:10;">&#8250;</button>
+
+</section>
+
+<section class="categories-section">
+    <h2 class="section-title">Our Categories</h2>
+    <p class="section-sub">Discover our full range of premium chocolate products</p>
+    <div class="cat-stage" id="catStage" style="position:relative;min-height:320px;">
+        <div class="cat-slot cat-slot-left"  id="catLeft"></div>
+        <div class="cat-slot cat-slot-mid"   id="catMid"></div>
+        <div class="cat-slot cat-slot-right" id="catRight"></div>
+    </div>
+</section>
+
+<section class="featured-section">
+    <h2 class="section-title">Fan Favourites</h2>
+    <p class="section-sub">Our most loved chocolates — tried, tested, and absolutely irresistible</p>
+    <div class="products-grid" id="featuredProducts">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+</section>
+
+<section class="section why-section">
+    <h2 class="section-title">Why ChocoBite?</h2>
+    <div class="why-grid">
+        <div class="why-card"><div class="why-icon">🌿</div><h3>Ethically Sourced</h3><p>Our cacao is sourced from sustainable farms with fair-trade practices.</p></div>
+        <div class="why-card"><div class="why-icon">🏆</div><h3>Award Winning</h3><p>Multiple national chocolate awards for quality and craftsmanship.</p></div>
+        <div class="why-card"><div class="why-icon">🚚</div><h3>Fast Delivery</h3><p>Temperature-controlled packaging ensures your chocolate arrives perfect.</p></div>
+        <div class="why-card"><div class="why-icon">💯</div><h3>100% Natural</h3><p>No artificial flavours, colours or preservatives — ever.</p></div>
+    </div>
+</section>
+
+<section class="section testimonials-section">
+    <h2 class="section-title">What Our Customers Say</h2>
+    <div class="testimonials-slider" id="testimonialsSlider">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Navbar scroll effect ──────────────────────────────────────
+window.addEventListener('scroll', function() {
+    var nav = document.querySelector('.navbar');
+    if (!nav) return;
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ── Hero Slider ───────────────────────────────────────────────
+var cur       = 0;
+var TOTAL     = 3;
+var DURATION  = 5000;
+var autoTimer = null;
+var progTimer = null;
+var progStart = null;
+var paused    = false;
+
+var vid = document.getElementById('heroBgVideo');
+
+function goSlide(n) {
+    // Fade out old slide
+    document.getElementById('slide' + cur).classList.remove('active');
+    document.querySelectorAll('.sdot')[cur].classList.remove('active');
+
+    cur = ((n % TOTAL) + TOTAL) % TOTAL;
+
+    // Fade in new slide
+    document.getElementById('slide' + cur).classList.add('active');
+    document.querySelectorAll('.sdot')[cur].classList.add('active');
+
+    // Video plays continuously — never call play() mid-slide (causes stutter)
+
+    restartProgress();
+    restartAuto();
+}
+
+function nextSlide() { goSlide(cur + 1); }
+function prevSlide() { goSlide(cur - 1); }
+
+function restartProgress() {
+    cancelAnimationFrame(progTimer);
+    progStart = null;
+    var bar = document.getElementById('sliderProgress');
+    bar.style.width = '0%';
+    function step(ts) {
+        if (!progStart) progStart = ts;
+        var pct = Math.min(100, ((ts - progStart) / DURATION) * 100);
+        bar.style.width = pct + '%';
+        if (pct < 100) progTimer = requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+function restartAuto() {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(nextSlide, DURATION);
+}
+
+// Pause on hover — stops slide transition only, video keeps playing
+var hero = document.getElementById('heroSection');
+hero.addEventListener('mouseenter', function() {
+    paused = true;
+    clearTimeout(autoTimer);
+    cancelAnimationFrame(progTimer);
+    /* video keeps playing on hover */
+});
+hero.addEventListener('mouseleave', function() {
+    paused = false;
+    /* video was never paused, no need to resume */
+    restartProgress();
+    restartAuto();
+});
+
+// Swipe on mobile
+var swipeX = 0;
+hero.addEventListener('touchstart', function(e){ swipeX = e.touches[0].clientX; }, {passive:true});
+hero.addEventListener('touchend',   function(e){
+    var dx = e.changedTouches[0].clientX - swipeX;
+    if (Math.abs(dx) > 40) dx < 0 ? nextSlide() : prevSlide();
+}, {passive:true});
+
+restartProgress();
+restartAuto();
+
+// ── Featured products ─────────────────────────────────────────
+async function loadFeatured() {
+    var res  = await fetch('/api/products?category=flavoured');
+    var prds = await res.json();
+    var el   = document.getElementById('featuredProducts');
+    if (!Array.isArray(prds) || !prds.length) {
+        el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px">No products yet — visit /seed first.</p>';
+        return;
+    }
+    el.innerHTML = '';
+    prds.slice(0, 4).forEach(function(p) { el.innerHTML += createProductCard(p); });
+}
+
+// ── Testimonials ──────────────────────────────────────────────
+async function loadTestimonials() {
+    var res  = await fetch('/api/feedback/list');
+    var fbs  = await res.json();
+    var el   = document.getElementById('testimonialsSlider');
+    if (!fbs.length) {
+        el.innerHTML = '<p style="text-align:center;color:var(--gold)">Be the first to share your experience!</p>';
+        return;
+    }
+    el.innerHTML = fbs.map(function(f) {
+        return '<div class="testimonial-card">' +
+            '<div class="stars">' + '&#9733;'.repeat(f.rating) + '&#9734;'.repeat(5 - f.rating) + '</div>' +
+            '<p>"' + (f.comment || f.message || '') + '"</p>' +
+            '<span class="t-name">&#8212; ' + f.name + '</span>' +
+            '<span class="t-date">' + f.created_at + '</span>' +
+            '</div>';
+    }).join('');
+}
+
+loadFeatured();
+loadTestimonials();
+
+// ── Categories Single-Card Fade ──────────────────────────────
+(function() {
+    var CATS = [
+        { href: '/products?cat=seeds',     img: '/static/images/cocoa_bean.jpg',   name: 'Cocoa Beans &amp; Chips', desc: 'Premium baking chips &amp; cacao nibs' },
+        { href: '/products?cat=powder',    img: '/static/images/cocoa_powder.jpg', name: 'Choco Powder',            desc: 'Pure cocoa &amp; hot chocolate mixes'  },
+        { href: '/products?cat=flavoured', img: '/static/images/choco_bar.jpg',    name: 'Flavoured Chocolates',    desc: 'Exotic bars &amp; filled chocolates'   }
+    ];
+    var N       = CATS.length;
+    var cur     = 0;
+    var slots   = [
+        document.getElementById('catLeft'),
+        document.getElementById('catMid'),
+        document.getElementById('catRight')
+    ];
+    if (!slots[0]) return;
+
+    function makeCard(cat) {
+        var iconHtml = cat.img
+            ? '<img src="' + cat.img + '" alt="' + cat.name + '" style="width:96px;height:96px;object-fit:cover;border-radius:50%;border:2px solid rgba(255,255,255,0.35);box-shadow:0 4px 20px rgba(0,0,0,0.6);display:block;margin:0 auto;">'
+            : cat.icon;
+        return '<a href="' + cat.href + '" class="category-card">'
+             + '<div class="cat-img" style="text-align:center;">' + iconHtml + '</div>'
+             + '<h3>' + cat.name + '</h3>'
+             + '<p>' + cat.desc + '</p>'
+             + '<span class="cat-arrow">&#8594;</span>'
+             + '</a>';
+    }
+
+    // Pre-fill all 3 slots with all 3 cards
+    slots.forEach(function(s, i) {
+        s.innerHTML = makeCard(CATS[i]);
+    });
+
+    // Show first card
+    slots[cur].classList.add('cat-visible');
+
+    function nextCard() {
+        var prev = cur;
+        cur = (cur + 1) % N;
+
+        // Fade out current
+        slots[prev].classList.remove('cat-visible');
+
+        // After 2s fade-out + 0.5s gap = 2.5s, fade in next
+        setTimeout(function() {
+            slots[cur].classList.add('cat-visible');
+        }, 2500); // 2s fade out + 0.5s gap before fade-in starts
+    }
+
+    // Each card is visible for 4s, then 4s transition = 8s total per card
+    var timer = setInterval(nextCard, 8500);
+
+    var stage = document.getElementById('catStage');
+    if (stage) {
+        stage.addEventListener('mouseenter', function() { clearInterval(timer); });
+        stage.addEventListener('mouseleave', function() {
+            timer = setInterval(nextCard, 8500);
+        });
+    }
+})();
+</script>
+{% endblock %}

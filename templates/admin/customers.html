@@ -1,0 +1,318 @@
+{% extends "admin/base.html" %}
+{% block title %}Customers — ChocoBite Admin{% endblock %}
+{% block page_title %}Customer Management{% endblock %}
+
+{% block extra_css %}
+<style>
+.cust-toolbar { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+.cust-toolbar input {
+    background:var(--jet3); border:1px solid rgba(212,130,10,0.2); border-radius:8px;
+    padding:9px 14px; color:var(--text); font-family:'Crimson Text',serif;
+    font-size:14px; outline:none; transition:border-color .2s; min-width:260px; }
+.cust-toolbar input:focus { border-color:var(--gold); }
+
+.cust-avatar {
+    width:36px; height:36px; border-radius:50%;
+    background:linear-gradient(135deg,var(--jet4),var(--jet3));
+    border:1px solid rgba(212,130,10,0.2);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel',serif; font-size:13px; font-weight:700;
+    color:var(--gold); flex-shrink:0; }
+
+.summary-tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:22px; }
+.cust-tile { background:var(--jet2); border:1px solid rgba(212,130,10,0.12); border-radius:10px; padding:14px 18px; }
+.cust-tile-lbl { font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; font-family:'Cinzel',serif; margin-bottom:5px; }
+.cust-tile-val { font-size:22px; font-weight:700; color:var(--gold2); font-family:'Cinzel',serif; }
+
+/* Customer detail drawer */
+.drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:6000; }
+.drawer { position:fixed; top:0; right:0; bottom:0; width:480px; max-width:100vw;
+    background:var(--jet2); border-left:1px solid rgba(212,130,10,0.2);
+    z-index:6001; overflow-y:auto; padding:24px;
+    animation:slideIn .25s ease; }
+@keyframes slideIn { from{transform:translateX(100%)} to{transform:translateX(0)} }
+.drawer-header { display:flex; align-items:center; gap:14px; margin-bottom:20px;
+    padding-bottom:16px; border-bottom:1px solid rgba(212,130,10,0.12); }
+.drawer-avatar { width:52px; height:52px; border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel',serif; font-size:20px; font-weight:700; color:#000; }
+.drawer-close { margin-left:auto; background:none; border:none; color:var(--muted);
+    font-size:20px; cursor:pointer; }
+.info-row { display:flex; justify-content:space-between; padding:8px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04); font-size:14px; }
+.info-row:last-child { border-bottom:none; }
+.info-l { color:var(--muted); font-size:12px; }
+.info-v { color:var(--text); text-align:right; max-width:60%; word-break:break-word; }
+.mini-order-row { background:var(--jet3); border-radius:8px; padding:10px 12px;
+    margin-bottom:8px; font-size:13px; }
+.mini-order-id { color:var(--gold); font-size:11px; font-family:'Cinzel',serif; }
+.spend-badge { background:rgba(212,130,10,0.1); color:var(--gold2); border:1px solid rgba(212,130,10,0.25);
+    font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700; }
+.top-badge { background:rgba(45,122,79,0.1); color:#6fcf97; border:1px solid rgba(45,122,79,0.2);
+    font-size:10px; padding:2px 8px; border-radius:10px; font-family:'Cinzel',serif; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Summary tiles -->
+<div class="summary-tiles" id="custSummary">
+    <div class="cust-tile"><div class="cust-tile-lbl">Total Customers</div><div class="cust-tile-val" id="tCusts">—</div></div>
+    <div class="cust-tile"><div class="cust-tile-lbl">Active (Ordered)</div><div class="cust-tile-val" id="tActive" style="color:#6fcf97">—</div></div>
+    <div class="cust-tile"><div class="cust-tile-lbl">New This Month</div><div class="cust-tile-val" id="tNew" style="color:#64b5f6">—</div></div>
+    <div class="cust-tile"><div class="cust-tile-lbl">Total Revenue</div><div class="cust-tile-val" id="tRevenue" style="color:var(--gold)">—</div></div>
+</div>
+
+<!-- Toolbar -->
+<div class="cust-toolbar">
+    <input type="text" id="custSearch" placeholder="Search by name, email or phone…" oninput="debounceSearch()">
+    <button class="btn-ghost" onclick="loadCustomers()">↺ Refresh</button>
+</div>
+
+<div style="font-size:13px;color:var(--muted);margin-bottom:12px" id="custCount"></div>
+
+<div class="admin-card" style="padding:0">
+    <div style="overflow-x:auto">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Orders</th>
+                    <th>Total Spent</th>
+                    <th>Cancelled</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="custBody">
+                <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination" id="custPagination" style="margin-top:16px;display:flex;gap:8px;justify-content:center"></div>
+
+<!-- Customer detail drawer -->
+<div id="drawerOverlay" class="drawer-overlay" style="display:none" onclick="closeDrawer()"></div>
+<div id="customerDrawer" class="drawer" style="display:none">
+    <div class="drawer-header">
+        <div class="drawer-avatar" id="drawerAvatar">?</div>
+        <div>
+            <div id="drawerName" style="font-family:'Cinzel',serif;font-size:16px;color:var(--gold2)"></div>
+            <div id="drawerEmail" style="font-size:12px;color:var(--muted);margin-top:3px"></div>
+        </div>
+        <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div id="drawerInfo"></div>
+    <div style="margin-top:20px">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;
+                font-family:'Cinzel',serif;margin-bottom:12px">Order History</div>
+        <div id="drawerOrders"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
+    </div>
+    <div id="drawerActions" style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(212,130,10,0.1)"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var currentPage = 1;
+var allCusts    = [];
+var _dTimer     = null;
+
+function debounceSearch() {
+    clearTimeout(_dTimer);
+    _dTimer = setTimeout(function(){ currentPage = 1; loadCustomers(); }, 350);
+}
+
+async function loadCustomers() {
+    var search = document.getElementById('custSearch').value.trim();
+    var params = new URLSearchParams({page: currentPage});
+    if (search) params.set('search', search);
+
+    document.getElementById('custBody').innerHTML =
+        '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Loading…</td></tr>';
+
+    var res  = await fetch('/admin/api/customers?' + params);
+    var data = await res.json();
+    allCusts = data.users || [];
+    renderCustomers(data.users||[], data.total, data.page, data.per_page);
+    loadSummary(data.users||[], data.total);
+}
+
+function loadSummary(users, total) {
+    document.getElementById('tCusts').textContent  = total;
+    var active  = users.filter(function(u){ return u.total_orders > 0; }).length;
+    var revenue = users.reduce(function(s,u){ return s + (u.total_spent||0); }, 0);
+    document.getElementById('tActive').textContent  = active;
+    document.getElementById('tRevenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+    // New this month — approximate from loaded users
+    var thisMonth = new Date().toISOString().substring(0,7); // YYYY-MM
+    var newCount  = users.filter(function(u){ return (u.created_at||'').includes(thisMonth); }).length;
+    document.getElementById('tNew').textContent = newCount;
+}
+
+function renderCustomers(users, total, page, per) {
+    document.getElementById('custCount').textContent =
+        total + ' customer' + (total !== 1 ? 's' : '');
+
+    if (!users.length) {
+        document.getElementById('custBody').innerHTML =
+            '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No customers found.</td></tr>';
+        document.getElementById('custPagination').innerHTML = '';
+        return;
+    }
+
+    document.getElementById('custBody').innerHTML = users.map(function(u) {
+        var initials = (u.full_name||'?').split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
+        var topBadge = u.total_spent > 1000
+            ? '<span class="top-badge">⭐ Top Buyer</span>'
+            : '';
+        return '<tr>' +
+            '<td>' +
+                '<div style="display:flex;align-items:center;gap:10px">' +
+                    '<div class="cust-avatar">' + initials + '</div>' +
+                    '<div>' +
+                        '<div style="font-size:13px;font-weight:600;color:var(--text)">' + (u.full_name||'—') + '</div>' +
+                        topBadge +
+                    '</div>' +
+                '</div>' +
+            '</td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (u.email||'—') + '</td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (u.phone||'—') + '</td>' +
+            '<td style="font-weight:600;color:var(--text)">' + (u.total_orders||0) + '</td>' +
+            '<td><span class="spend-badge">₹' + (u.total_spent||0).toLocaleString('en-IN') + '</span></td>' +
+            '<td style="color:' + (u.cancelled>0?'#e04040':'var(--muted)') + ';font-size:13px">' + (u.cancelled||0) + '</td>' +
+            '<td style="font-size:11px;color:var(--muted)">' + (u.created_at||'—') + '</td>' +
+            '<td>' +
+                '<div style="display:flex;gap:6px">' +
+                    '<button class="inv-action-btn" onclick="viewCustomer(\'' + u.user_id + '\')">View</button>' +
+                    '<button class="inv-action-btn" style="color:#e04040;border-color:rgba(224,64,64,0.25)" ' +
+                        'onclick="deleteCustomer(\'' + u.user_id + '\',\'' + encodeURI(u.full_name) + '\')">Delete</button>' +
+                '</div>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+
+    // Pagination
+    var pages = Math.ceil(total / per);
+    var pg = '';
+    for (var i = 1; i <= pages; i++) {
+        pg += '<button class="page-btn' + (i===page?' active':'') + '" onclick="goPage('+i+')">' + i + '</button>';
+    }
+    document.getElementById('custPagination').innerHTML = pg;
+}
+
+function goPage(p) { currentPage = p; loadCustomers(); }
+
+async function viewCustomer(uid) {
+    var u = allCusts.find(function(x){ return x.user_id === uid; });
+    if (!u) return;
+
+    var initials = (u.full_name||'?').split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
+    document.getElementById('drawerAvatar').textContent = initials;
+    document.getElementById('drawerName').textContent   = u.full_name || '—';
+    document.getElementById('drawerEmail').textContent  = u.email || '—';
+
+    document.getElementById('drawerInfo').innerHTML =
+        '<div class="info-row"><span class="info-l">User ID</span>' +
+            '<code style="color:var(--gold);font-size:10px;text-align:right">' + uid + '</code></div>' +
+        '<div class="info-row"><span class="info-l">Phone</span><span class="info-v">' + (u.phone||'—') + '</span></div>' +
+        '<div class="info-row"><span class="info-l">Address</span><span class="info-v">' + (u.address||'—') + '</span></div>' +
+        '<div class="info-row"><span class="info-l">Joined</span><span class="info-v">' + (u.created_at||'—') + '</span></div>' +
+        '<div class="info-row"><span class="info-l">Total Orders</span><span class="info-v" style="color:var(--gold2);font-weight:700">' + (u.total_orders||0) + '</span></div>' +
+        '<div class="info-row"><span class="info-l">Total Spent (Paid)</span><span class="info-v" style="color:var(--gold2);font-weight:700">₹' + (u.total_spent||0).toLocaleString('en-IN') + '</span></div>' +
+        '<div class="info-row"><span class="info-l">Cancelled Orders</span><span class="info-v" style="color:' + (u.cancelled>0?'#e04040':'#6fcf97') + '">' + (u.cancelled||0) + '</span></div>';
+
+    // Load orders
+    document.getElementById('drawerOrders').innerHTML = '<div style="color:var(--muted);font-size:13px">Loading…</div>';
+    var res  = await fetch('/admin/api/customer/' + uid + '/orders');
+    var data = await res.json();
+    if (!data.orders || !data.orders.length) {
+        document.getElementById('drawerOrders').innerHTML = '<div style="color:var(--muted);font-size:13px">No orders yet.</div>';
+    } else {
+        document.getElementById('drawerOrders').innerHTML = data.orders.map(function(o) {
+            var sc = 'status-' + (o.order_status||'processing');
+            return '<div class="mini-order-row">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+                    '<code class="mini-order-id">' + (o.order_id||'').substring(0,12) + '…</code>' +
+                    '<span class="status-pill ' + sc + '" style="font-size:10px">' + (o.order_status||'—') + '</span>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">' +
+                    '<span>' + (o.booked_at||'—') + '</span>' +
+                    '<span style="color:var(--gold2);font-weight:700">₹' + (o.total_amount||0) + '</span>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    // Delete button
+    document.getElementById('drawerActions').innerHTML =
+        '<button class="btn-danger" style="width:100%" onclick="deleteCustomer(\'' + uid + '\',\'' + encodeURI(u.full_name) + '\')">' +
+            '🗑 Delete Account (GDPR)' +
+        '</button>';
+
+    document.getElementById('drawerOverlay').style.display = 'block';
+    document.getElementById('customerDrawer').style.display = 'block';
+}
+
+function closeDrawer() {
+    document.getElementById('drawerOverlay').style.display = 'none';
+    document.getElementById('customerDrawer').style.display = 'none';
+}
+
+function deleteCustomer(uid, name) {
+    var dname = decodeURI(name);
+    if (typeof showConfirm === 'function') {
+        showConfirm(
+            'Delete account for <strong>' + dname + '</strong>?<br>' +
+            '<span style="font-size:12px;color:#a07840">Orders will be anonymised (GDPR). This cannot be undone.</span>',
+            async function() {
+                var res  = await fetch('/admin/api/customer/delete', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({user_id: uid})
+                });
+                var data = await res.json();
+                adminToast(data.message, data.success ? 'success' : 'error');
+                if (data.success) { closeDrawer(); loadCustomers(); }
+            }, '🗑'
+        );
+    }
+}
+
+// Confirm helper if not already defined
+if (typeof showConfirm === 'undefined') {
+    window.showConfirm = function(msg, onOk, icon) {
+        var ov = document.createElement('div');
+        ov.className = 'modal-bg';
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+        ov.innerHTML =
+            '<div style="background:var(--jet2);border:1px solid rgba(212,130,10,0.2);border-radius:14px;max-width:380px;width:100%;padding:28px">' +
+            '<div style="font-size:28px;text-align:center;margin-bottom:12px">' + (icon||'⚙️') + '</div>' +
+            '<div style="color:var(--text);font-size:15px;text-align:center;margin-bottom:22px">' + msg + '</div>' +
+            '<div style="display:flex;gap:10px">' +
+            '<button class="btn-ghost" style="flex:1" onclick="this.closest(\'.modal-bg\').remove()">Cancel</button>' +
+            '<button class="btn-gold" style="flex:1" id="cfOk2">Confirm</button>' +
+            '</div></div>';
+        document.body.appendChild(ov);
+        ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+        ov.querySelector('#cfOk2').onclick = function(){ ov.remove(); onOk(); };
+    };
+}
+
+// Also add "inv-action-btn" and "page-btn" styles inline if not from orders page
+document.head.insertAdjacentHTML('beforeend', `<style>
+.inv-action-btn{background:transparent;border:1px solid rgba(212,130,10,.2);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Cinzel',serif;transition:all .2s;white-space:nowrap}
+.inv-action-btn:hover{border-color:var(--gold);color:var(--gold)}
+.page-btn{background:var(--jet3);border:1px solid rgba(212,130,10,.2);color:var(--muted);border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;transition:all .2s}
+.page-btn:hover,.page-btn.active{border-color:var(--gold);color:var(--gold)}
+</style>`);
+
+loadCustomers();
+</script>
+{% endblock %}

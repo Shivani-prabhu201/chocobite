@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}My Orders - ChocoBite{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📦 My Orders</h1>
+    <p>Track your active orders and browse your order history</p>
+</div>
+
+<div class="orders-tab-bar">
+    <button class="orders-tab active" id="tabActive"  onclick="switchTab('active')">🕐 Active Orders</button>
+    <button class="orders-tab"        id="tabHistory" onclick="switchTab('history')">📋 Order History</button>
+</div>
+
+<div id="panelActive"  class="orders-panel">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+<div id="panelHistory" class="orders-panel hidden">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+@keyframes fadeInUp {
+    from { opacity:0; transform:translateY(24px); }
+    to   { opacity:1; transform:translateY(0);    }
+}
+@keyframes popIn {
+    from { transform:scale(0); opacity:0; }
+    to   { transform:scale(1); opacity:1; }
+}
+</style>
+<script>
+function fmtDate(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+}
+function fmtDateTime(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    var date = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+    var time = d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:true});
+    return date + ' at ' + time;
+}
+function isToday(iso) {
+    if (!iso) return false;
+    var d = new Date(iso), now = new Date();
+    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+}
+function isPast(iso) { return iso ? new Date(iso) < new Date() : false; }
+
+function switchTab(tab) {
+    document.getElementById('tabActive').classList.toggle('active',  tab==='active');
+    document.getElementById('tabHistory').classList.toggle('active', tab==='history');
+    document.getElementById('panelActive').classList.toggle('hidden',  tab!=='active');
+    document.getElementById('panelHistory').classList.toggle('hidden', tab!=='history');
+    if (tab==='history') loadHistory();
+}
+
+/* ── Cancel-order confirmation modal ──────────────────────────────────────── */
+function cancelOrder(orderId) {
+    var overlay = document.createElement('div');
+    overlay.id  = 'cancelOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:20px';
+
+    var inner = document.createElement('div');
+    inner.style.cssText = 'background:#0a0a0a;border:1px solid #d4820a44;border-radius:16px;padding:32px 28px;max-width:400px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,0.6);text-align:center;font-family:inherit;animation:fadeInUp .25s ease';
+    inner.innerHTML =
+        '<div style="font-size:44px;margin-bottom:14px">&#128465;&#65039;</div>' +
+        '<h3 style="color:#fff;font-size:20px;font-weight:700;margin-bottom:8px">Cancel this order?</h3>' +
+        '<p style="color:#b0906a;font-size:14px;line-height:1.6;margin-bottom:24px">' +
+            'This action cannot be undone.<br>' +
+            'If you paid online, your refund will be processed in ' +
+            '<strong style="color:#d4820a">2 business days</strong>.' +
+        '</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center">' +
+            '<button id="cancelNo" style="flex:1;max-width:140px;padding:11px 0;background:transparent;border:1.5px solid #5c4a2a;color:#c8a87a;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Keep Order</button>' +
+            '<button id="cancelYes" style="flex:1;max-width:140px;padding:11px 0;background:#c0392b;border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">Yes, Cancel</button>' +
+        '</div>';
+    overlay.appendChild(inner);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.getElementById('cancelNo').onclick = function() { overlay.remove(); };
+    document.getElementById('cancelYes').onclick = async function() {
+        var btn = document.getElementById('cancelYes');
+        btn.disabled = true;
+        btn.textContent = 'Cancelling…';
+
+        var res  = await fetch('/api/order/cancel', {
+            method:  'POST',
+            headers: {'Content-Type':'application/json'},
+            body:    JSON.stringify({order_id: orderId})
+        });
+        var data = await res.json();
+        overlay.remove();
+
+        if (data.success) {
+            showCancelSuccess(data.paid_online, data.amount, data.message);
+            loadActive();
+        } else {
+            showToast(data.message, 'error');
+        }
+    };
+}
+
+/* ── Rich success card shown after cancellation ──────────────────────────── */
+function showCancelSuccess(paidOnline, amount, message) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:20px';
+
+    var refundBlock = paidOnline
+        ? '<div style="background:#0a150a;border:1px solid #2e6b2e;border-radius:10px;padding:14px 18px;margin:18px 0 6px;text-align:left">' +
+              '<div style="font-size:12px;color:#7ec87e;font-weight:600;margin-bottom:6px">&#x1F4B3; REFUND INFORMATION</div>' +
+              '<div style="font-size:14px;color:#c8e6c8;line-height:1.7">' +
+                  'Amount: <strong style="color:#6fcf97">&#8377;' + (amount||'') + '</strong><br>' +
+                  'Expected: <strong style="color:#6fcf97">within 2 business days</strong><br>' +
+                  'Refund goes back to your original payment method.' +
+              '</div>' +
+          '</div>'
+        : '<p style="color:#b0906a;font-size:14px;margin:14px 0 6px">No payment was charged — COD order.</p>';
+
+    var inner = document.createElement('div');
+    inner.style.cssText = 'background:#0a0a0a;border:1px solid #d4820a44;border-radius:16px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,0.6);text-align:center;font-family:inherit;animation:fadeInUp .25s ease';
+    inner.innerHTML =
+        '<div style="width:64px;height:64px;border-radius:50%;background:#0a150a;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)">&#9989;</div>' +
+        '<h3 style="color:#fff;font-size:20px;font-weight:700;margin-bottom:6px">Order Cancelled</h3>' +
+        '<p style="color:#b0906a;font-size:13px">Your order has been successfully cancelled.</p>' +
+        refundBlock +
+        '<button id="cancelOkBtn" style="margin-top:20px;width:100%;padding:13px;background:linear-gradient(135deg,#d4820a,#b5690a);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">OK, Got it</button>';
+
+    overlay.appendChild(inner);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.getElementById('cancelOkBtn').onclick = function() { overlay.remove(); };
+}
+
+function buildCard(order, isHistory) {
+    var arriving  = isToday(order.estimated_arrival);
+    var delivered = order.order_status === 'delivered' || (isPast(order.estimated_arrival) && !arriving);
+    var cancelled = order.order_status === 'cancelled';
+
+    var dispatched = order.order_status === 'dispatched';
+    var statusHtml = cancelled
+        ? '<span class="ord-status ord-cancelled">&#10060; Cancelled</span>'
+        : (order.order_status === 'delivered' || (isHistory && delivered))
+            ? '<span class="ord-status ord-delivered">&#9989; Delivered</span>'
+            : dispatched
+                ? '<span class="ord-status ord-dispatched">&#128666; Shipped</span>'
+                : arriving
+                    ? '<span class="ord-status ord-arriving">&#128666; Arriving Today!</span>'
+                    : '<span class="ord-status ord-confirmed">&#128230; Order Confirmed</span>';
+
+    var giftBadge = order.is_custom_gift
+        ? '<span class="ord-status" style="background:#4a0080;color:#f5c842;border:1px solid #7b2fc4;font-size:10px;padding:3px 8px;border-radius:12px;margin-left:4px">&#127873; Custom Gift</span>'
+        : '';
+    var designBadge = order.is_custom_design
+        ? '<span class="ord-status" style="background:#1a3a1a;color:#6fcf97;border:1px solid #2e6b2e;font-size:10px;padding:3px 8px;border-radius:12px;margin-left:4px">&#127912; Custom Design</span>'
+        : '';
+
+    var payHtml = order.payment_method === 'online'
+        ? '<span class="ord-pay ord-paid">&#9989; Paid Online</span>'
+        : (order.payment_status === 'Paid'
+            ? '<span class="ord-pay ord-paid">&#9989; Paid Offline</span>'
+            : (isHistory
+                ? '<span class="ord-pay ord-cod">&#128181; Payment Pending</span>'
+                : '<span class="ord-pay ord-cod">&#128181; Pay on Delivery</span>'));
+
+    var itemRows = (order.items||[]).map(function(it) {
+        return '<div class="ord-item">' +
+               '<span class="ord-item-name">' + it.name + '</span>' +
+               '<span class="ord-item-qty">x' + it.quantity + '</span>' +
+               '<span class="ord-item-price">&#8377;' + (it.price * it.quantity) + '</span>' +
+               '</div>';
+    }).join('');
+
+    var deliveryRow = cancelled
+        ? '<div class="orm-row"><span class="orm-l">Status</span><span class="orm-v" style="color:#f08080">Order Cancelled</span></div>'
+        : (isHistory && delivered)
+            ? '<div class="orm-row"><span class="orm-l">Delivered on</span><span class="orm-v" style="color:#6fcf97">' + fmtDate(order.estimated_arrival) + '</span></div>'
+            : arriving
+                ? '<div class="orm-row"><span class="orm-l">Delivery</span><span class="orm-v ord-arriving-txt">&#128666; Arriving Today &mdash; ' + fmtDate(order.estimated_arrival) + '</span></div>'
+                : '<div class="orm-row"><span class="orm-l">Est. Delivery</span><span class="orm-v">' + fmtDate(order.estimated_arrival) + '</span></div>';
+
+    var actionHtml = '';
+    if (!isHistory && !cancelled && !delivered) {
+        actionHtml = arriving
+            ? '<div class="ord-no-cancel">&#128683; You cannot cancel this order &mdash; it is arriving today</div>'
+            : '<button class="ord-cancel-btn" onclick="cancelOrder(\''+order.order_id+'\')">&#10005; Cancel Order</button>';
+    }
+
+    var shortId = order.order_id ? order.order_id.slice(0,8).toUpperCase()+'...' : '—';
+
+    return '<div class="ord-card' + (cancelled?' is-cancelled':'') + (arriving?' is-arriving':'') + '">' +
+        '<div class="ord-card-head">' +
+            '<div class="ord-id-block">' +
+                '<span class="ord-id-lbl">Order ID</span>' +
+                '<span class="ord-id-val">' + shortId + '</span>' +
+            '</div>' +
+            '<div class="ord-badges">' + statusHtml + giftBadge + designBadge + payHtml + '</div>' +
+        '</div>' +
+        '<div class="ord-items-block">' +
+            '<div class="ord-items-hd">Products Ordered</div>' +
+            itemRows +
+        '</div>' +
+        '<div class="ord-meta-block">' +
+            (order.is_custom_gift ? '<div class="orm-row"><span class="orm-l">&#127873; Gift For</span><span class="orm-v" style="color:#f5c842">' + (order.gift_recipient||'—') + ' · ' + (order.gift_occasion||'') + '</span></div>' : '') +
+            (order.gift_message ? '<div class="orm-row"><span class="orm-l">&#128172; Message</span><span class="orm-v" style="font-style:italic;color:#b0906a">"' + order.gift_message + '"</span></div>' : '') +
+            (order.is_custom_design && order.design_bar_name ? '<div class="orm-row"><span class="orm-l">&#10022; Bar Text</span><span class="orm-v" style="color:#f5c842;font-style:italic">' + order.design_bar_name + '</span></div>' : '') +
+            (order.is_custom_design && order.design_wrapper ? '<div class="orm-row"><span class="orm-l">&#127912; Wrapper</span><span class="orm-v">' + order.design_wrapper + (order.design_pattern && order.design_pattern!=='None' ? ' · ' + order.design_pattern : '') + '</span></div>' : '') +
+            '<div class="orm-row"><span class="orm-l">Ordered on</span><span class="orm-v">' + fmtDateTime(order.booked_at) + '</span></div>' +
+            deliveryRow +
+            '<div class="orm-row"><span class="orm-l">Total</span><span class="orm-v ord-total-val">&#8377;' + order.total_amount + '</span></div>' +
+            '<div class="orm-row"><span class="orm-l">Payment</span><span class="orm-v">' + (order.payment_method==='online'?'Online (Razorpay)':'Cash on Delivery') + '</span></div>' +
+            '<div class="orm-row"><span class="orm-l">Address</span><span class="orm-v ord-addr-val">' + (order.delivery_address||'—') + '</span></div>' +
+            (order.delivery_pincode ? '<div class="orm-row"><span class="orm-l">Pincode</span><span class="orm-v">' + order.delivery_pincode + '</span></div>' : '') +
+        '</div>' +
+        (actionHtml ? '<div class="ord-action-block">' + actionHtml + '</div>' : '') +
+    '</div>';
+}
+
+async function loadActive() {
+    var panel = document.getElementById('panelActive');
+    panel.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+    var status = await checkLoginStatus();
+    if (!status.logged_in) {
+        panel.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128274;</div><h2>Please login to view your orders</h2><button class="hero-btn primary" onclick="openAuthModal()">Login</button></div>';
+        return;
+    }
+    var res  = await fetch('/api/orders/active');
+    var data = await res.json();
+    if (!data.success || !data.orders || !data.orders.length) {
+        panel.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128230;</div><h2>No active orders</h2><p>Your confirmed orders will appear here.</p><a href="/products" class="hero-btn primary">Shop Now</a></div>';
+        return;
+    }
+    panel.innerHTML = '<div class="ord-grid">' + data.orders.map(function(o){return buildCard(o,false);}).join('') + '</div>';
+}
+
+async function loadHistory() {
+    var panel = document.getElementById('panelHistory');
+    panel.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+    var status = await checkLoginStatus();
+    if (!status.logged_in) {
+        panel.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128274;</div><h2>Please login to view history</h2><button class="hero-btn primary" onclick="openAuthModal()">Login</button></div>';
+        return;
+    }
+    var res  = await fetch('/api/orders/history');
+    var data = await res.json();
+    if (!data.success || !data.orders || !data.orders.length) {
+        panel.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128203;</div><h2>No order history yet</h2><p>Delivered and cancelled orders appear here.</p></div>';
+        return;
+    }
+    panel.innerHTML = '<div class="ord-grid">' + data.orders.map(function(o){return buildCard(o,true);}).join('') + '</div>';
+}
+
+loadActive();
+</script>
+{% endblock %}

@@ -1,0 +1,743 @@
+{% extends "admin/base.html" %}
+{% block title %}Analytics & Reports — ChocoBite Admin{% endblock %}
+{% block page_title %}Analytics & Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.an-grid-2   { display:grid; grid-template-columns:1fr 1fr;     gap:20px; margin-bottom:20px; }
+.an-grid-3   { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:20px; }
+.an-full     { grid-column:1/-1; }
+@media(max-width:900px){ .an-grid-2,.an-grid-3 { grid-template-columns:1fr; } }
+
+/* ── Section tabs ─────────────────────────────────────────────────────────── */
+.an-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+.an-tab  {
+    background:transparent; border:1px solid rgba(212,130,10,0.2);
+    border-radius:20px; padding:7px 18px; font-size:13px; cursor:pointer;
+    color:var(--muted); transition:all .2s; font-family:'Cinzel',serif;
+    letter-spacing:.5px;
+}
+.an-tab:hover  { border-color:var(--gold); color:var(--gold); }
+.an-tab.active { background:var(--gold); border-color:var(--gold); color:#000; font-weight:700; }
+
+/* ── Section panels ───────────────────────────────────────────────────────── */
+.an-section { display:none; }
+.an-section.active { display:block; }
+
+/* ── KPI cards ────────────────────────────────────────────────────────────── */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:24px; }
+.kpi-card {
+    background:var(--jet2); border:1px solid rgba(212,130,10,0.12);
+    border-radius:12px; padding:18px 16px; position:relative; overflow:hidden;
+    transition:border-color .2s;
+}
+.kpi-card:hover { border-color:rgba(212,130,10,0.3); }
+.kpi-card::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--gold),transparent); opacity:.5;
+}
+.kpi-icon { font-size:20px; margin-bottom:8px; opacity:.7; }
+.kpi-val  { font-family:'Cinzel',serif; font-size:24px; font-weight:700;
+             color:var(--gold2); line-height:1; margin-bottom:4px; }
+.kpi-lbl  { font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+
+/* ── Chart containers ─────────────────────────────────────────────────────── */
+.chart-box {
+    background:var(--jet2); border:1px solid rgba(212,130,10,0.12);
+    border-radius:12px; padding:20px 22px; margin-bottom:20px;
+}
+.chart-box-title {
+    font-family:'Cinzel',serif; font-size:12px; color:var(--muted);
+    letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+}
+.chart-wrap-md  { position:relative; height:240px; }
+.chart-wrap-sm  { position:relative; height:200px; }
+.chart-wrap-lg  { position:relative; height:300px; }
+.chart-wrap-pie { position:relative; height:220px; width:220px; margin:0 auto; }
+
+/* ── Horizontal bar chart (pure CSS) ─────────────────────────────────────── */
+.hbar-list { display:flex; flex-direction:column; gap:10px; }
+.hbar-row  { display:flex; align-items:center; gap:10px; font-size:13px; }
+.hbar-name { width:160px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+.hbar-wrap { flex:1; background:var(--jet4); border-radius:4px; height:18px; overflow:hidden; position:relative; }
+.hbar-fill { height:100%; border-radius:4px; transition:width .8s ease; }
+.hbar-val  { font-size:12px; color:var(--muted); flex-shrink:0; width:80px; text-align:right; }
+
+/* ── Season cards (popular by season) ────────────────────────────────────── */
+.season-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+@media(max-width:1100px){ .season-grid-4 { grid-template-columns:1fr 1fr; } }
+@media(max-width:600px) { .season-grid-4 { grid-template-columns:1fr; } }
+.season-card {
+    background:var(--jet2); border:1px solid rgba(212,130,10,0.12);
+    border-radius:12px; padding:16px;
+}
+.season-card-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.season-emoji     { font-size:26px; }
+.season-title     { font-family:'Cinzel',serif; font-size:13px; color:var(--gold2); }
+.season-prod-row  { display:flex; align-items:center; justify-content:space-between;
+                     padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+                     font-size:13px; }
+.season-prod-row:last-child { border-bottom:none; }
+.season-prod-name { color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px; }
+.season-prod-cnt  { color:var(--gold); font-size:12px; flex-shrink:0; }
+
+/* ── Retention split visual ──────────────────────────────────────────────── */
+.retention-wrap { display:flex; align-items:center; gap:28px; flex-wrap:wrap; }
+.retention-donut { position:relative; height:180px; width:180px; flex-shrink:0; }
+.retention-legend { flex:1; }
+.ret-leg-row { display:flex; align-items:center; gap:10px; font-size:13px; margin-bottom:10px; }
+.ret-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+/* ── Comparison section ───────────────────────────────────────────────────── */
+.cmp-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:20px; }
+.cmp-ctrl label { font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase;
+                   font-family:'Cinzel',serif; display:block; margin-bottom:4px; }
+.cmp-ctrl select {
+    background:var(--jet3); border:1px solid rgba(212,130,10,0.2); border-radius:8px;
+    padding:8px 12px; color:var(--text); font-family:'Crimson Text',serif; font-size:14px;
+    outline:none; cursor:pointer;
+}
+.cmp-ctrl select:focus { border-color:var(--gold); }
+
+.cmp-cards { display:grid; grid-template-columns:1fr auto 1fr; gap:16px; align-items:center; margin-bottom:20px; }
+@media(max-width:700px){ .cmp-cards { grid-template-columns:1fr; } .cmp-vs { display:none; } }
+.cmp-card {
+    background:var(--jet2); border:1px solid rgba(212,130,10,0.2); border-radius:14px; padding:22px;
+}
+.cmp-card-year  { font-family:'Cinzel',serif; font-size:14px; color:var(--muted); letter-spacing:2px; margin-bottom:12px; }
+.cmp-card-rev   { font-family:'Cinzel',serif; font-size:30px; color:var(--gold2); font-weight:700; margin-bottom:4px; }
+.cmp-card-meta  { font-size:12px; color:var(--muted); margin-bottom:14px; }
+.cmp-prod-item  { display:flex; justify-content:space-between; font-size:13px;
+                   padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.cmp-prod-item:last-child { border-bottom:none; }
+.cmp-vs { font-family:'Cinzel',serif; font-size:20px; color:var(--gold); text-align:center; }
+.cmp-delta-pos { color:#6fcf97; font-weight:700; }
+.cmp-delta-neg { color:#e04040; font-weight:700; }
+
+/* ── Export panel ─────────────────────────────────────────────────────────── */
+.export-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+.export-card {
+    background:var(--jet2); border:1px solid rgba(212,130,10,0.12);
+    border-radius:12px; padding:20px; text-align:center; transition:border-color .2s;
+}
+.export-card:hover { border-color:rgba(212,130,10,0.35); }
+.export-icon { font-size:32px; margin-bottom:10px; }
+.export-title { font-family:'Cinzel',serif; font-size:13px; color:var(--text);
+                 letter-spacing:.5px; margin-bottom:6px; }
+.export-desc  { font-size:12px; color:var(--muted); margin-bottom:14px; line-height:1.5; }
+.btn-export {
+    background:linear-gradient(135deg,var(--gold),#b5690a); border:none;
+    color:#000; border-radius:8px; padding:8px 20px; font-size:12px;
+    font-family:'Cinzel',serif; font-weight:700; cursor:pointer; transition:opacity .2s;
+    letter-spacing:.5px;
+}
+.btn-export:hover { opacity:.85; }
+
+/* ── Table inside charts ──────────────────────────────────────────────────── */
+.an-table { width:100%; border-collapse:collapse; font-size:13px; }
+.an-table th { font-size:10px; font-family:'Cinzel',serif; letter-spacing:1.5px;
+               text-transform:uppercase; color:var(--muted); padding:8px 12px;
+               border-bottom:1px solid rgba(212,130,10,0.12); text-align:left; }
+.an-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04);
+               color:var(--text); vertical-align:middle; }
+.an-table tr:last-child td { border-bottom:none; }
+.an-table tr:hover td { background:rgba(212,130,10,0.04); }
+
+.pill-gold   { background:rgba(212,130,10,0.15); color:var(--gold);  font-size:11px;
+               padding:2px 8px; border-radius:10px; font-weight:700; }
+.pill-blue   { background:rgba(100,181,246,0.12); color:#64b5f6;      font-size:11px;
+               padding:2px 8px; border-radius:10px; font-weight:700; }
+.pill-green  { background:rgba(45,122,79,0.15); color:#6fcf97;        font-size:11px;
+               padding:2px 8px; border-radius:10px; font-weight:700; }
+
+/* ── Loading state ───────────────────────────────────────────────────────── */
+.an-loading { display:flex; align-items:center; justify-content:center;
+              height:160px; color:var(--muted); font-family:'Cinzel',serif;
+              font-size:12px; letter-spacing:2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPI summary row -->
+<div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-val" id="kpiRevenue">—</div><div class="kpi-lbl">Total Revenue</div></div>
+    <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-val" id="kpiOrders">—</div><div class="kpi-lbl">Total Orders</div></div>
+    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-val" id="kpiCustomers">—</div><div class="kpi-lbl">Customers</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🔁</div><div class="kpi-val" id="kpiRepeat">—</div><div class="kpi-lbl">Repeat Buyers</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🌐</div><div class="kpi-val" id="kpiOnline">—</div><div class="kpi-lbl">Online Payments</div></div>
+    <div class="kpi-card"><div class="kpi-icon">💵</div><div class="kpi-val" id="kpiCod">—</div><div class="kpi-lbl">COD Orders</div></div>
+</div>
+
+<!-- Tab nav -->
+<div class="an-tabs">
+    <button class="an-tab active" onclick="switchTab('revenue')">📊 Revenue</button>
+    <button class="an-tab" onclick="switchTab('seasonal')">🌿 Seasonal</button>
+    <button class="an-tab" onclick="switchTab('comparison')">⚖️ Comparison</button>
+    <button class="an-tab" onclick="switchTab('retention')">🔁 Retention</button>
+    <button class="an-tab" onclick="switchTab('payment')">💳 Payments</button>
+    <button class="an-tab" onclick="switchTab('export')">📥 Export</button>
+</div>
+
+<!-- ═══════ REVENUE SECTION ═══════ -->
+<div class="an-section active" id="sec-revenue">
+    <div class="an-grid-2">
+        <!-- Revenue by Category -->
+        <div class="chart-box">
+            <div class="chart-box-title">Revenue by Category</div>
+            <div id="catChartWrap" class="chart-wrap-md"><div class="an-loading">Loading…</div></div>
+        </div>
+        <!-- Revenue by Season bar -->
+        <div class="chart-box">
+            <div class="chart-box-title">Revenue by Season</div>
+            <div id="seasonRevChartWrap" class="chart-wrap-md"><div class="an-loading">Loading…</div></div>
+        </div>
+    </div>
+    <!-- Top 10 Products -->
+    <div class="chart-box">
+        <div class="chart-box-title">Top 10 Products by Revenue</div>
+        <div id="topProdWrap"><div class="an-loading">Loading…</div></div>
+    </div>
+</div>
+
+<!-- ═══════ SEASONAL SECTION ═══════ -->
+<div class="an-section" id="sec-seasonal">
+    <div class="chart-box" style="margin-bottom:20px">
+        <div class="chart-box-title">Most Popular Products per Season</div>
+        <div class="season-grid-4" id="popularSeasonsGrid">
+            <div class="an-loading" style="grid-column:1/-1">Loading…</div>
+        </div>
+    </div>
+    <div class="chart-box">
+        <div class="chart-box-title">Seasonal Revenue Breakdown</div>
+        <div class="chart-wrap-lg" id="seasonDetailChartWrap"><div class="an-loading">Loading…</div></div>
+    </div>
+</div>
+
+<!-- ═══════ COMPARISON SECTION ═══════ -->
+<div class="an-section" id="sec-comparison">
+    <div class="cmp-controls">
+        <div class="cmp-ctrl">
+            <label>Season</label>
+            <select id="cmpSeason" onchange="loadComparison()">
+                <option>Summer</option><option>Monsoon</option>
+                <option>Autumn</option><option>Winter</option>
+            </select>
+        </div>
+        <div class="cmp-ctrl">
+            <label>Year 1</label>
+            <select id="cmpYear1" onchange="loadComparison()"></select>
+        </div>
+        <div class="cmp-ctrl">
+            <label>Year 2</label>
+            <select id="cmpYear2" onchange="loadComparison()"></select>
+        </div>
+    </div>
+    <div class="cmp-cards" id="cmpCards">
+        <div class="an-loading" style="grid-column:1/-1">Loading…</div>
+    </div>
+    <div class="chart-box">
+        <div class="chart-box-title" id="cmpChartTitle">Season Comparison — Revenue</div>
+        <div class="chart-wrap-sm" id="cmpChartWrap"><div class="an-loading">Loading…</div></div>
+    </div>
+</div>
+
+<!-- ═══════ RETENTION SECTION ═══════ -->
+<div class="an-section" id="sec-retention">
+    <div class="an-grid-2">
+        <div class="chart-box">
+            <div class="chart-box-title">Buyer Breakdown</div>
+            <div class="retention-wrap" id="retentionWrap"><div class="an-loading">Loading…</div></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-box-title">Monthly New Customers</div>
+            <div class="chart-wrap-md" id="monthlyCustomersWrap"><div class="an-loading">Loading…</div></div>
+        </div>
+    </div>
+    <div class="chart-box">
+        <div class="chart-box-title">Top Repeat Customers</div>
+        <div id="topRepeatsWrap"><div class="an-loading">Loading…</div></div>
+    </div>
+</div>
+
+<!-- ═══════ PAYMENT SECTION ═══════ -->
+<div class="an-section" id="sec-payment">
+    <div class="an-grid-2">
+        <div class="chart-box">
+            <div class="chart-box-title">Payment Method Split (Revenue)</div>
+            <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+                <div class="chart-wrap-pie"><canvas id="payPieChart"></canvas></div>
+                <div id="payLegend" style="flex:1;min-width:140px"></div>
+            </div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-box-title">Monthly Revenue — Online vs COD</div>
+            <div class="chart-wrap-md" id="payMonthlyWrap"><div class="an-loading">Loading…</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ EXPORT SECTION ═══════ -->
+<div class="an-section" id="sec-export">
+    <div class="chart-box">
+        <div class="chart-box-title">Export Data</div>
+        <div class="export-grid">
+            <div class="export-card">
+                <div class="export-icon">📦</div>
+                <div class="export-title">Orders Report</div>
+                <div class="export-desc">All orders with customer, amount, status, payment method and date.</div>
+                <button class="btn-export" onclick="exportCSV('orders')">⬇ Download CSV</button>
+            </div>
+            <div class="export-card">
+                <div class="export-icon">🍫</div>
+                <div class="export-title">Products Report</div>
+                <div class="export-desc">Product catalogue with category, price, stock and visibility.</div>
+                <button class="btn-export" onclick="exportCSV('products')">⬇ Download CSV</button>
+            </div>
+            <div class="export-card">
+                <div class="export-icon">👥</div>
+                <div class="export-title">Customers Report</div>
+                <div class="export-desc">All customer accounts with contact details and order count.</div>
+                <button class="btn-export" onclick="exportCSV('customers')">⬇ Download CSV</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+/* ── Global Chart defaults ─────────────────────────────────────────────────── */
+Chart.defaults.color       = '#7a6040';
+Chart.defaults.borderColor = 'rgba(212,130,10,0.1)';
+Chart.defaults.font.family = "'Crimson Text', Georgia, serif";
+
+var GOLD  = '#d4820a', GOLD2 = '#f5c842', CREAM = '#f5e6c8';
+var BLUE  = '#64b5f6', GREEN = '#6fcf97', RED   = '#e04040';
+var SEASON_COLORS = { Summer:'#f5c842', Monsoon:'#64b5f6', Autumn:'#e07840', Winter:'#a0c4e0' };
+var PALLETE = ['#d4820a','#f5c842','#64b5f6','#6fcf97','#ce93d8','#e07840','#80cbc4','#e04040','#a0c4e0','#ffcc80'];
+
+/* ── Tab switching ─────────────────────────────────────────────────────────── */
+var tabLoaded = {};
+function switchTab(name) {
+    document.querySelectorAll('.an-tab').forEach(function(t,i){
+        t.classList.toggle('active', ['revenue','seasonal','comparison','retention','payment','export'][i] === name);
+    });
+    document.querySelectorAll('.an-section').forEach(function(s){
+        s.classList.toggle('active', s.id === 'sec-' + name);
+    });
+    if (!tabLoaded[name]) {
+        tabLoaded[name] = true;
+        var loaders = { revenue:'loadRevenue', seasonal:'loadSeasonal',
+                        comparison:'initComparison', retention:'loadRetention',
+                        payment:'loadPayment' };
+        if (loaders[name]) window[loaders[name]]();
+    }
+}
+
+/* ── Formatters ────────────────────────────────────────────────────────────── */
+function fmtINR(v) { return '₹' + Number(v).toLocaleString('en-IN'); }
+function pct(a,b)  { return b ? Math.round(a*100/b)+'%' : '0%'; }
+
+/* ── KPI summary ───────────────────────────────────────────────────────────── */
+fetch('/admin/api/analytics/summary').then(function(r){return r.json();}).then(function(d){
+    document.getElementById('kpiRevenue').textContent   = fmtINR(d.total_revenue);
+    document.getElementById('kpiOrders').textContent    = d.total_orders;
+    document.getElementById('kpiCustomers').textContent = d.total_customers;
+    document.getElementById('kpiRepeat').textContent    = d.repeat_buyers;
+    document.getElementById('kpiOnline').textContent    = d.online_count;
+    document.getElementById('kpiCod').textContent       = d.cod_count;
+});
+
+/* ══════════════════════════════════════════════════════════════
+   REVENUE TAB
+══════════════════════════════════════════════════════════════ */
+tabLoaded['revenue'] = true;
+
+function loadRevenue() {
+    // Category chart
+    fetch('/admin/api/analytics/revenue-by-category').then(function(r){return r.json();}).then(function(d){
+        var wrap = document.getElementById('catChartWrap');
+        wrap.innerHTML = '<canvas id="catChart"></canvas>';
+        wrap.style.height = '240px';
+        new Chart(document.getElementById('catChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: d.data.map(function(x){return x.category;}),
+                datasets:[{
+                    data: d.data.map(function(x){return x.revenue;}),
+                    backgroundColor: PALLETE.slice(0, d.data.length),
+                    borderWidth: 1, borderColor: '#0a0a0a',
+                }]
+            },
+            options: {
+                responsive:true, maintainAspectRatio:false,
+                plugins:{
+                    legend:{ position:'right', labels:{ font:{size:12}, padding:12,
+                        color:'#e8d5b0', boxWidth:14 }},
+                    tooltip:{ callbacks:{ label:function(c){
+                        return ' ' + c.label + ': ' + fmtINR(c.raw);
+                    }}}
+                }
+            }
+        });
+    });
+
+    // Season revenue bar
+    fetch('/admin/api/analytics/revenue-by-season').then(function(r){return r.json();}).then(function(d){
+        var wrap = document.getElementById('seasonRevChartWrap');
+        wrap.innerHTML = '<canvas id="seasonRevChart"></canvas>';
+        new Chart(document.getElementById('seasonRevChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: d.data.map(function(x){return x.season;}),
+                datasets:[{
+                    label:'Revenue (₹)', data: d.data.map(function(x){return x.revenue;}),
+                    backgroundColor: d.data.map(function(x){
+                        var s = x.season.split(' ')[0];
+                        return SEASON_COLORS[s] || GOLD;
+                    }),
+                    borderRadius:6, borderSkipped:false,
+                }]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+                    label:function(c){ return ' ' + fmtINR(c.raw); }
+                }}},
+                scales:{
+                    x:{ ticks:{color:'#7a6040',font:{size:11}}, grid:{display:false} },
+                    y:{ ticks:{color:'#7a6040',font:{size:11},
+                        callback:function(v){ return '₹'+(v>=1000?Math.round(v/1000)+'k':v); }},
+                        grid:{color:'rgba(212,130,10,0.07)'} }
+                }
+            }
+        });
+    });
+
+    // Top 10 products horizontal bar (CSS)
+    fetch('/admin/api/analytics/revenue-by-product').then(function(r){return r.json();}).then(function(d){
+        var wrap = document.getElementById('topProdWrap');
+        if (!d.data.length){ wrap.innerHTML='<div class="an-loading">No data yet</div>'; return; }
+        var max = d.data[0].revenue;
+        var html = '<div class="hbar-list">';
+        d.data.forEach(function(p,i){
+            var w = max ? Math.round(p.revenue*100/max) : 0;
+            var col = PALLETE[i % PALLETE.length];
+            html += '<div class="hbar-row">' +
+                '<span class="hbar-name" title="'+p.name+'">'+p.name+'</span>' +
+                '<div class="hbar-wrap"><div class="hbar-fill" style="width:'+w+'%;background:'+col+'"></div></div>' +
+                '<span class="hbar-val">'+fmtINR(p.revenue)+'</span>' +
+            '</div>';
+        });
+        html += '</div>';
+        wrap.innerHTML = html;
+    });
+}
+loadRevenue();
+
+/* ══════════════════════════════════════════════════════════════
+   SEASONAL TAB
+══════════════════════════════════════════════════════════════ */
+function loadSeasonal() {
+    // Popular by season cards
+    fetch('/admin/api/analytics/popular-by-season').then(function(r){return r.json();}).then(function(d){
+        var grid = document.getElementById('popularSeasonsGrid');
+        var icons = {Summer:'☀️', Monsoon:'🌧️', Autumn:'🍂', Winter:'❄️'};
+        var html = '';
+        ['Summer','Monsoon','Autumn','Winter'].forEach(function(s){
+            var prods = d.data[s] || [];
+            html += '<div class="season-card">' +
+                '<div class="season-card-head"><span class="season-emoji">'+(icons[s]||'🌿')+'</span>' +
+                '<span class="season-title">'+s+'</span></div>';
+            if (!prods.length) {
+                html += '<div style="font-size:12px;color:var(--muted)">No orders yet</div>';
+            } else {
+                prods.forEach(function(p){
+                    html += '<div class="season-prod-row">' +
+                        '<span class="season-prod-name" title="'+p.name+'">'+p.name+'</span>' +
+                        '<span class="season-prod-cnt">'+p.units+' units</span></div>';
+                });
+            }
+            html += '</div>';
+        });
+        grid.innerHTML = html;
+    });
+
+    // Season detail grouped bar
+    fetch('/admin/api/analytics/revenue-by-season').then(function(r){return r.json();}).then(function(d){
+        var wrap = document.getElementById('seasonDetailChartWrap');
+        wrap.innerHTML = '<canvas id="seasonDetailChart"></canvas>';
+        new Chart(document.getElementById('seasonDetailChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: d.data.map(function(x){return x.season;}),
+                datasets:[
+                    {
+                        label:'Revenue (₹)', data: d.data.map(function(x){return x.revenue;}),
+                        backgroundColor: GOLD, borderRadius:5, borderSkipped:false, yAxisID:'y',
+                    },
+                    {
+                        label:'Orders', data: d.data.map(function(x){return x.orders;}),
+                        backgroundColor: BLUE, borderRadius:5, borderSkipped:false, yAxisID:'y2',
+                    }
+                ]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{ labels:{color:'#e8d5b0', font:{size:12}, padding:16} },
+                    tooltip:{ callbacks:{ label:function(c){
+                        return c.dataset.label === 'Revenue (₹)' ?
+                            ' '+fmtINR(c.raw) : ' '+c.raw+' orders';
+                    }}}},
+                scales:{
+                    x:{ ticks:{color:'#7a6040'}, grid:{display:false} },
+                    y:{ position:'left', ticks:{color:'#7a6040',
+                        callback:function(v){return '₹'+(v>=1000?Math.round(v/1000)+'k':v);}},
+                        grid:{color:'rgba(212,130,10,0.07)'} },
+                    y2:{ position:'right', ticks:{color:BLUE},
+                         grid:{display:false} }
+                }
+            }
+        });
+    });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPARISON TAB
+══════════════════════════════════════════════════════════════ */
+var cmpChart = null;
+function initComparison() {
+    var yr = new Date().getFullYear();
+    var s1 = document.getElementById('cmpYear1');
+    var s2 = document.getElementById('cmpYear2');
+    for (var y = yr; y >= yr-4; y--) {
+        s1.innerHTML += '<option value="'+y+'">'+(y === yr-1 ? y+' ✓' : y)+'</option>';
+        s2.innerHTML += '<option value="'+y+'">'+(y === yr   ? y+' ✓' : y)+'</option>';
+    }
+    s1.value = yr - 1;
+    s2.value = yr;
+    loadComparison();
+}
+
+function loadComparison() {
+    var season = document.getElementById('cmpSeason').value;
+    var y1     = document.getElementById('cmpYear1').value;
+    var y2     = document.getElementById('cmpYear2').value;
+    var url    = '/admin/api/analytics/seasonal-comparison?season='+season+'&year1='+y1+'&year2='+y2;
+    document.getElementById('cmpCards').innerHTML = '<div class="an-loading" style="grid-column:1/-1">Loading…</div>';
+    fetch(url).then(function(r){return r.json();}).then(function(d){
+        // Cards
+        var delta  = d.data2.revenue - d.data1.revenue;
+        var deltaH = delta >= 0
+            ? '<span class="cmp-delta-pos">▲ '+fmtINR(Math.abs(delta))+'</span>'
+            : '<span class="cmp-delta-neg">▼ '+fmtINR(Math.abs(delta))+'</span>';
+
+        function makeCard(year, data) {
+            var tops = data.top_products.map(function(p){
+                return '<div class="cmp-prod-item"><span>'+p.name+'</span><span class="pill-gold">'+p.units+' units</span></div>';
+            }).join('');
+            return '<div class="cmp-card">' +
+                '<div class="cmp-card-year">'+season.toUpperCase()+' '+year+'</div>' +
+                '<div class="cmp-card-rev">'+fmtINR(data.revenue)+'</div>' +
+                '<div class="cmp-card-meta">'+data.orders+' orders &nbsp;·&nbsp; '+data.units+' units sold</div>' +
+                (tops ? '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-family:Cinzel,serif;letter-spacing:1px">TOP PRODUCTS</div>'+tops : '') +
+            '</div>';
+        }
+
+        document.getElementById('cmpCards').innerHTML =
+            makeCard(d.year1, d.data1) +
+            '<div class="cmp-vs">⚖️<br><br>'+deltaH+'</div>' +
+            makeCard(d.year2, d.data2);
+
+        // Chart
+        document.getElementById('cmpChartTitle').textContent =
+            season + ' ' + d.year1 + ' vs ' + season + ' ' + d.year2 + ' — Revenue & Orders';
+        var wrap = document.getElementById('cmpChartWrap');
+        wrap.innerHTML = '<canvas id="cmpBarChart"></canvas>';
+        if (cmpChart) cmpChart.destroy();
+        cmpChart = new Chart(document.getElementById('cmpBarChart').getContext('2d'), {
+            type:'bar',
+            data:{
+                labels:[season+' '+d.year1, season+' '+d.year2],
+                datasets:[
+                    { label:'Revenue (₹)', data:[d.data1.revenue, d.data2.revenue],
+                      backgroundColor:[GOLD, GOLD2], borderRadius:6, yAxisID:'y' },
+                    { label:'Orders', data:[d.data1.orders, d.data2.orders],
+                      backgroundColor:[BLUE+'99', BLUE], borderRadius:6, yAxisID:'y2' }
+                ]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{labels:{color:'#e8d5b0',font:{size:12},padding:14}},
+                    tooltip:{ callbacks:{ label:function(c){
+                        return c.dataset.label === 'Revenue (₹)' ? ' '+fmtINR(c.raw) : ' '+c.raw+' orders';
+                    }}}},
+                scales:{
+                    x:{ ticks:{color:'#e8d5b0', font:{size:13}}, grid:{display:false} },
+                    y:{ position:'left', ticks:{color:'#7a6040',
+                        callback:function(v){return '₹'+(v>=1000?Math.round(v/1000)+'k':v);}},
+                        grid:{color:'rgba(212,130,10,0.07)'} },
+                    y2:{ position:'right', ticks:{color:BLUE}, grid:{display:false} }
+                }
+            }
+        });
+    });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RETENTION TAB
+══════════════════════════════════════════════════════════════ */
+var retDonutChart = null, monthlyChart = null;
+function loadRetention() {
+    fetch('/admin/api/analytics/customer-retention').then(function(r){return r.json();}).then(function(d){
+        var total = d.one_time_count + d.repeat_count;
+
+        // Donut + legend
+        var retWrap = document.getElementById('retentionWrap');
+        retWrap.innerHTML =
+            '<div class="retention-donut"><canvas id="retDonut"></canvas></div>' +
+            '<div class="retention-legend" id="retLegend"></div>';
+
+        if (retDonutChart) retDonutChart.destroy();
+        retDonutChart = new Chart(document.getElementById('retDonut').getContext('2d'), {
+            type:'doughnut',
+            data:{
+                labels:['Repeat Buyers','One-time Buyers'],
+                datasets:[{
+                    data:[d.repeat_count, d.one_time_count],
+                    backgroundColor:[GOLD, '#333'],
+                    borderWidth:1, borderColor:'#0a0a0a',
+                }]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false, cutout:'68%',
+                plugins:{ legend:{display:false},
+                    tooltip:{ callbacks:{ label:function(c){
+                        return ' '+c.label+': '+c.raw+' ('+pct(c.raw,total)+')';
+                    }}}}
+            }
+        });
+
+        document.getElementById('retLegend').innerHTML =
+            '<div class="ret-leg-row"><div class="ret-dot" style="background:'+GOLD+'"></div>' +
+            '<span>Repeat Buyers &nbsp;</span><strong style="color:var(--gold2)">'+d.repeat_count+' ('+pct(d.repeat_count,total)+')</strong></div>' +
+            '<div class="ret-leg-row" style="margin-top:4px"><div class="ret-dot" style="background:#333;border:1px solid #555"></div>' +
+            '<span>One-time Buyers &nbsp;</span><strong style="color:var(--text)">'+d.one_time_count+' ('+pct(d.one_time_count,total)+')</strong></div>';
+
+        // Monthly new customers line
+        var wrap = document.getElementById('monthlyCustomersWrap');
+        wrap.innerHTML = '<canvas id="monthlyChart"></canvas>';
+        if (monthlyChart) monthlyChart.destroy();
+        monthlyChart = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+            type:'line',
+            data:{
+                labels: d.monthly.map(function(m){return m.month;}),
+                datasets:[{
+                    label:'New Customers', data: d.monthly.map(function(m){return m.new_customers;}),
+                    borderColor:GOLD, backgroundColor:'rgba(212,130,10,0.08)',
+                    borderWidth:2, fill:true, tension:0.35,
+                    pointBackgroundColor:GOLD, pointRadius:4,
+                }]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{display:false} },
+                scales:{
+                    x:{ ticks:{color:'#7a6040', font:{size:11}}, grid:{display:false} },
+                    y:{ ticks:{color:'#7a6040'}, grid:{color:'rgba(212,130,10,0.07)'} }
+                }
+            }
+        });
+
+        // Top repeats table
+        var rows = d.top_repeats.map(function(r,i){
+            return '<tr><td>'+(i+1)+'</td><td>'+r.name+'</td>' +
+                '<td><span class="pill-gold">'+r.orders+' orders</span></td></tr>';
+        }).join('');
+        document.getElementById('topRepeatsWrap').innerHTML =
+            '<table class="an-table"><thead><tr><th>#</th><th>Customer</th><th>Orders</th></tr></thead><tbody>'+rows+'</tbody></table>';
+    });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAYMENT TAB
+══════════════════════════════════════════════════════════════ */
+var payPieChart = null, payMonthlyChart = null;
+function loadPayment() {
+    fetch('/admin/api/analytics/payment-split').then(function(r){return r.json();}).then(function(d){
+        var total = d.cod_total + d.online_total;
+
+        // Pie
+        if (payPieChart) payPieChart.destroy();
+        payPieChart = new Chart(document.getElementById('payPieChart').getContext('2d'), {
+            type:'pie',
+            data:{
+                labels:['Online','COD'],
+                datasets:[{
+                    data:[d.online_total, d.cod_total],
+                    backgroundColor:[BLUE, GOLD],
+                    borderWidth:1, borderColor:'#0a0a0a',
+                }]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{display:false},
+                    tooltip:{ callbacks:{ label:function(c){
+                        return ' '+c.label+': '+fmtINR(c.raw)+' ('+pct(c.raw,total)+')';
+                    }}}}
+            }
+        });
+
+        document.getElementById('payLegend').innerHTML =
+            '<div class="ret-leg-row"><div class="ret-dot" style="background:'+BLUE+'"></div>' +
+            '<span>Online &nbsp;</span><strong style="color:'+BLUE+'">'+fmtINR(d.online_total)+'</strong></div>' +
+            '<div class="ret-leg-row" style="margin-top:8px"><div class="ret-dot" style="background:'+GOLD+'"></div>' +
+            '<span>COD &nbsp;</span><strong style="color:var(--gold2)">'+fmtINR(d.cod_total)+'</strong></div>';
+
+        // Monthly stacked bar
+        var wrap = document.getElementById('payMonthlyWrap');
+        wrap.innerHTML = '<canvas id="payMonthlyChart"></canvas>';
+        if (payMonthlyChart) payMonthlyChart.destroy();
+        payMonthlyChart = new Chart(document.getElementById('payMonthlyChart').getContext('2d'), {
+            type:'bar',
+            data:{
+                labels: d.monthly.map(function(m){return m.month;}),
+                datasets:[
+                    { label:'Online', data:d.monthly.map(function(m){return m.online;}),
+                      backgroundColor:BLUE, borderRadius:4, borderSkipped:false, stack:'s' },
+                    { label:'COD',    data:d.monthly.map(function(m){return m.cod;}),
+                      backgroundColor:GOLD, borderRadius:4, borderSkipped:false, stack:'s' }
+                ]
+            },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{ labels:{color:'#e8d5b0',font:{size:12},padding:14} },
+                    tooltip:{ callbacks:{ label:function(c){ return ' '+c.dataset.label+': '+fmtINR(c.raw); }}}},
+                scales:{
+                    x:{ ticks:{color:'#7a6040',font:{size:11}}, grid:{display:false}, stacked:true },
+                    y:{ ticks:{color:'#7a6040',
+                        callback:function(v){return '₹'+(v>=1000?Math.round(v/1000)+'k':v);}},
+                        grid:{color:'rgba(212,130,10,0.07)'}, stacked:true }
+                }
+            }
+        });
+    });
+}
+
+/* ── Export CSV ────────────────────────────────────────────────────────────── */
+function exportCSV(report) {
+    var a = document.createElement('a');
+    a.href = '/admin/api/analytics/export-csv?report=' + report;
+    a.download = 'chocobite_' + report + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    adminToast('Downloading ' + report + ' report…', 'success');
+}
+</script>
+{% endblock %}

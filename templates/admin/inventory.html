@@ -1,0 +1,203 @@
+{% extends "admin/base.html" %}
+{% block title %}Inventory — ChocoBite Admin{% endblock %}
+{% block page_title %}Inventory & Stock{% endblock %}
+
+{% block extra_css %}
+<style>
+.inv-summary { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:22px; }
+.inv-tile { background:var(--jet2); border:1px solid rgba(212,130,10,0.12); border-radius:10px; padding:16px 18px; }
+.inv-tile-lbl { font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; font-family:'Cinzel',serif; margin-bottom:6px; }
+.inv-tile-val { font-size:22px; font-weight:700; font-family:'Cinzel',serif; color:var(--gold2); }
+.inv-tile-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+.stock-bar-wrap { flex:1; background:var(--jet4); border-radius:3px; height:6px; overflow:hidden; min-width:60px; }
+.stock-bar { height:100%; border-radius:3px; transition:width .5s ease; }
+.bar-ok     { background:linear-gradient(90deg,#2d7a4f,#6fcf97); }
+.bar-warn   { background:linear-gradient(90deg,#b5690a,#d4820a); }
+.bar-alert  { background:linear-gradient(90deg,#8b1a1a,#e04040); }
+
+.inv-qty-input { background:var(--jet3); border:1px solid rgba(212,130,10,0.2);
+    border-radius:6px; padding:5px 8px; color:var(--text); font-size:13px;
+    width:70px; text-align:center; outline:none; }
+.inv-qty-input:focus { border-color:var(--gold); }
+.inv-update-btn { background:rgba(45,122,79,0.15); border:1px solid rgba(45,122,79,0.3);
+    color:#6fcf97; border-radius:6px; padding:5px 12px; font-size:12px;
+    font-family:'Cinzel',serif; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.inv-update-btn:hover { background:rgba(45,122,79,0.3); }
+.badge-alert { background:rgba(139,26,26,0.2); color:#e04040; border:1px solid rgba(224,64,64,0.3);
+    font-size:10px; padding:2px 7px; border-radius:10px; font-weight:700; animation:stockPulse 1.5s infinite; }
+.badge-warn  { background:rgba(212,130,10,0.1); color:#d4820a; border:1px solid rgba(212,130,10,0.3);
+    font-size:10px; padding:2px 7px; border-radius:10px; font-weight:700; }
+.badge-ok    { background:rgba(45,122,79,0.1); color:#6fcf97; border:1px solid rgba(45,122,79,0.2);
+    font-size:10px; padding:2px 7px; border-radius:10px; }
+@keyframes stockPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Summary tiles -->
+<div class="inv-summary" id="invSummary">
+    <div class="inv-tile"><div class="inv-tile-lbl">Total Products</div><div class="inv-tile-val" id="tTotal">—</div></div>
+    <div class="inv-tile"><div class="inv-tile-lbl">Total Stock Units</div><div class="inv-tile-val" id="tUnits">—</div></div>
+    <div class="inv-tile" style="border-color:rgba(212,130,10,0.3)"><div class="inv-tile-lbl">Low Stock (&lt;20)</div><div class="inv-tile-val" style="color:#d4820a" id="tWarn">—</div></div>
+    <div class="inv-tile" style="border-color:rgba(224,64,64,0.3)"><div class="inv-tile-lbl">Critical (&lt;7)</div><div class="inv-tile-val" style="color:#e04040" id="tAlert">—</div></div>
+    <div class="inv-tile" style="border-color:rgba(139,26,26,0.3)"><div class="inv-tile-lbl">Out of Stock</div><div class="inv-tile-val" style="color:#e04040" id="tOut">—</div></div>
+</div>
+
+<!-- Filter bar -->
+<div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+    <select id="invCatFilter" onchange="loadInventory()"
+        style="background:var(--jet3);border:1px solid rgba(212,130,10,0.2);border-radius:8px;
+               padding:8px 12px;color:var(--text);font-family:'Crimson Text',serif;font-size:14px;outline:none">
+        <option value="">All Categories</option>
+        <option value="1">Cocoa Beans & Chips</option>
+        <option value="2">Choco Powder</option>
+        <option value="3">Flavoured Chocolates</option>
+    </select>
+    <select id="invStockFilter" onchange="loadInventory()"
+        style="background:var(--jet3);border:1px solid rgba(212,130,10,0.2);border-radius:8px;
+               padding:8px 12px;color:var(--text);font-family:'Crimson Text',serif;font-size:14px;outline:none">
+        <option value="">All Stock Levels</option>
+        <option value="out">Out of Stock (0)</option>
+        <option value="alert">Critical (&lt;7)</option>
+        <option value="warn">Low (&lt;20)</option>
+        <option value="ok">OK (≥20)</option>
+    </select>
+    <button class="btn-ghost" onclick="loadInventory()">↺ Refresh</button>
+    <a href="/admin/products" class="btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center">
+        + Add Product →
+    </a>
+</div>
+
+<div class="admin-card" style="padding:0">
+    <div style="overflow-x:auto">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Current Stock</th>
+                    <th>Status</th>
+                    <th style="min-width:200px">Stock Level</th>
+                    <th>Add Stock</th>
+                    <th>Set Exact</th>
+                </tr>
+            </thead>
+            <tbody id="invBody">
+                <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var invProducts = [];
+var MAX_STOCK   = 200;  // for bar display scaling
+const CAT_NAMES = {1:'Cocoa Beans & Chips', 2:'Choco Powder', 3:'Flavoured Chocolates'};
+
+async function loadInventory() {
+    var cat       = document.getElementById('invCatFilter').value;
+    var stockFilt = document.getElementById('invStockFilter').value;
+    var params    = new URLSearchParams();
+    if (cat) params.set('category', cat);
+
+    var res  = await fetch('/admin/api/products?' + params);
+    var data = await res.json();
+    var prods = data.products || [];
+
+    // Apply stock filter
+    if (stockFilt === 'out')   prods = prods.filter(function(p){ return (p.stock_quantity||0) === 0; });
+    if (stockFilt === 'alert') prods = prods.filter(function(p){ return (p.stock_quantity||0) < 7; });
+    if (stockFilt === 'warn')  prods = prods.filter(function(p){ return (p.stock_quantity||0) < 20; });
+    if (stockFilt === 'ok')    prods = prods.filter(function(p){ return (p.stock_quantity||0) >= 20; });
+
+    invProducts = prods;
+    renderSummary(data.products || []);  // summary always uses all
+    renderInventory(prods);
+}
+
+function renderSummary(all) {
+    var total = all.length;
+    var units = all.reduce(function(s,p){ return s + (p.stock_quantity||0); }, 0);
+    var warn  = all.filter(function(p){ return (p.stock_quantity||0) < 20 && (p.stock_quantity||0) > 0; }).length;
+    var alert = all.filter(function(p){ return (p.stock_quantity||0) > 0 && (p.stock_quantity||0) < 7; }).length;
+    var out   = all.filter(function(p){ return (p.stock_quantity||0) === 0; }).length;
+    document.getElementById('tTotal').textContent = total;
+    document.getElementById('tUnits').textContent = units.toLocaleString('en-IN');
+    document.getElementById('tWarn').textContent  = warn;
+    document.getElementById('tAlert').textContent = alert;
+    document.getElementById('tOut').textContent   = out;
+}
+
+function renderInventory(prods) {
+    if (!prods.length) {
+        document.getElementById('invBody').innerHTML =
+            '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">No products match this filter.</td></tr>';
+        return;
+    }
+
+    document.getElementById('invBody').innerHTML = prods.map(function(p) {
+        var qty  = p.stock_quantity || 0;
+        var pct  = Math.min(100, Math.round((qty / MAX_STOCK) * 100));
+        var barCls = qty === 0 ? 'bar-alert' : qty < 7 ? 'bar-alert' : qty < 20 ? 'bar-warn' : 'bar-ok';
+        var badge  = qty === 0
+            ? '<span class="badge-alert">OUT</span>'
+            : qty < 7
+                ? '<span class="badge-alert">CRITICAL</span>'
+                : qty < 20
+                    ? '<span class="badge-warn">LOW</span>'
+                    : '<span class="badge-ok">OK</span>';
+
+        return '<tr>' +
+            '<td>' +
+                '<div style="font-size:13px;font-weight:600;color:var(--text)">' + p.name + '</div>' +
+                '<div style="font-size:11px;color:var(--muted)">' + (p.weight||'') + (p.pack_type?' · '+p.pack_type:'') + '</div>' +
+            '</td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (CAT_NAMES[p.category_id]||'—') + '</td>' +
+            '<td style="font-size:16px;font-weight:700;font-family:\'Cinzel\',serif;color:' +
+                (qty===0?'#e04040':qty<7?'#e04040':qty<20?'#d4820a':'#6fcf97') + '">' + qty + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' +
+                '<div style="display:flex;align-items:center;gap:8px">' +
+                    '<div class="stock-bar-wrap"><div class="stock-bar ' + barCls + '" style="width:' + pct + '%"></div></div>' +
+                    '<span style="font-size:10px;color:var(--muted);width:32px">' + pct + '%</span>' +
+                '</div>' +
+            '</td>' +
+            '<td>' +
+                '<div style="display:flex;gap:6px;align-items:center">' +
+                    '<input type="number" class="inv-qty-input" id="add_' + p.product_id + '" value="10" min="1">' +
+                    '<button class="inv-update-btn" onclick="quickStock(\'' + p.product_id + '\',\'add\')">+ Add</button>' +
+                '</div>' +
+            '</td>' +
+            '<td>' +
+                '<div style="display:flex;gap:6px;align-items:center">' +
+                    '<input type="number" class="inv-qty-input" id="set_' + p.product_id + '" value="' + qty + '" min="0">' +
+                    '<button class="inv-update-btn" style="background:rgba(30,90,140,0.15);border-color:rgba(100,181,246,0.3);color:#64b5f6" ' +
+                        'onclick="quickStock(\'' + p.product_id + '\',\'set\')">Set</button>' +
+                '</div>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+async function quickStock(id, action) {
+    var inputId = (action === 'add' ? 'add_' : 'set_') + id;
+    var qty     = parseInt(document.getElementById(inputId).value || 0);
+    if (isNaN(qty) || qty < 0) { adminToast('Invalid quantity', 'error'); return; }
+
+    var res  = await fetch('/admin/api/product/stock-update', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({product_id:id, action:action, quantity:qty})
+    });
+    var data = await res.json();
+    adminToast(data.message, data.success ? 'success' : 'error');
+    if (data.success) loadInventory();
+}
+
+loadInventory();
+</script>
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard — ChocoBite Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+.chart-wrap { position: relative; height: 180px; }
+.donut-wrap { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; }
+.donut-leg-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+.donut-leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.top-prod-row { display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04); }
+.top-prod-row:last-child { border-bottom: none; }
+.top-prod-bar-wrap { flex: 1; background: var(--jet3); border-radius: 3px; height: 6px; overflow: hidden; }
+.top-prod-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2));
+    border-radius: 3px; transition: width 0.8s ease; }
+.top-prod-name { width: 140px; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-prod-count { width: 36px; text-align: right; font-size: 12px; color: var(--muted); }
+.low-stock-item { display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+.low-stock-item:last-child { border-bottom: none; }
+.low-stock-qty { color: #e04040; font-weight: 700; }
+.order-type-badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="dashboardContent">
+    <!-- Stat tiles skeleton while loading -->
+    <div class="stat-grid" id="statGrid">
+        <div class="stat-tile"><div class="skeleton" style="width:60%;margin-bottom:12px"></div><div class="skeleton" style="width:40%;height:28px"></div></div>
+        <div class="stat-tile"><div class="skeleton" style="width:60%;margin-bottom:12px"></div><div class="skeleton" style="width:40%;height:28px"></div></div>
+        <div class="stat-tile"><div class="skeleton" style="width:60%;margin-bottom:12px"></div><div class="skeleton" style="width:40%;height:28px"></div></div>
+        <div class="stat-tile"><div class="skeleton" style="width:60%;margin-bottom:12px"></div><div class="skeleton" style="width:40%;height:28px"></div></div>
+        <div class="stat-tile"><div class="skeleton" style="width:60%;margin-bottom:12px"></div><div class="skeleton" style="width:40%;height:28px"></div></div>
+        <div class="stat-tile"><div class="skeleton" style="width:60%;margin-bottom:12px"></div><div class="skeleton" style="width:40%;height:28px"></div></div>
+        <div class="stat-tile"><div class="skeleton" style="width:60%;margin-bottom:12px"></div><div class="skeleton" style="width:40%;height:28px"></div></div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid-3">
+        <!-- Revenue chart -->
+        <div class="admin-card">
+            <div class="admin-card-title">
+                Revenue — Last 7 Days (paid orders only)
+                <div style="display:flex;gap:10px;align-items:center">
+                    <span style="color:var(--gold);font-size:11px" id="totalRevLabel"></span>
+                    <button onclick="loadDashboard()" style="background:transparent;border:1px solid rgba(212,130,10,0.2);
+                        color:var(--muted);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer"
+                        title="Refresh">↺</button>
+                </div>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+        <!-- Order status donut -->
+        <div class="admin-card">
+            <div class="admin-card-title">Order Status</div>
+            <div class="donut-wrap" style="flex-direction:column;gap:16px;padding-top:8px">
+                <canvas id="statusChart" width="130" height="130"></canvas>
+                <div class="donut-legend" id="donutLegend"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top products + Low stock -->
+    <div class="grid-2" style="margin-bottom:20px">
+        <div class="admin-card">
+            <div class="admin-card-title">Top Selling Products</div>
+            <div id="topProducts"><div class="skeleton" style="height:14px;margin-bottom:10px"></div></div>
+        </div>
+        <div class="admin-card">
+            <div class="admin-card-title">
+                ⚠ Low Stock Alert
+                <a href="/admin/inventory" style="font-size:11px;color:var(--gold)">View All →</a>
+            </div>
+            <div id="lowStockList"><div class="skeleton" style="height:14px"></div></div>
+        </div>
+    </div>
+
+    <!-- Recent orders -->
+    <div class="admin-card">
+        <div class="admin-card-title">
+            Recent Orders
+            <a href="/admin/orders" style="font-size:11px;color:var(--gold)">View All →</a>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="recentOrdersBody">
+                    <tr><td colspan="7"><div class="skeleton" style="height:14px"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+Chart.defaults.color          = '#7a6040';
+Chart.defaults.borderColor    = 'rgba(212,130,10,0.1)';
+Chart.defaults.font.family    = "'Crimson Text', Georgia, serif";
+
+var revenueChart = null;
+var statusChart  = null;
+
+async function loadDashboard() {
+    try {
+        var [res, revRes] = await Promise.all([
+            fetch('/admin/api/stats'),
+            fetch('/admin/api/revenue')
+        ]);
+        var data   = await res.json();
+        var revData = await revRes.json();
+        data.total_revenue = revData.total_revenue;
+        renderStats(data);
+        renderRevenue(data.revenue_7d);
+        renderStatusDonut(data.processing, data.delivered, data.cancelled);
+        renderTopProducts(data.top_products);
+        renderLowStock(data.low_stock);
+        renderRecentOrders(data.recent_orders);
+    } catch(e) {
+        adminToast('Failed to load dashboard data', 'error');
+    }
+}
+
+function renderStats(d) {
+    var tiles = [
+        { label:'Revenue Today',    value:'₹'+d.revenue_today.toLocaleString('en-IN'), sub:'Paid orders today',   icon:'💰' },
+        { label:'Total Revenue',    value:'₹'+(d.total_revenue||0).toLocaleString('en-IN'), sub:'All time (paid)', icon:'📈' },
+        { label:'Orders Today',     value:d.orders_today,   sub:'Placed today',              icon:'📦' },
+        { label:'Total Orders',     value:d.total_orders,   sub:'All time',                  icon:'📋' },
+        { label:'Customers',        value:d.total_users,    sub:'Registered accounts',        icon:'👥' },
+        { label:'Udupi Customers',  value:d.udupi_customers||0,    sub:'Pincodes 574xxx / 576xxx',   icon:'📍', accent:'#6fcf97' },
+        { label:'Other Regions',    value:d.other_customers||0,    sub:'Outside Udupi region',       icon:'🌐', accent:'#64b5f6' },
+        { label:'Udupi Product Pins', value:d.udupi_product_pins||0, sub:'Products covering Udupi',  icon:'🟢', accent:'#6fcf97' },
+        { label:'Other Region Pins',  value:d.other_product_pins||0, sub:'Products: other regions', icon:'🔵', accent:'#64b5f6' },
+    ];
+    document.getElementById('statGrid').innerHTML = tiles.map(function(t) {
+        var accent = t.accent ? 'color:' + t.accent + ';' : '';
+        var border = t.accent ? 'border-color:' + t.accent + '33;' : '';
+        return '<div class="stat-tile" style="' + border + '">' +
+            '<div class="stat-label">' + t.label + '</div>' +
+            '<div class="stat-value" style="' + accent + '">' + t.value + '</div>' +
+            '<div class="stat-sub">'   + t.sub   + '</div>' +
+            '<div class="stat-icon">'  + t.icon  + '</div>' +
+            '</div>';
+    }).join('');
+}
+
+function renderRevenue(days) {
+    var total = days.reduce(function(s, d){ return s + d.revenue; }, 0);
+    document.getElementById('totalRevLabel').textContent =
+        total > 0 ? '₹' + total.toLocaleString('en-IN') + ' this week' : 'No paid orders yet';
+
+    if (revenueChart) revenueChart.destroy();
+    var ctx = document.getElementById('revenueChart').getContext('2d');
+    var hasData = total > 0;
+
+    revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels:   days.map(function(d){ return d.date; }),
+            datasets: [{
+                label:                'Revenue (₹)',
+                data:                 days.map(function(d){ return d.revenue; }),
+                borderColor:          '#d4820a',
+                backgroundColor:      'rgba(212,130,10,0.1)',
+                borderWidth:          2.5,
+                pointRadius:          days.map(function(d){ return d.revenue > 0 ? 5 : 3; }),
+                pointBackgroundColor: days.map(function(d){ return d.revenue > 0 ? '#f5c842' : '#333'; }),
+                pointBorderColor:     '#d4820a',
+                tension:              0.4,
+                fill:                 true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 800, easing: 'easeInOutQuart' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return ' ₹' + ctx.raw.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(212,130,10,0.07)' },
+                    ticks: { font: { size: 11 }, color: '#7a6040' }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(212,130,10,0.07)' },
+                    ticks: {
+                        font: { size: 11 },
+                        color: '#7a6040',
+                        callback: function(v) {
+                            return v >= 1000 ? '₹' + (v/1000).toFixed(1) + 'k' : '₹' + v;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Show message if no data yet
+    if (!hasData) {
+        var wrap = document.querySelector('.chart-wrap');
+        if (wrap && !wrap.querySelector('.no-data-msg')) {
+            var msg = document.createElement('div');
+            msg.className = 'no-data-msg';
+            msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);' +
+                'color:var(--muted);font-size:13px;text-align:center;pointer-events:none';
+            msg.innerHTML = '<div style="font-size:22px;margin-bottom:6px">📊</div>' +
+                'Revenue will appear here<br>after payments are confirmed';
+            wrap.style.position = 'relative';
+            wrap.appendChild(msg);
+        }
+    } else {
+        var msg = document.querySelector('.no-data-msg');
+        if (msg) msg.remove();
+    }
+}
+
+function renderStatusDonut(processing, delivered, cancelled) {
+    if (statusChart) statusChart.destroy();
+    var ctx = document.getElementById('statusChart').getContext('2d');
+    var total = processing + delivered + cancelled || 1;
+    statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Processing','Delivered','Cancelled'],
+            datasets: [{
+                data:            [processing, delivered, cancelled],
+                backgroundColor: ['rgba(212,130,10,0.7)', 'rgba(45,122,79,0.7)', 'rgba(139,26,26,0.7)'],
+                borderColor:     ['#d4820a','#2d7a4f','#8b1a1a'],
+                borderWidth:     1,
+            }]
+        },
+        options: {
+            responsive: false,
+            cutout: '70%',
+            plugins: { legend: { display: false } }
+        }
+    });
+    var colors = ['#d4820a','#6fcf97','#e04040'];
+    var labels = ['Processing','Delivered','Cancelled'];
+    var vals   = [processing, delivered, cancelled];
+    document.getElementById('donutLegend').innerHTML = labels.map(function(l, i) {
+        return '<div class="donut-leg-row">' +
+            '<div class="donut-leg-dot" style="background:' + colors[i] + '"></div>' +
+            l + ' <span style="color:var(--muted);margin-left:auto">' + vals[i] + '</span>' +
+        '</div>';
+    }).join('');
+}
+
+function renderTopProducts(prods) {
+    if (!prods || !prods.length) { document.getElementById('topProducts').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No data yet</div>'; return; }
+    var max = prods[0].count || 1;
+    document.getElementById('topProducts').innerHTML = prods.map(function(p, i) {
+        return '<div class="top-prod-row">' +
+            '<span style="color:var(--muted);font-size:11px;width:16px">' + (i+1) + '</span>' +
+            '<span class="top-prod-name">' + p.name + '</span>' +
+            '<div class="top-prod-bar-wrap"><div class="top-prod-bar" style="width:' + Math.round(p.count/max*100) + '%"></div></div>' +
+            '<span class="top-prod-count">' + p.count + '</span>' +
+        '</div>';
+    }).join('');
+}
+
+function renderLowStock(items) {
+    if (!items || !items.length) {
+        document.getElementById('lowStockList').innerHTML =
+            '<div style="color:#6fcf97;font-size:13px;padding:8px 0">✓ All products have stock above 7 units</div>';
+        return;
+    }
+    document.getElementById('lowStockList').innerHTML = items.map(function(p) {
+        var qty   = p.stock_quantity;
+        var color = qty === 0 ? '#e04040' : qty <= 3 ? '#e07840' : '#d4820a';
+        var label = qty === 0 ? '🚫 OUT OF STOCK' : qty + ' left';
+        return '<div class="low-stock-item">' +
+            '<div>' +
+                '<div style="font-size:13px;color:var(--text);font-weight:600">' + p.name + '</div>' +
+                '<div style="font-size:10px;color:var(--muted);margin-top:2px">Stock below 7 units</div>' +
+            '</div>' +
+            '<span class="low-stock-qty" style="color:' + color + ';font-size:12px">' + label + '</span>' +
+        '</div>';
+    }).join('');
+}
+
+function renderRecentOrders(orders) {
+    if (!orders || !orders.length) {
+        document.getElementById('recentOrdersBody').innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No orders yet</td></tr>';
+        return;
+    }
+    document.getElementById('recentOrdersBody').innerHTML = orders.map(function(o) {
+        var statusClass = 'status-' + (o.order_status || 'processing');
+        var typeBadge   = o.is_custom_gift
+            ? '<span class="order-type-badge type-gift">🎁 Gift</span>'
+            : o.is_custom_design
+                ? '<span class="order-type-badge type-design">🎨 Design</span>'
+                : '<span style="color:var(--muted);font-size:11px">Regular</span>';
+        var shortId = (o.order_id || '').substring(0,8) + '…';
+        return '<tr>' +
+            '<td><code style="color:var(--gold);font-size:12px">' + shortId + '</code></td>' +
+            '<td>' + (o.user_name || '—') + '</td>' +
+            '<td style="color:var(--gold2);font-weight:600">₹' + (o.total_amount||0) + '</td>' +
+            '<td>' + typeBadge + '</td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (o.payment_method==='online'?'Online':'COD') + '</td>' +
+            '<td><span class="status-pill ' + statusClass + '">' + (o.order_status||'—') + '</span></td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (o.booked_at||'—') + '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+loadDashboard();
+</script>
+{% endblock %}

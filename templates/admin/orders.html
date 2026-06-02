@@ -1,0 +1,467 @@
+{% extends "admin/base.html" %}
+{% block title %}Orders — ChocoBite Admin{% endblock %}
+{% block page_title %}Order Management{% endblock %}
+
+{% block extra_css %}
+<style>
+.filter-bar { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:22px; align-items:center; }
+.filter-bar input { background:var(--jet3); border:1px solid rgba(212,130,10,0.2); border-radius:8px;
+    padding:9px 14px; color:var(--text); font-family:'Crimson Text',serif; font-size:14px; outline:none;
+    transition:border-color .2s; min-width:220px; }
+.filter-bar input:focus { border-color:var(--gold); }
+.filter-bar select { background:var(--jet3); border:1px solid rgba(212,130,10,0.2); border-radius:8px;
+    padding:9px 12px; color:var(--text); font-family:'Crimson Text',serif; font-size:14px; outline:none;
+    cursor:pointer; }
+.filter-bar select:focus { border-color:var(--gold); }
+.filter-pill-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+.fpill { background:transparent; border:1px solid rgba(212,130,10,0.2); color:var(--muted);
+    border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer; transition:all .2s;
+    font-family:'Crimson Text',serif; }
+.fpill:hover { border-color:var(--gold); color:var(--text); }
+.fpill.active { background:rgba(212,130,10,0.12); border-color:var(--gold); color:var(--gold2); font-weight:600; }
+.orders-table-wrap { overflow-x:auto; }
+.action-btn { border:none; border-radius:6px; padding:5px 12px; font-size:11px; font-weight:700;
+    cursor:pointer; font-family:'Cinzel',serif; letter-spacing:0.5px; transition:opacity .2s; white-space:nowrap; }
+.action-btn:hover { opacity:.85; }
+.btn-ship    { background:rgba(30,90,140,0.2);  color:#64b5f6; border:1px solid rgba(100,181,246,0.3); }
+.btn-paid    { background:rgba(45,122,79,0.2);  color:#6fcf97; border:1px solid rgba(111,207,151,0.3); }
+.btn-deliver { background:rgba(111,207,151,0.1);color:#6fcf97; border:1px solid rgba(111,207,151,0.2); }
+.btn-view    { background:rgba(212,130,10,0.1); color:var(--gold); border:1px solid rgba(212,130,10,0.25); }
+.actions-cell { display:flex; gap:6px; flex-wrap:wrap; }
+.pagination  { display:flex; gap:8px; justify-content:center; margin-top:18px; align-items:center; }
+.page-btn    { background:var(--jet3); border:1px solid rgba(212,130,10,0.2); color:var(--muted);
+    border-radius:6px; padding:6px 12px; font-size:13px; cursor:pointer; transition:all .2s; }
+.page-btn:hover, .page-btn.active { border-color:var(--gold); color:var(--gold); }
+.order-detail-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:5000;
+    display:flex; align-items:center; justify-content:center; padding:20px; }
+.order-detail-box { background:var(--jet2); border:1px solid rgba(212,130,10,0.2); border-radius:14px;
+    width:100%; max-width:560px; max-height:85vh; overflow-y:auto; padding:28px; position:relative; }
+.od-close { position:absolute; top:16px; right:18px; background:none; border:none; color:var(--muted);
+    font-size:20px; cursor:pointer; }
+.od-row { display:flex; justify-content:space-between; padding:8px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05); font-size:14px; }
+.od-row:last-child { border-bottom:none; }
+.od-l { color:var(--muted); width:130px; flex-shrink:0; }
+.od-v { color:var(--text); text-align:right; }
+.summary-count { color:var(--muted); font-size:13px; margin-bottom:12px; }
+.timer-chip { font-size:10px; font-family:'Cinzel',serif; font-weight:700; border-radius:6px;
+    padding:3px 7px; white-space:nowrap; display:inline-block; margin-bottom:2px; }
+.timer-ok      { color:#6fcf97; background:rgba(45,122,79,0.15); border:1px solid rgba(45,122,79,0.3); }
+.timer-warn    { color:#d4820a; background:rgba(212,130,10,0.1); border:1px solid rgba(212,130,10,0.3); }
+.timer-overdue { color:#e04040; background:rgba(139,26,26,0.15); border:1px solid rgba(224,64,64,0.3);
+    animation:timerPulse 1s infinite; }
+.timer-done    { color:#6fcf97; background:rgba(45,122,79,0.08); border:1px solid rgba(45,122,79,0.15); }
+@keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.timer-cell { display:flex; flex-direction:column; gap:2px; }
+.timer-label { font-size:9px; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; font-family:'Cinzel',serif; }
+/* Confirm modal */
+.confirm-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    animation:cfIn .2s ease; }
+@keyframes cfIn { from{opacity:0} to{opacity:1} }
+.confirm-box { background:var(--jet2);border:1px solid rgba(212,130,10,0.25);border-radius:14px;
+    padding:28px 28px 22px;max-width:380px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,0.6);
+    position:relative; }
+.confirm-box::before { content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:14px 14px 0 0; }
+.confirm-icon { font-size:28px;text-align:center;margin-bottom:12px; }
+.confirm-msg { color:var(--text);font-size:15px;text-align:center;margin-bottom:22px;line-height:1.5; }
+.confirm-btns { display:flex;gap:10px; }
+.confirm-ok { flex:1;background:linear-gradient(135deg,var(--gold),#b5690a);border:none;
+    color:#000;border-radius:8px;padding:11px;font-family:'Cinzel',serif;font-size:13px;
+    font-weight:700;cursor:pointer;transition:opacity .2s; }
+.confirm-ok:hover { opacity:.88; }
+.confirm-cancel { flex:1;background:transparent;border:1px solid rgba(212,130,10,0.2);
+    color:var(--muted);border-radius:8px;padding:11px;font-family:'Cinzel',serif;
+    font-size:13px;cursor:pointer;transition:all .2s; }
+.confirm-cancel:hover { border-color:var(--gold);color:var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Filter bar -->
+<div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="Search order ID, customer name or email…"
+           oninput="debounce(loadOrders, 400)()">
+    <select id="statusFilter" onchange="loadOrders()">
+        <option value="">All Statuses</option>
+        <option value="processing">Processing</option>
+        <option value="dispatched">Dispatched</option>
+        <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
+    </select>
+    <select id="paymentFilter" onchange="loadOrders()">
+        <option value="">All Payments</option>
+        <option value="online">Online</option>
+        <option value="cod">Cash on Delivery</option>
+    </select>
+    <select id="typeFilter" onchange="loadOrders()">
+        <option value="">All Types</option>
+        <option value="custom">Custom Orders</option>
+        <option value="gift">Gift Orders</option>
+        <option value="design">Design Orders</option>
+    </select>
+    <button class="btn-ghost" onclick="resetFilters()">Reset</button>
+</div>
+
+<div class="summary-count" id="summaryCount">Loading…</div>
+
+<!-- Orders table -->
+<div class="admin-card" style="padding:0">
+    <div class="orders-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Pay Status</th>
+                    <th>Type</th>
+                    <th>Order Status</th>
+                    <th>Date</th>
+                    <th>Timers</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="ordersBody">
+                <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">
+                    Loading orders…
+                </td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination" id="pagination"></div>
+
+<!-- Order detail modal -->
+<div id="orderDetailOverlay" class="order-detail-overlay" style="display:none" onclick="if(event.target===this)closeDetail()">
+    <div class="order-detail-box">
+        <button class="od-close" onclick="closeDetail()">✕</button>
+        <h3 style="font-family:'Cinzel',serif;color:var(--gold2);font-size:14px;margin-bottom:18px">Order Detail</h3>
+        <div id="orderDetailContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var currentPage = 1;
+var _debounceTimers = {};
+function debounce(fn, delay) {
+    return function() {
+        clearTimeout(_debounceTimers[fn]);
+        _debounceTimers[fn] = setTimeout(fn, delay);
+    };
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('paymentFilter').value = '';
+    document.getElementById('typeFilter').value = '';
+    currentPage = 1;
+    loadOrders();
+}
+
+function fmtCountdown(diff) {
+    if (diff <= 0) return null;
+    var dd = Math.floor(diff / 86400000);
+    var hh = Math.floor((diff % 86400000) / 3600000);
+    var mm = Math.floor((diff % 3600000) / 60000);
+    var ss = Math.floor((diff % 60000) / 1000);
+    return (dd > 0 ? dd + 'd ' : '') +
+           String(hh).padStart(2,'0') + ':' +
+           String(mm).padStart(2,'0') + ':' +
+           String(ss).padStart(2,'0');
+}
+
+function timerClass(diff, warnMs) {
+    if (diff <= 0) return 'timer-overdue';
+    return diff < warnMs ? 'timer-warn' : 'timer-ok';
+}
+
+function buildTimer(o) {
+    var cancelled  = o.order_status === 'cancelled';
+    var delivered  = o.order_status === 'delivered';
+    var dispatched = o.order_status === 'dispatched';
+    var now        = Date.now();
+
+    // Ship timer — only for 'processing' state
+    var shipHtml = '';
+    if (!cancelled && !delivered && !dispatched && o.ship_by) {
+        var sd   = new Date(o.ship_by).getTime() - now;
+        var sfmt = fmtCountdown(sd);
+        var scls = timerClass(sd, 4 * 3600000); // warn < 4h
+        shipHtml = '<div class="timer-label">Ship By</div>' +
+            '<span class="timer-chip ' + scls + '" ' +
+            'data-type="ship" data-deadline="' + o.ship_by + '" ' +
+            'data-orderid="' + o.order_id + '">' +
+            (sfmt || 'OVERDUE') + '</span>';
+        // 24h warning label
+        if (sd > 0 && sd < 86400000) {
+            shipHtml += '<div style="font-size:9px;color:#e04040;margin-top:1px">⚠ 1 day left!</div>';
+        }
+    } else if (dispatched) {
+        shipHtml = '<span class="timer-chip timer-done">Shipped ✓</span>';
+    }
+
+    // Delivery timer — for processing + dispatched states
+    var delHtml = '';
+    if (!cancelled && !delivered && o.estimated_arrival) {
+        var dd   = new Date(o.estimated_arrival).getTime() - now;
+        var dfmt = fmtCountdown(dd);
+        var dcls = timerClass(dd, 24 * 3600000); // warn < 24h
+        delHtml = '<div class="timer-label" style="margin-top:4px">Deliver By</div>' +
+            '<span class="timer-chip ' + dcls + '" ' +
+            'data-type="delivery" data-deadline="' + o.estimated_arrival + '" ' +
+            'data-orderid="' + o.order_id + '">' +
+            (dfmt || 'OVERDUE') + '</span>';
+        if (dd > 0 && dd < 86400000) {
+            delHtml += '<div style="font-size:9px;color:#e04040;margin-top:1px">⚠ Due today!</div>';
+        }
+    } else if (delivered) {
+        delHtml = '<span class="timer-chip timer-done">Delivered ✓</span>';
+    }
+
+    if (!shipHtml && !delHtml) return '<span style="color:var(--muted);font-size:11px">—</span>';
+    return '<div class="timer-cell">' + shipHtml + delHtml + '</div>';
+}
+
+// Live countdown timer — ticks every second
+var _timerInterval = null;
+function startTimers() {
+    clearInterval(_timerInterval);
+    _timerInterval = setInterval(function() {
+        var now = Date.now();
+        document.querySelectorAll('.timer-chip[data-orderid]').forEach(function(el) {
+            var deadline = new Date(el.dataset.deadline).getTime();
+            var diff     = deadline - now;
+            var orderId  = el.dataset.orderid;
+            var type     = el.dataset.type; // 'ship' or 'delivery'
+            var warnMs   = type === 'ship' ? 4*3600000 : 24*3600000;
+
+            if (diff <= 0) {
+                el.className  = 'timer-chip timer-overdue';
+                el.textContent = 'OVERDUE';
+                if (!el.dataset.notified) {
+                    el.dataset.notified = '1';
+                    fetch('/admin/api/orders/overdue-notify', {
+                        method:'POST', headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({order_id: orderId, timer_type: type})
+                    });
+                    adminToast('🚨 Order ' + orderId.substring(0,8) + ' — ' + type + ' OVERDUE! Email sent.', 'error');
+                }
+                // 24h warning notification for ship timer
+            } else if (type === 'ship' && diff < 86400000 && diff > 86340000 && !el.dataset.warned24) {
+                el.dataset.warned24 = '1';
+                adminToast('⚠ Order ' + orderId.substring(0,8) + ' — 24h left to ship!', 'error');
+            } else {
+                var fmt = fmtCountdown(diff);
+                el.className  = 'timer-chip ' + (diff < warnMs ? 'timer-warn' : 'timer-ok');
+                el.textContent = fmt;
+            }
+        });
+    }, 1000); // tick every second for dd:hh:mm:ss display
+}
+
+// ── Custom confirm modal ──────────────────────────────────────────────────────
+function showConfirm(msg, onOk, icon) {
+    var existing = document.getElementById('adminConfirmOverlay');
+    if (existing) existing.remove();
+    var ov = document.createElement('div');
+    ov.id = 'adminConfirmOverlay';
+    ov.className = 'confirm-overlay';
+    ov.innerHTML =
+        '<div class="confirm-box">' +
+            '<div class="confirm-icon">' + (icon || '⚙️') + '</div>' +
+            '<div class="confirm-msg">' + msg + '</div>' +
+            '<div class="confirm-btns">' +
+                '<button class="confirm-cancel" onclick="this.closest(\'.confirm-overlay\').remove()">Cancel</button>' +
+                '<button class="confirm-ok" id="confirmOkBtn">Confirm</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if (e.target === ov) ov.remove(); });
+    ov.querySelector('#confirmOkBtn').onclick = function() {
+        ov.remove();
+        onOk();
+    };
+}
+
+async function loadOrders() {
+    var search  = document.getElementById('searchInput').value.trim();
+    var status  = document.getElementById('statusFilter').value;
+    var payment = document.getElementById('paymentFilter').value;
+    var type    = document.getElementById('typeFilter').value;
+    var params  = new URLSearchParams({page:currentPage});
+    if (search)  params.set('search',  search);
+    if (status)  params.set('status',  status);
+    if (payment) params.set('payment', payment);
+    if (type)    params.set('type',    type);
+
+    document.getElementById('ordersBody').innerHTML =
+        '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Loading…</td></tr>';
+
+    var res  = await fetch('/admin/api/orders?' + params.toString());
+    var data = await res.json();
+    renderOrders(data.orders, data.total, data.page, data.per_page);
+}
+
+function renderOrders(orders, total, page, perPage) {
+    document.getElementById('summaryCount').textContent =
+        total + ' order' + (total !== 1 ? 's' : '') + ' found';
+
+    if (!orders.length) {
+        document.getElementById('ordersBody').innerHTML =
+            '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">No orders found.</td></tr>';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+    }
+
+    document.getElementById('ordersBody').innerHTML = orders.map(function(o) {
+        var sid = (o.order_id || '').substring(0,8) + '…';
+        var sc  = 'status-' + (o.order_status || 'processing');
+
+        var payPill = o.payment_status === 'Paid'
+            ? '<span class="status-pill status-delivered" style="font-size:10px">Paid</span>'
+            : '<span class="status-pill status-processing" style="font-size:10px">Pending</span>';
+
+        var typeBadge = o.is_custom_gift
+            ? '<span class="type-gift">🎁 Gift</span>'
+            : o.is_custom_design
+                ? '<span class="type-design">🎨 Design</span>'
+                : '<span style="color:var(--muted);font-size:11px">Regular</span>';
+
+        // Action buttons
+        var actions = '<div class="actions-cell">';
+        actions += '<button class="action-btn btn-view" onclick="viewOrder(\'' + o.order_id + '\')">View</button>';
+
+        if (o.order_status !== 'cancelled') {
+            // Ship — only while processing
+            if (o.order_status === 'processing') {
+                actions += '<button class="action-btn btn-ship" onclick="shipOrder(\'' + o.order_id + '\')">Ship 🚚</button>';
+            }
+            // Mark Delivered — only while dispatched
+            if (o.order_status === 'dispatched') {
+                actions += '<button class="action-btn btn-deliver" onclick="deliverOrder(\'' + o.order_id + '\')">Delivered ✓</button>';
+            }
+            // Mark Paid — COD only, visible until admin clicks it
+            // Shown for ALL non-cancelled states (processing/dispatched/delivered) until paid
+            if (o.payment_method === 'cod' && o.payment_status !== 'Paid') {
+                actions += '<button class="action-btn btn-paid" onclick="markPaid(\'' + o.order_id + '\')">Mark Paid ✓</button>';
+            }
+        }
+        actions += '</div>';
+
+        return '<tr>' +
+            '<td><code style="color:var(--gold);font-size:11px">' + sid + '</code></td>' +
+            '<td>' +
+                '<div style="font-size:13px">' + (o.user_name||'—') + '</div>' +
+                '<div style="font-size:11px;color:var(--muted)">' + (o.user_email||'') + '</div>' +
+            '</td>' +
+            '<td style="color:var(--gold2);font-weight:600">₹' + (o.total_amount||0) + '</td>' +
+            '<td style="font-size:12px;color:var(--muted)">' + (o.payment_method==='online'?'Online':'COD') + '</td>' +
+            '<td>' + payPill + '</td>' +
+            '<td>' + typeBadge + '</td>' +
+            '<td><span class="status-pill ' + sc + '">' + (o.order_status||'—') + '</span></td>' +
+            '<td style="font-size:11px;color:var(--muted)">' + (o.booked_at||'—') + '</td>' +
+            '<td>' + buildTimer(o) + '</td>' +
+            '<td>' + actions + '</td>' +
+        '</tr>';
+    }).join('');
+
+    // Pagination
+    var totalPages = Math.ceil(total / perPage);
+    var pg = '';
+    for (var i = 1; i <= totalPages; i++) {
+        pg += '<button class="page-btn' + (i===page?' active':'') + '" onclick="goPage(' + i + ')">' + i + '</button>';
+    }
+    document.getElementById('pagination').innerHTML = pg;
+    startTimers();
+}
+
+function goPage(p) { currentPage = p; loadOrders(); }
+
+async function shipOrder(id) {
+    showConfirm('Ship this order and notify customer?', async function() {
+        var r = await fetch('/admin/api/order/ship', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({order_id:id})
+        });
+        var d = await r.json();
+        adminToast(d.message, d.success ? 'success' : 'error');
+        if (d.success) loadOrders();
+    });
+}
+
+async function markPaid(id) {
+    showConfirm('Mark COD payment as received and notify customer?', async function() {
+        var r = await fetch('/admin/api/order/mark-paid', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({order_id:id})
+        });
+        var d = await r.json();
+        adminToast(d.message, d.success ? 'success' : 'error');
+        if (d.success) loadOrders();
+    });
+}
+
+async function deliverOrder(id) {
+    showConfirm('Mark this order as delivered?', async function() {
+        var r = await fetch('/admin/api/order/deliver', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({order_id:id})
+        });
+        var d = await r.json();
+        adminToast(d.message, d.success ? 'success' : 'error');
+        if (d.success) loadOrders();
+    });
+}
+
+async function viewOrder(id) {
+    var res = await fetch('/admin/api/orders?search=' + id + '&page=1');
+    var data = await res.json();
+    var o = data.orders[0];
+    if (!o) return;
+
+    var items = (o.items||[]).map(function(i) {
+        return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px">' +
+            '<span style="color:var(--text)">' + i.name + ' × ' + i.quantity + '</span>' +
+            '<span style="color:var(--gold)">₹' + i.price + '</span>' +
+        '</div>';
+    }).join('');
+
+    document.getElementById('orderDetailContent').innerHTML =
+        '<div class="od-row"><span class="od-l">Order ID</span><code style="color:var(--gold);font-size:11px">' + o.order_id + '</code></div>' +
+        '<div class="od-row"><span class="od-l">Customer</span><span class="od-v">' + (o.user_name||'—') + '</span></div>' +
+        '<div class="od-row"><span class="od-l">Email</span><span class="od-v" style="font-size:12px">' + (o.user_email||'—') + '</span></div>' +
+        '<div class="od-row"><span class="od-l">Status</span><span class="od-v"><span class="status-pill status-' + o.order_status + '">' + o.order_status + '</span></span></div>' +
+        '<div class="od-row"><span class="od-l">Payment</span><span class="od-v">' + (o.payment_method==='online'?'Online':'COD') + ' — ' + (o.payment_status||'—') + '</span></div>' +
+        '<div class="od-row"><span class="od-l">Total</span><span class="od-v" style="color:var(--gold2);font-weight:700">₹' + o.total_amount + '</span></div>' +
+        '<div class="od-row"><span class="od-l">Address</span><span class="od-v" style="font-size:12px;text-align:right">' + (o.delivery_address||'—') + '</span></div>' +
+        (o.delivery_pincode ? '<div class="od-row"><span class="od-l">Pincode</span><span class="od-v">' + o.delivery_pincode + '</span></div>' : '') +
+        '<div class="od-row"><span class="od-l">Ordered</span><span class="od-v" style="font-size:12px">' + (o.booked_at||'—') + '</span></div>' +
+        '<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(212,130,10,0.12)">' +
+            '<div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-family:Cinzel,serif;margin-bottom:8px">Items</div>' +
+            items +
+        '</div>';
+
+    document.getElementById('orderDetailOverlay').style.display = 'flex';
+}
+
+function closeDetail() {
+    document.getElementById('orderDetailOverlay').style.display = 'none';
+}
+
+// Check if coming from dashboard view-all link
+window.addEventListener('DOMContentLoaded', function() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('type')) document.getElementById('typeFilter').value = params.get('type');
+    if (params.get('status')) document.getElementById('statusFilter').value = params.get('status');
+    loadOrders();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Razorpay — Secure Payment</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: rgba(0,0,0,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  /* ── Main Modal ─────────────────────────────────────── */
+  .rzp-modal {
+    background: #fff;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 420px;
+    min-height: 540px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+    position: relative;
+  }
+
+  /* ── Header ─────────────────────────────────────────── */
+  .rzp-header {
+    background: linear-gradient(135deg, #3d3093 0%, #2d1fa3 100%);
+    padding: 16px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+  }
+  .rzp-logo-box {
+    width: 83px; height: 22px;
+    background: transparent;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+  .rzp-logo-box svg { width:40px; height:40px; }
+  .rzp-merchant { flex:1; }
+  .rzp-merchant-name {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Times New Roman', Times, serif;
+    letter-spacing: 0.3px;
+  }
+  .rzp-merchant-sub {
+    color: rgba(255,255,255,0.70);
+    font-size: 12px;
+    font-family: 'Times New Roman', Times, serif;
+    margin-top: 3px;
+  }
+  .rzp-close {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.2s;
+  }
+  .rzp-close:hover { color: #fff; }
+  .rzp-lang {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    padding: 3px 7px;
+    cursor: pointer;
+    margin-right: 6px;
+  }
+
+  /* ── QR Banner ──────────────────────────────────────── */
+  .rzp-qr-banner {
+    background: #f8f8ff;
+    border: 1px solid #e8e4ff;
+    border-radius: 8px;
+    margin: 12px 16px 4px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .rzp-qr-img {
+    width: 70px; height: 70px;
+    border: 2px solid #3d3093;
+    border-radius: 4px;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .rzp-qr-text { font-size: 12px; color: #555; line-height: 1.5; }
+  .rzp-qr-text strong { color: #3d3093; }
+  .rzp-qr-timer { color: #e04040; font-weight: 600; }
+  .rzp-upi-icons { display:flex; gap:7px; margin-top:8px; align-items:center; }
+  .rzp-upi-icon {
+    width:30px; height:30px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700;
+    overflow:hidden; border:1px solid #e8e4f5;
+    background:#fff; flex-shrink:0;
+  }
+  /* (image rules moved to wallet-logo section below) */
+  /* Method icon image support */
+  .rzp-method-icon img {
+    width:22px; height:22px; object-fit:contain;
+  }
+  /* Bank logo image support */
+  .rzp-bank-logo img {
+    width:100%; height:100%; object-fit:contain; border-radius:3px;
+  }
+
+  /* ── Section heading ─────────────────────────────────── */
+  .rzp-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    padding: 10px 16px 4px;
+  }
+
+  /* ── Method list ─────────────────────────────────────── */
+  .rzp-methods { padding: 0 8px; flex:1; }
+  .rzp-method {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .rzp-method:hover { background: #f5f3ff; }
+  .rzp-method:last-child { border-bottom: none; }
+  .rzp-method-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: #f0eeff;
+    flex-shrink: 0;
+  }
+  .rzp-method-icon svg { width:20px; height:20px; }
+  .rzp-method-info { flex:1; }
+  .rzp-method-name { font-size:14px; font-weight:600; color:#222; }
+  .rzp-method-sub  { font-size:11.5px; color:#888; margin-top:2px; }
+  .rzp-method-arrow { color:#bbb; font-size:16px; }
+
+  /* ── Footer ──────────────────────────────────────────── */
+  .rzp-footer {
+    padding: 10px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #eee;
+  }
+  .rzp-account-btn {
+    font-size: 12px; color:#555;
+    background:none; border:none; cursor:pointer;
+    display:flex; align-items:center; gap:4px;
+  }
+  .rzp-secured {
+    font-size:11px; color:#888;
+    display:flex; align-items:center; gap:5px;
+  }
+  .rzp-secured-logo {
+    font-size:13px; font-weight:700;
+    background:linear-gradient(135deg,#3d3093,#072edd);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+
+  /* ── Amount bar ──────────────────────────────────────── */
+  .rzp-amount-bar {
+    background:#fff;
+    border-top: 1px solid #eee;
+    padding: 10px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rzp-amount-val {
+    font-size:18px; font-weight:700; color:#222;
+  }
+  .rzp-amount-label { font-size:11px; color:#888; }
+  .rzp-pay-btn {
+    background: linear-gradient(135deg, #3d3093, #2d1fa3);
+    color:#fff; border:none; border-radius:6px;
+    padding:11px 32px;
+    font-size:15px; font-weight:600;
+    cursor:pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .rzp-pay-btn:hover { opacity:0.9; }
+  .rzp-pay-btn:active { transform:scale(0.98); }
+  .rzp-pay-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  /* ── SCREENS ─────────────────────────────────────────── */
+  .screen { display:none; flex-direction:column; flex:1; }
+  .screen.active { display:flex; }
+
+  /* Back button */
+  .rzp-back {
+    background:none; border:none; color:rgba(255,255,255,0.85);
+    font-size:18px; cursor:pointer; padding:2px 6px; margin-right:4px;
+    border-radius:4px;
+  }
+  .rzp-back:hover { color:#fff; background:rgba(255,255,255,0.1); }
+
+  /* ── Card Form ───────────────────────────────────────── */
+  .rzp-form { padding:16px; flex:1; display:flex; flex-direction:column; gap:14px; }
+  .rzp-field label {
+    display:block; font-size:12px; color:#666; margin-bottom:5px; font-weight:500;
+  }
+  .rzp-field input, .rzp-field select {
+    width:100%; padding:10px 12px;
+    border:1.5px solid #ddd; border-radius:6px;
+    font-size:14px; color:#222;
+    outline:none; transition:border-color 0.2s;
+    background:#fafafa;
+  }
+  .rzp-field input:focus, .rzp-field select:focus {
+    border-color:#3d3093; background:#fff;
+  }
+  .rzp-row { display:flex; gap:12px; }
+  .rzp-row .rzp-field { flex:1; }
+
+  /* Card type icons */
+  .rzp-card-icons { display:flex; gap:6px; margin-bottom:10px; }
+  .rzp-card-icon {
+    padding:3px 8px; border-radius:4px;
+    font-size:10px; font-weight:700;
+    border:1.5px solid #e0e0e0; color:#555;
+    background:#fff;
+  }
+  .rzp-card-icon.visa   { color:#1a1f71; border-color:#1a1f71; }
+  .rzp-card-icon.mc     { color:#eb001b; border-color:#eb001b; }
+  .rzp-card-icon.rupay  { color:#007cc3; border-color:#007cc3; }
+
+  /* UPI form */
+  .rzp-upi-input-wrap { position:relative; }
+  .rzp-upi-input-wrap input { padding-right:90px; }
+  .rzp-upi-verify {
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    background:#3d3093; color:#fff; border:none; border-radius:4px;
+    padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600;
+  }
+
+  /* Netbanking */
+  .rzp-banks { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px 16px; }
+  .rzp-bank {
+    border:1.5px solid #eee; border-radius:6px; padding:10px;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    cursor:pointer; font-size:11.5px; color:#444; font-weight:500;
+    transition:all 0.15s; text-align:center;
+  }
+  .rzp-bank:hover, .rzp-bank.selected {
+    border-color:#3d3093; background:#f5f3ff; color:#3d3093;
+  }
+  .rzp-bank-logo {
+    width:44px; height:30px; border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; color:#fff;
+    overflow:hidden; flex-shrink:0;
+  }
+  .rzp-bank-logo img {
+    width:44px; height:30px;
+    object-fit:cover; border-radius:4px; display:block;
+  }
+
+  /* Wallet list */
+  .rzp-wallets { padding:8px 16px; flex:1; }
+  .rzp-wallet {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 0; border-bottom:1px solid #f0f0f0;
+    cursor:pointer;
+  }
+  .rzp-wallet:hover { background:#f9f9f9; border-radius:6px; padding-left:6px; padding-right:6px; }
+  .rzp-wallet-left { display:flex; align-items:center; gap:12px; }
+  .rzp-wallet-logo {
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; color:#fff;
+    overflow:hidden; flex-shrink:0;
+    background:transparent;   /* colour set via inline style only when no image */
+  }
+  /* Image fills the circle completely — hides background + letter */
+  .rzp-wallet-logo img {
+    width:38px; height:38px;
+    object-fit:cover; border-radius:50%;
+    display:block; flex-shrink:0;
+  }
+  /* UPI icon images — fill their box cleanly */
+  .rzp-upi-icon img {
+    width:30px; height:30px;
+    object-fit:cover; border-radius:6px;
+    display:block;
+  }
+  .rzp-wallet-name { font-size:14px; font-weight:500; color:#222; }
+  .rzp-radio {
+    width:18px; height:18px; border-radius:50%;
+    border:2px solid #ccc; display:flex; align-items:center; justify-content:center;
+  }
+  .rzp-radio.checked { border-color:#3d3093; }
+  .rzp-radio.checked::after {
+    content:''; width:9px; height:9px; background:#3d3093; border-radius:50%;
+  }
+
+  /* ── OTP / Bank Page ─────────────────────────────────── */
+  .rzp-otp-screen {
+    padding:24px 20px;
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:16px; text-align:center;
+  }
+  .rzp-bank-name {
+    font-size:22px; font-weight:700; color:#3d3093;
+  }
+  .rzp-bank-subtitle { font-size:13px; color:#888; }
+  .rzp-otp-field {
+    display:flex; gap:10px; justify-content:center; margin:8px 0;
+  }
+  .rzp-otp-digit {
+    width:48px; height:52px;
+    border:2px solid #ddd; border-radius:8px;
+    text-align:center; font-size:22px; font-weight:700; color:#3d3093;
+    outline:none; transition:border-color 0.2s;
+  }
+  .rzp-otp-digit:focus { border-color:#3d3093; }
+  .rzp-otp-hint { font-size:12px; color:#aaa; }
+
+  /* ── Success Screen ──────────────────────────────────── */
+  .rzp-success-screen {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:12px; padding:30px 20px; text-align:center;
+  }
+  .rzp-success-icon {
+    width:72px; height:72px; border-radius:50%;
+    background:#e6f9ed; display:flex; align-items:center; justify-content:center;
+    animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  .rzp-success-icon svg { width:40px; height:40px; }
+  @keyframes popIn {
+    from { transform:scale(0); opacity:0; }
+    to   { transform:scale(1); opacity:1; }
+  }
+  .rzp-success-title { font-size:20px; font-weight:700; color:#1a7a3c; }
+  .rzp-success-sub   { font-size:13px; color:#666; line-height:1.5; }
+  .rzp-txn-id { font-size:12px; color:#aaa; font-family:monospace; }
+  .rzp-done-btn {
+    background:#1a7a3c; color:#fff; border:none; border-radius:6px;
+    padding:12px 40px; font-size:15px; font-weight:600;
+    cursor:pointer; margin-top:8px; transition:opacity 0.2s;
+  }
+  .rzp-done-btn:hover { opacity:0.9; }
+
+  /* ── Processing spinner ──────────────────────────────── */
+  .rzp-processing {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px;
+  }
+  .rzp-spinner {
+    width:48px; height:48px; border:4px solid #e8e4ff;
+    border-top:4px solid #3d3093; border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .rzp-processing-text { font-size:15px; color:#555; font-weight:500; }
+
+  /* ── Timer countdown ─────────────────────────────────── */
+  #timerDisplay { font-weight:600; color:#e04040; }
+</style>
+</head>
+<body>
+
+<div class="rzp-modal" id="rzpModal">
+
+  <!-- ═══ HEADER (shared, changes title per screen) ════════════════════════ -->
+  <div class="rzp-header" id="rzpHeader">
+    <button class="rzp-back hidden" id="rzpBack" onclick="goBack()">&#8592;</button>
+    <!-- ══ IMAGE SLOT: Merchant/Store logo in header ════════════════════════
+         Replace the SVG below with your ChocoBite logo image:
+         <img src="{{ url_for('static', filename='images/chocobitelogo.jpeg') }}"
+              style="height:36px;width:auto;object-fit:contain;border-radius:4px;">
+         Or keep the SVG initials as-is. ════════════════════════════════════ -->
+    <div class="rzp-logo-box">
+      <img src="{{ url_for('static', filename='images/chocobitelogo.jpeg') }}"
+           alt="ChocoBite"
+           onerror="this.style.display='none'"
+           style="width:83px;height:22px;object-fit:fill;border-radius:3px;display:block;">
+    </div>
+    <div class="rzp-merchant">
+      <div class="rzp-merchant-name" id="headerTitle">ChocoBite</div>
+      <div class="rzp-merchant-sub" id="headerSub">Premium Chocolate Store</div>
+    </div>
+    <button class="rzp-lang">EN ▾</button>
+    <button class="rzp-close" onclick="closeRzp()">&#10005;</button>
+  </div>
+
+  <!-- ═══ SCREEN 1: Method Selection ══════════════════════════════════════ -->
+  <div class="screen active" id="screenMethods">
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     IMAGE SETUP GUIDE — Read this before adding images
+     ══════════════════════════════════════════════════════════════════════════
+
+     Create this folder structure in your project:
+       static/images/payment/
+         gpay.png        — Google Pay logo (30x30, transparent PNG)
+         phonepe.png     — PhonePe logo   (30x30, transparent PNG)
+         paytm.png       — Paytm logo     (30x30, transparent PNG)
+         bhim.png        — BHIM UPI logo  (30x30, transparent PNG)
+         mobikwik.png    — Mobikwik logo  (34x34, circular PNG)
+         freecharge.png  — Freecharge logo
+         sbi.png         — SBI bank logo
+         hdfc.png        — HDFC bank logo
+         icici.png       — ICICI bank logo
+         axis.png        — Axis bank logo
+         kotak.png       — Kotak bank logo
+         bob.png         — Bank of Baroda logo
+
+     Download tip: Search "[AppName] logo PNG transparent" on Google Images.
+     Each .rzp-upi-icon already has an onerror fallback — if image is missing,
+     it shows coloured initials instead (no broken image icons).
+
+     All IMAGE SLOT comments below show exactly where to swap SVG/text for <img>.
+═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- QR banner -->
+    <div class="rzp-qr-banner">
+      <svg class="rzp-qr-img" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <!-- Fake QR pattern -->
+        <rect width="80" height="80" fill="#fff"/>
+        <rect x="4" y="4" width="24" height="24" rx="2" fill="#3d3093"/>
+        <rect x="8" y="8" width="16" height="16" rx="1" fill="#fff"/>
+        <rect x="10" y="10" width="12" height="12" rx="1" fill="#3d3093"/>
+        <rect x="52" y="4" width="24" height="24" rx="2" fill="#3d3093"/>
+        <rect x="56" y="8" width="16" height="16" rx="1" fill="#fff"/>
+        <rect x="58" y="10" width="12" height="12" rx="1" fill="#3d3093"/>
+        <rect x="4" y="52" width="24" height="24" rx="2" fill="#3d3093"/>
+        <rect x="8" y="56" width="16" height="16" rx="1" fill="#fff"/>
+        <rect x="10" y="58" width="12" height="12" rx="1" fill="#3d3093"/>
+        <rect x="36" y="4" width="6" height="6" fill="#3d3093"/>
+        <rect x="44" y="4" width="6" height="6" fill="#3d3093"/>
+        <rect x="36" y="12" width="6" height="6" fill="#3d3093"/>
+        <rect x="44" y="20" width="6" height="6" fill="#3d3093"/>
+        <rect x="36" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="44" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="52" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="60" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="68" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="36" y="44" width="6" height="6" fill="#3d3093"/>
+        <rect x="60" y="44" width="6" height="6" fill="#3d3093"/>
+        <rect x="36" y="52" width="6" height="6" fill="#3d3093"/>
+        <rect x="44" y="52" width="6" height="6" fill="#3d3093"/>
+        <rect x="52" y="52" width="6" height="6" fill="#3d3093"/>
+        <rect x="68" y="52" width="6" height="6" fill="#3d3093"/>
+        <rect x="36" y="60" width="6" height="6" fill="#3d3093"/>
+        <rect x="52" y="60" width="6" height="6" fill="#3d3093"/>
+        <rect x="60" y="68" width="6" height="6" fill="#3d3093"/>
+        <rect x="4" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="12" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="20" y="36" width="6" height="6" fill="#3d3093"/>
+        <rect x="4" y="44" width="6" height="6" fill="#3d3093"/>
+        <rect x="20" y="44" width="6" height="6" fill="#3d3093"/>
+        <rect x="4" y="68" width="6" height="6" fill="#3d3093"/>
+        <rect x="12" y="68" width="6" height="6" fill="#3d3093"/>
+        <rect x="20" y="60" width="6" height="6" fill="#3d3093"/>
+      </svg>
+      <div class="rzp-qr-text">
+        <strong>Pay With UPI QR</strong><br>
+        Scan using any UPI app
+        <div class="rzp-upi-icons">
+
+          <!-- ══ IMAGE SLOT: GPay logo ══════════════════════════════════════
+               Replace the letter "G" below with an <img> tag like:
+               <img src="{{ url_for('static', filename='images/payment/gpay.png') }}" alt="GPay">
+               Recommended size: 30x30px, transparent background PNG -->
+          <div class="rzp-upi-icon" style="background:#fff" title="Google Pay">
+            <img src="{{ url_for('static', filename='images/payment/gpay.png') }}"
+                 alt="GPay"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.style.display='none';this.parentNode.style.background='#fff'">
+          </div>
+
+          <!-- ══ IMAGE SLOT: PhonePe logo ═══════════════════════════════════
+               Place phonePe logo at: static/images/payment/phonepe.png -->
+          <div class="rzp-upi-icon" style="background:#5f259f" title="PhonePe">
+            <img src="{{ url_for('static', filename='images/payment/phonepe.png') }}"
+                 alt="PhonePe"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.parentNode.innerHTML='<span style=&quot;color:#fff;font-weight:700&quot;>P</span>'">
+          </div>
+
+          <!-- ══ IMAGE SLOT: Paytm logo ══════════════════════════════════════
+               Place Paytm logo at: static/images/payment/paytm.png -->
+          <div class="rzp-upi-icon" style="background:#002970" title="Paytm">
+            <img src="{{ url_for('static', filename='images/payment/paytm.png') }}"
+                 alt="Paytm"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.parentNode.innerHTML='<span style=&quot;color:#fff;font-weight:700&quot;>P</span>'">
+          </div>
+
+          <!-- ══ IMAGE SLOT: BHIM logo ═══════════════════════════════════════
+               Place BHIM logo at: static/images/payment/bhim.png -->
+          <div class="rzp-upi-icon" style="background:#00a650" title="BHIM">
+            <img src="{{ url_for('static', filename='images/payment/bhim.png') }}"
+                 alt="BHIM"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.parentNode.innerHTML='<span style=&quot;color:#fff;font-weight:700&quot;>B</span>'">
+          </div>
+
+        </div>
+        QR valid for <span class="rzp-qr-timer"><span id="timerDisplay">11:49</span></span>
+      </div>
+    </div>
+
+    <div class="rzp-section-title">Cards, UPI &amp; More</div>
+
+    <div class="rzp-methods">
+      <div class="rzp-method" onclick="showScreen('screenCard')">
+        <!-- ══ IMAGE SLOT: Card method icon ─ swap SVG with <img src="static/images/payment/card-icon.png"> ══ -->
+        <div class="rzp-method-icon">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="#3d3093" stroke-width="1.8"/><line x1="2" y1="10" x2="22" y2="10" stroke="#3d3093" stroke-width="1.8"/><line x1="6" y1="15" x2="10" y2="15" stroke="#3d3093" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="rzp-method-info">
+          <div class="rzp-method-name">Card</div>
+          <div class="rzp-method-sub">Visa · Mastercard · RuPay &amp; more</div>
+        </div>
+        <div class="rzp-method-arrow">›</div>
+      </div>
+
+      <div class="rzp-method" onclick="showScreen('screenUPI')">
+        <div class="rzp-method-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M13 5l7 7-7 7M6 5l7 7-7 7" stroke="#3d3093" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="rzp-method-info">
+          <div class="rzp-method-name">UPI / QR</div>
+          <div class="rzp-method-sub">GPay · PhonePe · Paytm &amp; more</div>
+        </div>
+        <div class="rzp-method-arrow">›</div>
+      </div>
+
+      <div class="rzp-method" onclick="showScreen('screenNetbanking')">
+        <div class="rzp-method-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 9l9-6 9 6v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z" stroke="#3d3093" stroke-width="1.8"/><polyline points="9,22 9,12 15,12 15,22" stroke="#3d3093" stroke-width="1.8"/></svg>
+        </div>
+        <div class="rzp-method-info">
+          <div class="rzp-method-name">Netbanking</div>
+          <div class="rzp-method-sub">All Indian banks</div>
+        </div>
+        <div class="rzp-method-arrow">›</div>
+      </div>
+
+      <div class="rzp-method" onclick="showScreen('screenWallet')">
+        <div class="rzp-method-icon">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="#3d3093" stroke-width="1.8"/><circle cx="17" cy="14" r="2" fill="#3d3093"/><path d="M22 11H6a2 2 0 01-2-2V6" stroke="#3d3093" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="rzp-method-info">
+          <div class="rzp-method-name">Wallet</div>
+          <div class="rzp-method-sub">Mobikwik &amp; more</div>
+        </div>
+        <div class="rzp-method-arrow">›</div>
+      </div>
+
+    </div><!-- end rzp-methods -->
+
+    <div class="rzp-footer">
+      <button class="rzp-account-btn">Account &#9650;</button>
+      <div class="rzp-secured">Secured by <span class="rzp-secured-logo">Razorpay</span></div>
+    </div>
+
+    <div class="rzp-amount-bar">
+      <div>
+        <div class="rzp-amount-label">Total Amount</div>
+        <div class="rzp-amount-val" id="amountDisplay">₹0</div>
+      </div>
+      <button class="rzp-pay-btn" onclick="guardAmount() && showScreen('screenCard')">Pay Now</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 2: Card Payment ═══════════════════════════════════════════ -->
+  <div class="screen" id="screenCard">
+    <div class="rzp-form">
+      <div class="rzp-card-icons">
+        <span class="rzp-card-icon visa">VISA</span>
+        <span class="rzp-card-icon mc">MC</span>
+        <span class="rzp-card-icon rupay">RuPay</span>
+      </div>
+      <div class="rzp-field">
+        <label>Card Number</label>
+        <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19"
+               oninput="formatCard(this)">
+      </div>
+      <div class="rzp-field">
+        <label>Cardholder Name</label>
+        <input type="text" id="cardName" placeholder="Name on card">
+      </div>
+      <div class="rzp-row">
+        <div class="rzp-field">
+          <label>Expiry (MM/YY)</label>
+          <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5"
+                 oninput="formatExpiry(this)">
+        </div>
+        <div class="rzp-field">
+          <label>CVV</label>
+          <input type="password" id="cardCvv" placeholder="•••" maxlength="4">
+        </div>
+      </div>
+      <div id="cardError" style="color:#e04040;font-size:12px;display:none"></div>
+    </div>
+    <div class="rzp-footer">
+      <button class="rzp-account-btn">Account &#9650;</button>
+      <div class="rzp-secured">Secured by <span class="rzp-secured-logo">Razorpay</span></div>
+    </div>
+    <div class="rzp-amount-bar">
+      <div>
+        <div class="rzp-amount-label">Total Amount</div>
+        <div class="rzp-amount-val" id="amountDisplayCard">₹0</div>
+      </div>
+      <button class="rzp-pay-btn" onclick="submitCard()">Pay Now</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 3: UPI ════════════════════════════════════════════════════ -->
+  <div class="screen" id="screenUPI">
+    <div class="rzp-form">
+      <div class="rzp-field">
+        <label>UPI ID</label>
+        <div class="rzp-upi-input-wrap">
+          <input type="text" id="upiId" placeholder="yourname@upi">
+          <button class="rzp-upi-verify" onclick="submitUPI()">Verify</button>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#888;line-height:1.5">
+        Enter your UPI ID and click Verify to proceed.<br>
+        You will receive a payment request on your UPI app.
+      </p>
+      <div id="upiError" style="color:#e04040;font-size:12px;display:none"></div>
+    </div>
+    <div class="rzp-footer">
+      <button class="rzp-account-btn">Account &#9650;</button>
+      <div class="rzp-secured">Secured by <span class="rzp-secured-logo">Razorpay</span></div>
+    </div>
+    <div class="rzp-amount-bar">
+      <div>
+        <div class="rzp-amount-label">Total Amount</div>
+        <div class="rzp-amount-val" id="amountDisplayUPI">₹0</div>
+      </div>
+      <button class="rzp-pay-btn" onclick="submitUPI()">Verify &amp; Pay</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 4: Netbanking ══════════════════════════════════════════════ -->
+  <div class="screen" id="screenNetbanking">
+    <div style="padding:12px 16px 0;font-size:13px;color:#555">Select your bank:</div>
+    <div class="rzp-banks">
+      <div class="rzp-bank" onclick="selectBank(this,'SBI')">
+        <div class="rzp-bank-logo" style="background:#0052a5">
+          <img src="/static/images/payment/sbi.png" alt="SBI"
+               onload="this.parentNode.style.background='transparent'"
+               onerror="this.style.display='none';this.parentNode.style.background='#0052a5';this.parentNode.textContent='SBI'">
+        </div>
+        State Bank
+      </div>
+      <div class="rzp-bank" onclick="selectBank(this,'HDFC')">
+        <div class="rzp-bank-logo" style="background:#004c8e">
+          <img src="/static/images/payment/hdfc.png" alt="HDFC"
+               onload="this.parentNode.style.background='transparent'"
+               onerror="this.style.display='none';this.parentNode.style.background='#004c8e';this.parentNode.textContent='HDFC'">
+        </div>
+        HDFC Bank
+      </div>
+      <div class="rzp-bank" onclick="selectBank(this,'ICICI')">
+        <div class="rzp-bank-logo" style="background:#b02a2a">
+          <img src="/static/images/payment/icici.png" alt="ICICI"
+               onload="this.parentNode.style.background='transparent'"
+               onerror="this.style.display='none';this.parentNode.style.background='#b02a2a';this.parentNode.textContent='ICICI'">
+        </div>
+        ICICI Bank
+      </div>
+      <div class="rzp-bank" onclick="selectBank(this,'Axis')">
+        <div class="rzp-bank-logo" style="background:#8b0000">
+          <img src="/static/images/payment/axis.png" alt="Axis"
+               onload="this.parentNode.style.background='transparent'"
+               onerror="this.style.display='none';this.parentNode.style.background='#8b0000';this.parentNode.textContent='Axis'">
+        </div>
+        Axis Bank
+      </div>
+      <div class="rzp-bank" onclick="selectBank(this,'Kotak')">
+        <div class="rzp-bank-logo" style="background:#e74c1c">
+          <img src="/static/images/payment/kotak.png" alt="Kotak"
+               onload="this.parentNode.style.background='transparent'"
+               onerror="this.style.display='none';this.parentNode.style.background='#e74c1c';this.parentNode.textContent='KMB'">
+        </div>
+        Kotak Bank
+      </div>
+      <div class="rzp-bank" onclick="selectBank(this,'BOB')">
+        <div class="rzp-bank-logo" style="background:#f5a623">
+          <img src="/static/images/payment/bob.png" alt="BOB"
+               onload="this.parentNode.style.background='transparent'"
+               onerror="this.style.display='none';this.parentNode.style.background='#f5a623';this.parentNode.textContent='BOB'">
+        </div>
+        Bank of Baroda
+      </div>
+    </div>
+    <div id="bankError" style="color:#e04040;font-size:12px;padding:0 16px;display:none"></div>
+    <div style="flex:1"></div>
+    <div class="rzp-footer">
+      <button class="rzp-account-btn">Account &#9650;</button>
+      <div class="rzp-secured">Secured by <span class="rzp-secured-logo">Razorpay</span></div>
+    </div>
+    <div class="rzp-amount-bar">
+      <div>
+        <div class="rzp-amount-label">Total Amount</div>
+        <div class="rzp-amount-val" id="amountDisplayBank">₹0</div>
+      </div>
+      <button class="rzp-pay-btn" onclick="submitNetbanking()">Pay Now</button>
+    </div>
+  </div>
+
+    <!-- ═══ SCREEN 5: Wallet ══════════════════════════════════════════════════ -->
+  <div class="screen" id="screenWallet">
+    <div style="padding:12px 16px 4px;font-size:13px;font-weight:600;color:#333">Select Wallet</div>
+    <div class="rzp-wallets">
+
+      <!-- Mobikwik -->
+      <div class="rzp-wallet" onclick="selectWallet(this,'Mobikwik')">
+        <div class="rzp-wallet-left">
+          <div class="rzp-wallet-logo" id="wlogo_Mobikwik" style="background:#00b9f1">
+            <img src="/static/images/payment/mobikwik.png" alt="Mobikwik"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.style.display='none';this.parentNode.style.background='#00b9f1';this.parentNode.textContent='M'">
+          </div>
+          <div class="rzp-wallet-name">Mobikwik</div>
+        </div>
+        <div class="rzp-radio" id="walletRadio_Mobikwik"></div>
+      </div>
+
+      <!-- Freecharge -->
+      <div class="rzp-wallet" onclick="selectWallet(this,'Freecharge')">
+        <div class="rzp-wallet-left">
+          <div class="rzp-wallet-logo" id="wlogo_Freecharge" style="background:#ff6600">
+            <img src="/static/images/payment/freecharge.png" alt="Freecharge"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.style.display='none';this.parentNode.style.background='#ff6600';this.parentNode.textContent='F'">
+          </div>
+          <div class="rzp-wallet-name">Freecharge</div>
+        </div>
+        <div class="rzp-radio" id="walletRadio_Freecharge"></div>
+      </div>
+
+      <!-- Airtel Money -->
+      <div class="rzp-wallet" onclick="selectWallet(this,'Airtel Money')">
+        <div class="rzp-wallet-left">
+          <div class="rzp-wallet-logo" id="wlogo_AirtelMoney" style="background:#e40000">
+            <img src="/static/images/payment/airtel.png" alt="Airtel Money"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.style.display='none';this.parentNode.style.background='#e40000';this.parentNode.textContent='A'">
+          </div>
+          <div class="rzp-wallet-name">Airtel Money</div>
+        </div>
+        <div class="rzp-radio" id="walletRadio_AirtelMoney"></div>
+      </div>
+
+      <!-- Ola Money -->
+      <div class="rzp-wallet" onclick="selectWallet(this,'Ola Money')">
+        <div class="rzp-wallet-left">
+          <div class="rzp-wallet-logo" id="wlogo_OlaMoney" style="background:#333333">
+            <img src="/static/images/payment/olamoney.png" alt="Ola Money"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.style.display='none';this.parentNode.style.background='#333333';this.parentNode.textContent='O'">
+          </div>
+          <div class="rzp-wallet-name">Ola Money</div>
+        </div>
+        <div class="rzp-radio" id="walletRadio_OlaMoney"></div>
+      </div>
+
+      <!-- JioMoney -->
+      <div class="rzp-wallet" onclick="selectWallet(this,'JioMoney')">
+        <div class="rzp-wallet-left">
+          <div class="rzp-wallet-logo" id="wlogo_JioMoney" style="background:#0f4c81">
+            <img src="/static/images/payment/jiomoney.png" alt="JioMoney"
+                 onload="this.parentNode.style.background='transparent'"
+                 onerror="this.style.display='none';this.parentNode.style.background='#0f4c81';this.parentNode.textContent='J'">
+          </div>
+          <div class="rzp-wallet-name">JioMoney</div>
+        </div>
+        <div class="rzp-radio" id="walletRadio_JioMoney"></div>
+      </div>
+
+    </div>
+    <div class="rzp-footer">
+      <button class="rzp-account-btn">Account &#9650;</button>
+      <div class="rzp-secured">Secured by <span class="rzp-secured-logo">Razorpay</span></div>
+    </div>
+    <div class="rzp-amount-bar">
+      <div>
+        <div class="rzp-amount-label">Total Amount</div>
+        <div class="rzp-amount-val" id="amountDisplayWallet">&#8377;0</div>
+      </div>
+      <button class="rzp-pay-btn" onclick="submitWallet()">Pay Now</button>
+    </div>
+  </div>
+
+<!-- ═══ SCREEN 7: OTP / Bank Auth ════════════════════════════════════════ -->
+  <div class="screen" id="screenOTP">
+    <div class="rzp-otp-screen">
+      <div style="font-size:40px">🏦</div>
+      <div class="rzp-bank-name" id="otpBankName">Bank Authentication</div>
+      <div class="rzp-bank-subtitle">This is a demo payment page.<br>Choose whether to make this payment successful.</div>
+      <div class="rzp-otp-field">
+        <input class="rzp-otp-digit" type="text" maxlength="1" oninput="otpNext(this,1)">
+        <input class="rzp-otp-digit" type="text" maxlength="1" oninput="otpNext(this,2)">
+        <input class="rzp-otp-digit" type="text" maxlength="1" oninput="otpNext(this,3)">
+        <input class="rzp-otp-digit" type="text" maxlength="1" oninput="otpNext(this,4)">
+        <input class="rzp-otp-digit" type="text" maxlength="1" oninput="otpNext(this,5)">
+        <input class="rzp-otp-digit" type="text" maxlength="1" oninput="otpNext(this,6)">
+      </div>
+      <div class="rzp-otp-hint">Enter any 6 digits (this is a demo OTP)</div>
+      <div style="display:flex;gap:14px;margin-top:8px;width:100%">
+        <button onclick="processPayment(true)"
+          style="flex:1;padding:13px;background:#1a7a3c;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">
+          ✓ Success
+        </button>
+        <button onclick="processPayment(false)"
+          style="flex:1;padding:13px;background:#e04040;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">
+          ✗ Failure
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 8: Processing ══════════════════════════════════════════════ -->
+  <div class="screen" id="screenProcessing">
+    <div class="rzp-processing">
+      <div class="rzp-spinner"></div>
+      <div class="rzp-processing-text">Processing your payment…</div>
+      <div style="font-size:12px;color:#aaa">Please do not close this window</div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 9: Success ═════════════════════════════════════════════════ -->
+  <div class="screen" id="screenSuccess">
+    <div class="rzp-success-screen">
+      <div class="rzp-success-icon">
+        <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="#1a7a3c" opacity="0.15"/><path d="M12 21l6 6 10-12" stroke="#1a7a3c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="rzp-success-title">Payment Successful!</div>
+      <div class="rzp-success-sub">
+        Your payment of <strong id="successAmount">₹0</strong> was processed successfully.<br>
+        A confirmation has been sent to your email.
+      </div>
+      <div class="rzp-txn-id" id="txnId">TXN ID: RZP00000000</div>
+      <button class="rzp-done-btn" onclick="onPaymentDone()">Done</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 10: Failed ══════════════════════════════════════════════════ -->
+  <div class="screen" id="screenFailed">
+    <div class="rzp-otp-screen">
+      <div style="font-size:48px">❌</div>
+      <div style="font-size:20px;font-weight:700;color:#e04040">Payment Failed</div>
+      <div style="font-size:13px;color:#666;line-height:1.6">
+        Your payment didn't go through due to a temporary issue.<br>
+        Any debited amount will be refunded in 4–5 business days.
+      </div>
+      <button onclick="showScreen('screenMethods')"
+        style="background:#3d3093;color:#fff;border:none;border-radius:8px;padding:13px 40px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;width:100%">
+        Try Again
+      </button>
+      <button onclick="closeRzp()"
+        style="background:transparent;color:#888;border:1px solid #ddd;border-radius:8px;padding:11px 40px;font-size:14px;cursor:pointer;width:100%">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+</div><!-- /rzp-modal -->
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let RZP = {
+  amount:    0,
+  items:     [],
+  address:   '',
+  method:    '',
+  subMethod: '',
+  onSuccess: null,
+  onCancel:  null,
+};
+
+let selectedBank   = null;
+let selectedWallet = null;
+let timerInterval  = null;
+let timerSeconds   = 11 * 60 + 49;
+
+// ── Screen management ─────────────────────────────────────────────────────────
+const screenHistory = [];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  screenHistory.push(id);
+
+  // Show/hide back button
+  const backBtn = document.getElementById('rzpBack');
+  if (screenHistory.length > 1 && id !== 'screenSuccess' && id !== 'screenProcessing') {
+    backBtn.classList.remove('hidden');
+  } else {
+    backBtn.classList.add('hidden');
+  }
+
+  // Update header sub
+  const subtitles = {
+    screenCard:        'Debit / Credit Card',
+    screenUPI:         'UPI Payment',
+    screenNetbanking:  'Net Banking',
+    screenWallet:      'Wallet',
+    screenOTP:         'Authenticate',
+    screenProcessing:  'Processing…',
+    screenSuccess:     'Payment Successful',
+    screenFailed:      'Payment Failed',
+    screenMethods:     'Premium Chocolate Store',
+  };
+  document.getElementById('headerSub').textContent = subtitles[id] || 'ChocoBite';
+}
+
+function goBack() {
+  if (screenHistory.length > 1) {
+    screenHistory.pop();
+    const prev = screenHistory[screenHistory.length - 1];
+    showScreen(prev);
+    screenHistory.pop(); // showScreen pushes again, so remove duplicate
+  }
+}
+
+// ── Amount guard (called from Pay Now on method list) ────────────────────────
+function guardAmount() {
+  if (!RZP.amount || RZP.amount <= 0) {
+    alert('Payment amount must be greater than ₹0');
+    return false;
+  }
+  return true;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function initRzp(config) {
+  RZP.amount    = config.amount;
+  RZP.items     = config.items;
+  RZP.address   = config.address;
+  RZP.onSuccess = config.onSuccess;
+  RZP.onCancel  = config.onCancel;
+
+  const fmt = '₹' + RZP.amount.toLocaleString('en-IN');
+  ['amountDisplay','amountDisplayCard','amountDisplayUPI','amountDisplayBank',
+   'amountDisplayWallet',].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = fmt;
+  });
+  document.getElementById('successAmount').textContent = fmt;
+
+  startTimer();
+  showScreen('screenMethods');
+}
+
+// ── Timer ──────────────────────────────────────────────────────────────────────
+function startTimer() {
+  clearInterval(timerInterval);
+  timerSeconds = 11 * 60 + 49;
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    if (timerSeconds <= 0) { clearInterval(timerInterval); return; }
+    const m = Math.floor(timerSeconds / 60);
+    const s = timerSeconds % 60;
+    const el = document.getElementById('timerDisplay');
+    if (el) el.textContent = m + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+
+// ── Card helpers ──────────────────────────────────────────────────────────────
+function formatCard(inp) {
+  let v = inp.value.replace(/\D/g,'').substring(0,16);
+  inp.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExpiry(inp) {
+  let v = inp.value.replace(/\D/g,'');
+  if (v.length >= 3) v = v.substring(0,2)+'/'+v.substring(2,4);
+  inp.value = v;
+}
+
+// ── Submit methods ────────────────────────────────────────────────────────────
+function submitCard() {
+  const num  = document.getElementById('cardNumber').value.replace(/\s/g,'');
+  const name = document.getElementById('cardName').value.trim();
+  const exp  = document.getElementById('cardExpiry').value.trim();
+  const cvv  = document.getElementById('cardCvv').value.trim();
+  const err  = document.getElementById('cardError');
+
+  // ── Validation: amount must be > 0 ───────────────────────────────────────
+  if (!RZP.amount || RZP.amount <= 0) {
+    err.textContent = 'Payment amount must be greater than ₹0';
+    err.style.display = 'block'; return;
+  }
+
+  // ── Validation: card number ───────────────────────────────────────────────
+  if (num.length < 12) {
+    err.textContent = 'Enter a valid card number (min 12 digits)';
+    err.style.display = 'block'; return;
+  }
+
+  // ── Validation: cardholder name ───────────────────────────────────────────
+  if (!name) {
+    err.textContent = 'Enter cardholder name';
+    err.style.display = 'block'; return;
+  }
+
+  // ── Validation: expiry format & range ─────────────────────────────────────
+  if (exp.length < 5 || !exp.includes('/')) {
+    err.textContent = 'Enter expiry in MM/YY format';
+    err.style.display = 'block'; return;
+  }
+  const [mm, yy] = exp.split('/').map(Number);
+  const now = new Date();
+  const curMonth = now.getMonth() + 1;   // 1–12
+  const curYear  = now.getFullYear() % 100; // e.g. 25 for 2025
+
+  if (mm < 1 || mm > 12) {
+    err.textContent = 'Invalid expiry month — must be 01 to 12';
+    err.style.display = 'block'; return;
+  }
+  if (yy > 30) {
+    err.textContent = 'Expiry year cannot be beyond 2030';
+    err.style.display = 'block'; return;
+  }
+  if (yy < curYear || (yy === curYear && mm < curMonth)) {
+    err.textContent = 'This card has expired — check your expiry date';
+    err.style.display = 'block'; return;
+  }
+
+  // ── Validation: CVV ───────────────────────────────────────────────────────
+  if (cvv.length < 3) {
+    err.textContent = 'Enter a valid CVV (3–4 digits)';
+    err.style.display = 'block'; return;
+  }
+
+  err.style.display = 'none';
+  RZP.method    = 'Card';
+  RZP.subMethod = 'Card ending ' + num.slice(-4);
+  document.getElementById('otpBankName').textContent = 'Card Bank Authentication';
+  showScreen('screenOTP');
+}
+
+function submitUPI() {
+  const id  = document.getElementById('upiId').value.trim();
+  const err = document.getElementById('upiError');
+  if (!id || !id.includes('@')) { err.textContent='Enter a valid UPI ID (e.g. name@upi)'; err.style.display='block'; return; }
+  err.style.display='none';
+  RZP.method = 'UPI';
+  RZP.subMethod = id;
+  document.getElementById('otpBankName').textContent = 'UPI Authentication';
+  showScreen('screenOTP');
+}
+
+function selectBank(el, name) {
+  document.querySelectorAll('.rzp-bank').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedBank = name;
+}
+
+function submitNetbanking() {
+  const err = document.getElementById('bankError');
+  if (!selectedBank) { err.textContent='Please select a bank'; err.style.display='block'; return; }
+  err.style.display='none';
+  RZP.method = 'Netbanking';
+  RZP.subMethod = selectedBank + ' Bank';
+  document.getElementById('otpBankName').textContent = selectedBank + ' Bank Authentication';
+  showScreen('screenOTP');
+}
+
+function selectWallet(el, name) {
+  document.querySelectorAll('.rzp-radio').forEach(r => r.classList.remove('checked'));
+  const key = name.replace(/\s/g,'');
+  const radio = document.getElementById('walletRadio_' + key);
+  if (radio) radio.classList.add('checked');
+  selectedWallet = name;
+}
+
+function submitWallet() {
+  if (!selectedWallet) { alert('Please select a wallet'); return; }
+  RZP.method = 'Wallet';
+  RZP.subMethod = selectedWallet;
+  document.getElementById('otpBankName').textContent = selectedWallet + ' Authentication';
+  showScreen('screenOTP');
+}
+
+function otpNext(inp, n) {
+  if (inp.value && n < 6) {
+    const inputs = document.querySelectorAll('.rzp-otp-digit');
+    inputs[n].focus();
+  }
+}
+
+// ── Process Payment ───────────────────────────────────────────────────────────
+async function processPayment(success) {
+  if (!success) { showScreen('screenFailed'); return; }
+
+  showScreen('screenProcessing');
+
+  // Simulate brief processing delay
+  await new Promise(r => setTimeout(r, 1800));
+
+  // Generate fake transaction ID
+  const txnId = 'RZP' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2,6).toUpperCase();
+  document.getElementById('txnId').textContent = 'TXN ID: ' + txnId;
+  // ── FIX: always stamp the correct amount on the success screen ──
+  document.getElementById('successAmount').textContent = '₹' + RZP.amount.toLocaleString('en-IN');
+  clearInterval(timerInterval);
+
+  // Call server to confirm order
+  try {
+    const res = await fetch('/api/order/dummy-payment/confirm', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        items:       RZP.items,
+        address:     RZP.address,
+        total:       RZP.amount,
+        txn_id:      txnId,
+        method:      RZP.method,
+        sub_method:  RZP.subMethod,
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showScreen('screenSuccess');
+    } else {
+      showScreen('screenFailed');
+    }
+  } catch(e) {
+    showScreen('screenFailed');
+  }
+}
+
+// ── Done ──────────────────────────────────────────────────────────────────────
+function onPaymentDone() {
+  clearInterval(timerInterval);
+  // Notify parent window (iframe scenario)
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'RZP_DONE' }, '*');
+  }
+  if (RZP.onSuccess) RZP.onSuccess();
+}
+
+function closeRzp() {
+  clearInterval(timerInterval);
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'RZP_CANCEL' }, '*');
+  }
+  if (RZP.onCancel) RZP.onCancel();
+}
+
+// ── Listen for init message from parent frame ────────────────────────────────
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'RZP_INIT') {
+    initRzp(e.data.config);
+  }
+});
+
+// ── If opened as a page with URL params (for about_product direct flow) ───────
+const urlp = new URLSearchParams(window.location.search);
+if (urlp.get('amount')) {
+  // Will be initialised via postMessage from parent
+}
+</script>
+</body>
+</html>

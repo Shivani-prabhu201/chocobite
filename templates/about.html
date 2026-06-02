@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}About — ChocoBite{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Our Story</h1>
+    <p>Born from a love for chocolate, crafted with purpose</p>
+</div>
+
+<section class="about-page">
+    <div class="about-grid">
+        <div class="about-text">
+            <h2>Where It All Began</h2>
+            <p>ChocoBite was founded with one simple dream: to make premium, ethical chocolate accessible to everyone in India. What started as a small family kitchen experiment has grown into a beloved artisan chocolate brand.</p>
+            <p>We source our cacao directly from small-scale farmers in Kerala, Tamil Nadu, and internationally from Ghana and Ecuador. Every bean is selected for quality, and every product is crafted with honesty — no artificial additives, ever.</p>
+            <h2>Our Mission</h2>
+            <p>To bring the world's finest chocolate flavours to your doorstep while supporting sustainable farming and fair trade practices that uplift cocoa-farming communities.</p>
+        </div>
+        <div class="about-stats">
+            <div class="stat"><span class="stat-num">2018</span><span>Founded</span></div>
+            <div class="stat"><span class="stat-num">50+</span><span>Products</span></div>
+            <div class="stat"><span class="stat-num">10K+</span><span>Happy Customers</span></div>
+            <div class="stat"><span class="stat-num">100%</span><span>Natural</span></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     OUR CRAFT — MANAM-STYLE SCROLL SEQUENCING
+     ───────────────────────────────────────────────────────────────
+
+     LAYOUT (matches Manam exactly):
+     ┌─────────────────────────────────────────────────────────┐
+     │  "Our Craft"  /  "Before the Bean. Beyond the Bar."     │  ← heading (scrolls normally)
+     ├─────────────────────────────────────────────────────────┤
+     │                                                         │
+     │   ┌─────────────────────────────────┐                  │
+     │   │                                 │                  │
+     │   │         VIDEO (full-w)          │  ← ~65vh tall    │
+     │   │    plays fullscreen in panel    │                  │
+     │   └─────────────────────────────────┘                  │
+     │                                                         │
+     │   FARMING                    ← step label (uppercase)   │
+     │   Nurturing the Cacao        ← big h2 title             │
+     │   Our farmer-partner...      ← body paragraph           │
+     │                                                         │
+     ├──────┬───────────┬──────────────┬──────────────────────┤
+     │FARMNG│Fermentatio│Choc. Making  │Chocolatiering        │  ← tab bar
+     └──────┴───────────┴──────────────┴──────────────────────┘
+
+     HOW IT WORKS:
+     • .craft-scroll-spacer is STEPS × 100vh tall (set by JS).
+     • .craft-sticky is position:sticky; top:70px — stays on screen.
+     • On scroll, JS maps progress → step index → activateStep().
+     • activateStep() crossfades the video (opacity 0→1) and
+       slides the text block up (translateY 20px → 0).
+     • The tab bar at the bottom highlights the active stage.
+
+     VIDEO FILES:  static/videos/v1.mp4 … v4.mp4
+═══════════════════════════════════════════════════════════════ -->
+
+<div class="craft-section" id="craftSection">
+
+    <!-- Section heading scrolls normally above the sticky panel -->
+    <div class="craft-heading">
+        <span class="craft-eyebrow">&#10022; Our Craft &#10022;</span>
+        <h2 class="craft-title">Before the Bean.<br>Beyond the Bar.</h2>
+    </div>
+
+    <!-- Tall spacer — JS sets height = (STEPS + 0.6) × 100vh -->
+    <div class="craft-scroll-spacer" id="craftSpacer">
+
+        <!-- Sticky panel — stays fixed while spacer scrolls underneath -->
+        <div class="craft-sticky" id="craftSticky">
+
+            <!-- ── VIDEO LAYER ──────────────────────────────────────
+                 All 4 videos stacked. Only the active one is opacity:1.
+                 Each video fills the entire .craft-video-wrap div.
+                 object-fit:cover → fills without letterboxing.
+            ───────────────────────────────────────────────────────── -->
+            <div class="craft-video-wrap">
+
+                <!-- Dark overlay so text stays readable over bright video -->
+                <div class="craft-overlay"></div>
+
+                <!-- STEP 0 — FARMING -->
+                <video class="craft-vid active" data-step="0"
+                       autoplay muted loop playsinline preload="auto">
+                    <source src="{{ url_for('static', filename='videos/v1.mp4') }}" type="video/mp4">
+                </video>
+
+                <!-- STEP 1 — FERMENTATION -->
+                <video class="craft-vid" data-step="1"
+                       autoplay muted loop playsinline preload="auto">
+                    <source src="{{ url_for('static', filename='videos/v2.mp4') }}" type="video/mp4">
+                </video>
+
+                <!-- STEP 2 — CHOCOLATE MAKING -->
+                <video class="craft-vid" data-step="2"
+                       autoplay muted loop playsinline preload="auto">
+                    <source src="{{ url_for('static', filename='videos/v3.mp4') }}" type="video/mp4">
+                </video>
+
+                <!-- STEP 3 — CHOCOLATIERING -->
+                <video class="craft-vid" data-step="3"
+                       autoplay muted loop playsinline preload="auto">
+                    <source src="{{ url_for('static', filename='videos/v4.mp4') }}" type="video/mp4">
+                </video>
+
+            </div><!-- end craft-video-wrap -->
+
+
+            <!-- ── TEXT LAYER ───────────────────────────────────────
+                 Sits OVER the video via position:absolute + z-index.
+                 Each .craft-step is hidden (opacity:0) except the active one.
+                 JS fades + slides them on step change.
+            ───────────────────────────────────────────────────────── -->
+            <div class="craft-text-layer">
+
+                <!-- STEP 0 -->
+                <div class="craft-step active" data-step="0">
+                    <p class="craft-step-label">Farming</p>
+                    <h2 class="craft-step-title">Nurturing the Cacao</h2>
+                    <p class="craft-step-body">Our farmer-partner community nurtures Indian-origin cacao across Kerala and Tamil Nadu. With sustainable, shade-grown practices and zero synthetic pesticides, every pod is tended with the care it deserves — long before it reaches our hands.</p>
+                </div>
+
+                <!-- STEP 1 -->
+                <div class="craft-step" data-step="1">
+                    <p class="craft-step-label">Fermentation</p>
+                    <h2 class="craft-step-title">Revealing Hidden Flavours</h2>
+                    <p class="craft-step-body">Controlled fermentation and precise drying unlock the true flavour potential locked inside every cacao bean. Fruity, floral, earthy — each origin tells a different story. We don't mask it; we amplify it.</p>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="craft-step" data-step="2">
+                    <p class="craft-step-label">Chocolate Making</p>
+                    <h2 class="craft-step-title">Expressing Cacao's Flavours</h2>
+                    <p class="craft-step-body">Beans are delicately roasted, stone-ground, conched and tempered into chocolate that honours their origin. Every bar is a direct expression of the land, the farmer, and the season — nothing more, nothing less.</p>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="craft-step" data-step="3">
+                    <p class="craft-step-label">Chocolatiering</p>
+                    <h2 class="craft-step-title">Exploring Endless Possibilities</h2>
+                    <p class="craft-step-body">Our chocolatiers interpret the couverture into an ever-growing world of bars, bonbons, powders and snacks — balancing familiar Indian tastes with novel flavour combinations. The craft never stops evolving.</p>
+                </div>
+
+            </div><!-- end craft-text-layer -->
+
+
+            <!-- ── TAB BAR ────────────────────────────────────────
+                 Fixed at the bottom of the sticky panel.
+                 Clicking a tab smooth-scrolls to that step.
+            ───────────────────────────────────────────────────────── -->
+            <div class="craft-tab-bar">
+                <button class="craft-tab active" data-step="0">FARMING</button>
+                <button class="craft-tab"        data-step="1">Fermentation</button>
+                <button class="craft-tab"        data-step="2">Chocolate Making</button>
+                <button class="craft-tab"        data-step="3">Chocolatiering</button>
+                <!-- Progress bar lives inside the tab bar, spanning full width -->
+                <div class="craft-progress-track">
+                    <div class="craft-progress-bar" id="craftProgressBar"></div>
+                </div>
+            </div>
+
+        </div><!-- end craft-sticky -->
+    </div><!-- end craft-scroll-spacer -->
+</div><!-- end craft-section -->
+
+
+<!-- Our Values -->
+<section class="about-page" style="padding-top:0">
+    <div class="about-values">
+        <h2 style="text-align:center;margin-bottom:30px;">Our Values</h2>
+        <div class="why-grid">
+            <div class="why-card"><div class="why-icon">&#127807;</div><h3>Sustainability</h3><p>We are committed to eco-friendly packaging and zero-waste manufacturing processes.</p></div>
+            <div class="why-card"><div class="why-icon">&#129309;</div><h3>Fair Trade</h3><p>Every farmer who grows our cacao receives fair compensation and support.</p></div>
+            <div class="why-card"><div class="why-icon">&#10084;&#65039;</div><h3>Passion</h3><p>Each product is made with genuine love for chocolate and respect for the craft.</p></div>
+            <div class="why-card"><div class="why-icon">&#128300;</div><h3>Quality</h3><p>Rigorous quality checks at every stage — from bean to bar.</p></div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+
+    var STEPS    = 4;
+    var EXTRA_VH = 0.6;
+
+    /* DOM refs */
+    var spacer  = document.getElementById('craftSpacer');
+    var progBar = document.getElementById('craftProgressBar');
+    var section = document.getElementById('craftSection');
+    if (!spacer || !section) return;
+
+    /* Set spacer height so sticky panel dwells on each step */
+    function setSpacer() {
+        spacer.style.height = ((STEPS + EXTRA_VH) * window.innerHeight) + 'px';
+    }
+    setSpacer();
+    window.addEventListener('resize', setSpacer);
+
+    var cur        = -1;
+    var rafPending = false;
+
+    /* activateStep — crossfade video + slide text */
+    function activateStep(idx) {
+        if (idx === cur) return;
+        cur = idx;
+
+        /* Videos: fade active in, others out */
+        section.querySelectorAll('.craft-vid').forEach(function (v) {
+            var on = +v.dataset.step === idx;
+            v.classList.toggle('active', on);
+            /* Pause hidden videos to save CPU; play the active one */
+            if (on) {
+                v.play().catch(function(){});
+            } else {
+                v.pause();
+            }
+        });
+
+        /* Text panels: fade + slide active in, others out */
+        section.querySelectorAll('.craft-step').forEach(function (el) {
+            el.classList.toggle('active', +el.dataset.step === idx);
+        });
+
+        /* Tab bar */
+        document.querySelectorAll('.craft-tab').forEach(function (tab) {
+            tab.classList.toggle('active', +tab.dataset.step === idx);
+        });
+    }
+
+    /* Scroll handler */
+    function onScroll() {
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(function () {
+            rafPending = false;
+            var rect     = spacer.getBoundingClientRect();
+            var total    = spacer.offsetHeight - window.innerHeight;
+            var progress = Math.max(0, Math.min(1, -rect.top / total));
+            var step     = Math.min(Math.floor(progress * STEPS), STEPS - 1);
+            activateStep(step);
+            progBar.style.width = (progress * 100) + '%';
+        });
+    }
+
+    /* Attach/detach scroll listener via IntersectionObserver */
+    new IntersectionObserver(function (entries) {
+        if (entries[0].isIntersecting) {
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+        } else {
+            window.removeEventListener('scroll', onScroll);
+        }
+    }, { threshold: 0 }).observe(section);
+
+    /* Tab click → scroll to that step's position in the spacer */
+    document.querySelectorAll('.craft-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var idx     = +tab.dataset.step;
+            var absTop  = spacer.getBoundingClientRect().top + window.pageYOffset;
+            var perStep = spacer.offsetHeight / (STEPS + EXTRA_VH);
+            window.scrollTo({ top: absTop + idx * perStep + 8, behavior: 'smooth' });
+        });
+    });
+
+    activateStep(0);
+})();
+</script>
+{% endblock %}

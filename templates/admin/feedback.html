@@ -1,0 +1,400 @@
+{% extends "admin/base.html" %}
+{% block title %}Feedback & Reviews — ChocoBite Admin{% endblock %}
+{% block page_title %}Feedback &amp; Reviews{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Tab bar ─────────────────────────────────────────────────────────────── */
+.fb-tabs { display:flex; gap:8px; margin-bottom:24px; }
+.fb-tab  {
+    background:transparent; border:1px solid rgba(212,130,10,0.2);
+    border-radius:20px; padding:7px 20px; font-size:13px; cursor:pointer;
+    color:var(--muted); transition:all .2s; font-family:'Cinzel',serif;
+    letter-spacing:.5px;
+}
+.fb-tab:hover  { border-color:var(--gold); color:var(--gold); }
+.fb-tab.active { background:var(--gold); border-color:var(--gold); color:#000; font-weight:700; }
+
+/* ── Section panels ──────────────────────────────────────────────────────── */
+.fb-section { display:none; }
+.fb-section.active { display:block; }
+
+/* ── Filter bar ──────────────────────────────────────────────────────────── */
+.fb-filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+.fb-filter-btn {
+    background:rgba(255,255,255,0.03); border:1px solid rgba(212,130,10,0.15);
+    border-radius:8px; padding:6px 14px; font-size:12px; cursor:pointer;
+    color:var(--muted); transition:all .2s; font-family:'Cinzel',serif;
+}
+.fb-filter-btn:hover  { border-color:var(--gold); color:var(--gold); }
+.fb-filter-btn.active { background:rgba(212,130,10,0.12); border-color:var(--gold); color:var(--gold2); }
+
+/* ── Status pills ─────────────────────────────────────────────────────────── */
+.pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px;
+        font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+.pill-pending  { background:rgba(212,130,10,0.15); color:var(--gold); }
+.pill-approved { background:rgba(45,122,79,0.15);  color:#6fcf97; }
+.pill-rejected { background:rgba(139,26,26,0.2);   color:#e04040; }
+.pill-flagged  { background:rgba(180,60,0,0.2);    color:#ff9060; }
+.pill-hidden   { background:rgba(80,80,80,0.3);    color:#888; }
+
+/* ── Review card ─────────────────────────────────────────────────────────── */
+.fb-card {
+    background:var(--jet2); border:1px solid rgba(212,130,10,0.1);
+    border-radius:12px; padding:18px 20px; margin-bottom:14px;
+    transition:border-color .2s;
+}
+.fb-card:hover { border-color:rgba(212,130,10,0.25); }
+.fb-card-header { display:flex; align-items:flex-start; gap:14px; margin-bottom:12px; flex-wrap:wrap; }
+.fb-avatar {
+    width:38px; height:38px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg,var(--gold),#b5690a);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel',serif; font-size:14px; font-weight:700; color:#000;
+}
+.fb-meta { flex:1; min-width:0; }
+.fb-meta-name  { font-size:14px; color:var(--text); font-weight:600; }
+.fb-meta-date  { font-size:12px; color:var(--muted); }
+.fb-meta-prod  { font-size:12px; color:var(--gold); margin-top:2px; }
+.fb-stars      { color:#f5c842; font-size:0.95rem; letter-spacing:1px; margin-left:auto; }
+.fb-comment    { color:var(--text); font-size:14px; line-height:1.6; margin-bottom:14px; }
+.fb-actions    { display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+.act-btn {
+    background:transparent; border:1px solid rgba(212,130,10,0.2); border-radius:7px;
+    padding:5px 13px; font-size:12px; cursor:pointer; color:var(--muted);
+    transition:all .2s; font-family:'Cinzel',serif; letter-spacing:.3px;
+}
+.act-btn:hover { border-color:var(--gold); color:var(--gold); }
+.act-btn.approve  { border-color:rgba(45,122,79,.4);  color:#6fcf97; }
+.act-btn.approve:hover  { background:rgba(45,122,79,.1); }
+.act-btn.reject   { border-color:rgba(139,26,26,.4);  color:#e04040; }
+.act-btn.reject:hover   { background:rgba(139,26,26,.1); }
+.act-btn.flag     { border-color:rgba(180,60,0,.4);   color:#ff9060; }
+.act-btn.flag:hover     { background:rgba(180,60,0,.1); }
+.act-btn.hide     { border-color:rgba(80,80,80,.4);   color:#888; }
+.act-btn.hide:hover     { background:rgba(80,80,80,.1); }
+
+/* ── Reply box ────────────────────────────────────────────────────────────── */
+.reply-wrap { margin-top:10px; }
+.reply-existing {
+    background:rgba(212,130,10,0.06); border-left:3px solid var(--gold);
+    border-radius:0 8px 8px 0; padding:10px 14px; margin-bottom:8px; font-size:13px;
+}
+.reply-existing strong { color:var(--gold); font-size:11px; letter-spacing:1px;
+                          text-transform:uppercase; display:block; margin-bottom:4px; }
+.reply-input-row { display:flex; gap:8px; }
+.reply-input {
+    flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(212,130,10,0.2);
+    border-radius:8px; padding:8px 12px; color:var(--text); font-size:13px;
+    font-family:'Crimson Text',serif; outline:none; resize:none;
+    transition:border-color .2s;
+}
+.reply-input:focus { border-color:rgba(212,130,10,0.5); }
+.reply-send-btn {
+    background:linear-gradient(135deg,var(--gold),#b5690a); border:none;
+    border-radius:8px; padding:8px 16px; color:#000; font-size:12px;
+    font-family:'Cinzel',serif; font-weight:700; cursor:pointer;
+    white-space:nowrap; transition:opacity .2s;
+}
+.reply-send-btn:hover { opacity:.85; }
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.fb-empty { text-align:center; padding:40px; color:var(--muted);
+             font-family:'Cinzel',serif; font-size:13px; letter-spacing:1px; }
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+.fb-loading { display:flex; align-items:center; justify-content:center;
+               height:120px; color:var(--muted); font-family:'Cinzel',serif;
+               font-size:12px; letter-spacing:2px; }
+
+/* ── Stats row ───────────────────────────────────────────────────────────── */
+.fb-stats { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+             gap:12px; margin-bottom:20px; }
+.fb-stat  { background:var(--jet2); border:1px solid rgba(212,130,10,0.1);
+             border-radius:10px; padding:14px 16px; }
+.fb-stat-val { font-family:'Cinzel',serif; font-size:22px; font-weight:700;
+                color:var(--gold2); line-height:1; }
+.fb-stat-lbl { font-size:11px; color:var(--muted); margin-top:4px;
+                text-transform:uppercase; letter-spacing:1px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Tab bar -->
+<div class="fb-tabs">
+    <button class="fb-tab active" onclick="switchFbTab('general')">&#128172; General Feedback</button>
+    <button class="fb-tab"        onclick="switchFbTab('reviews')">&#11088; Product Reviews</button>
+</div>
+
+<!-- ══════════ GENERAL FEEDBACK SECTION ══════════ -->
+<div class="fb-section active" id="sec-general">
+
+    <div class="fb-stats" id="genStats">
+        <div class="fb-stat"><div class="fb-stat-val" id="gs-total">—</div><div class="fb-stat-lbl">Total</div></div>
+        <div class="fb-stat"><div class="fb-stat-val" id="gs-today">—</div><div class="fb-stat-lbl">Today</div></div>
+        <div class="fb-stat"><div class="fb-stat-val" id="gs-avg">—</div><div class="fb-stat-lbl">Avg Rating</div></div>
+        <div class="fb-stat"><div class="fb-stat-val" id="gs-replied">—</div><div class="fb-stat-lbl">Replied</div></div>
+    </div>
+
+    <div class="fb-filters">
+        <button class="fb-filter-btn active" onclick="filterGen('all',this)">All</button>
+        <button class="fb-filter-btn" onclick="filterGen('unreplied',this)">Unreplied</button>
+        <button class="fb-filter-btn" onclick="filterGen('replied',this)">Replied</button>
+    </div>
+
+    <div id="genList"><div class="fb-loading">Loading feedback…</div></div>
+</div>
+
+<!-- ══════════ PRODUCT REVIEWS SECTION ══════════ -->
+<div class="fb-section" id="sec-reviews">
+
+    <div class="fb-stats" id="revStats">
+        <div class="fb-stat"><div class="fb-stat-val" id="rs-total">—</div><div class="fb-stat-lbl">Total</div></div>
+        <div class="fb-stat"><div class="fb-stat-val" id="rs-pending">—</div><div class="fb-stat-lbl">Pending</div></div>
+        <div class="fb-stat"><div class="fb-stat-val" id="rs-approved">—</div><div class="fb-stat-lbl">Approved</div></div>
+        <div class="fb-stat"><div class="fb-stat-val" id="rs-rejected">—</div><div class="fb-stat-lbl">Rejected</div></div>
+        <div class="fb-stat"><div class="fb-stat-val" id="rs-flagged">—</div><div class="fb-stat-lbl">Flagged</div></div>
+    </div>
+
+    <div class="fb-filters">
+        <button class="fb-filter-btn active" onclick="filterRev('all',this)">All</button>
+        <button class="fb-filter-btn" onclick="filterRev('pending',this)">Pending</button>
+        <button class="fb-filter-btn" onclick="filterRev('approved',this)">Approved</button>
+        <button class="fb-filter-btn" onclick="filterRev('rejected',this)">Rejected</button>
+        <button class="fb-filter-btn" onclick="filterRev('flagged',this)">Flagged</button>
+        <button class="fb-filter-btn" onclick="filterRev('hidden',this)">Hidden</button>
+    </div>
+
+    <div id="revList"><div class="fb-loading">Loading reviews…</div></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var _genAll = [];
+var _revAll = [];
+var _genFilter = 'all';
+var _revFilter = 'all';
+
+/* ── Tab switching ──────────────────────────────────────────────────────── */
+function switchFbTab(name) {
+    document.querySelectorAll('.fb-tab').forEach(function(t, i) {
+        t.classList.toggle('active', ['general','reviews'][i] === name);
+    });
+    document.querySelectorAll('.fb-section').forEach(function(s) {
+        s.classList.toggle('active', s.id === 'sec-' + name);
+    });
+}
+
+/* ── Stars renderer ─────────────────────────────────────────────────────── */
+function stars(n) {
+    var s = '';
+    for (var i = 1; i <= 5; i++) s += (i <= n ? '\u2605' : '\u2606');
+    return s;
+}
+
+/* ── Avatar initials ─────────────────────────────────────────────────────── */
+function initials(name) {
+    return (name||'A').trim().split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+}
+
+/* ════════════════════════════════════════════
+   GENERAL FEEDBACK
+════════════════════════════════════════════ */
+async function loadGeneral() {
+    document.getElementById('genList').innerHTML = '<div class="fb-loading">Loading feedback\u2026</div>';
+    try {
+        var res = await fetch('/admin/api/feedback/all');
+        _genAll = await res.json();
+    } catch(e) { _genAll = []; }
+    updateGenStats();
+    renderGeneral();
+}
+
+function updateGenStats() {
+    var today = new Date().toDateString();
+    var total   = _genAll.length;
+    var todayCt = _genAll.filter(function(f){ return f.date_str && new Date(f.created_raw).toDateString()===today; }).length;
+    var avg     = total ? (_genAll.reduce(function(s,f){return s+f.rating;},0)/total).toFixed(1) : '—';
+    var replied = _genAll.filter(function(f){ return f.admin_reply; }).length;
+    document.getElementById('gs-total').textContent   = total;
+    document.getElementById('gs-today').textContent   = todayCt;
+    document.getElementById('gs-avg').textContent     = avg;
+    document.getElementById('gs-replied').textContent = replied;
+}
+
+function filterGen(filter, btn) {
+    _genFilter = filter;
+    document.querySelectorAll('#sec-general .fb-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderGeneral();
+}
+
+function renderGeneral() {
+    var list = _genAll.filter(function(f) {
+        if (_genFilter === 'unreplied') return !f.admin_reply;
+        if (_genFilter === 'replied')   return  !!f.admin_reply;
+        return true;
+    });
+    var el = document.getElementById('genList');
+    if (!list.length) { el.innerHTML = '<div class="fb-empty">No feedback found.</div>'; return; }
+    el.innerHTML = list.map(function(f) {
+        var av  = initials(f.name);
+        var replyHtml = '';
+        if (f.admin_reply) {
+            replyHtml = '<div class="reply-existing"><strong>&#128736; Admin Reply</strong>' + esc(f.admin_reply) + '</div>';
+        }
+        return '<div class="fb-card" id="gcard-'+f.feedback_id+'">'
+            + '<div class="fb-card-header">'
+                + '<div class="fb-avatar">' + av + '</div>'
+                + '<div class="fb-meta">'
+                    + '<div class="fb-meta-name">' + esc(f.name||'Anonymous') + (f.email ? ' <span style="color:var(--muted);font-size:12px">'+esc(f.email)+'</span>' : '') + '</div>'
+                    + '<div class="fb-meta-date">' + (f.created_at||'') + '</div>'
+                + '</div>'
+                + '<div class="fb-stars">' + stars(f.rating) + '</div>'
+            + '</div>'
+            + '<div class="fb-comment">' + esc(f.comment) + '</div>'
+            + '<div class="reply-wrap">'
+                + replyHtml
+                + '<div class="reply-input-row">'
+                    + '<textarea class="reply-input" id="greply-'+f.feedback_id+'" placeholder="Write a reply\u2026" rows="2"></textarea>'
+                    + '<button class="reply-send-btn" onclick="sendGenReply(\''+f.feedback_id+'\')">&#128736; Reply</button>'
+                + '</div>'
+            + '</div>'
+        + '</div>';
+    }).join('');
+}
+
+async function sendGenReply(fid) {
+    var text = document.getElementById('greply-'+fid).value.trim();
+    if (!text) { adminToast('Please write a reply first', 'error'); return; }
+    var res  = await fetch('/admin/api/feedback/reply', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({feedback_id: fid, reply: text})
+    });
+    var data = await res.json();
+    if (data.success) {
+        adminToast('Reply saved!', 'success');
+        var ta = document.getElementById('greply-'+fid);
+        if (ta) ta.value = '';
+        loadGeneral();
+    } else adminToast(data.message || 'Error', 'error');
+}
+
+/* ════════════════════════════════════════════
+   PRODUCT REVIEWS
+════════════════════════════════════════════ */
+async function loadReviews() {
+    document.getElementById('revList').innerHTML = '<div class="fb-loading">Loading reviews\u2026</div>';
+    try {
+        var res = await fetch('/admin/api/product-reviews/all');
+        _revAll = await res.json();
+    } catch(e) { _revAll = []; }
+    updateRevStats();
+    renderReviews();
+}
+
+function updateRevStats() {
+    document.getElementById('rs-total').textContent    = _revAll.length;
+    document.getElementById('rs-pending').textContent  = _revAll.filter(function(r){return (r.status||'pending')==='pending';}).length;
+    document.getElementById('rs-approved').textContent = _revAll.filter(function(r){return r.status==='approved';}).length;
+    document.getElementById('rs-rejected').textContent = _revAll.filter(function(r){return r.status==='rejected';}).length;
+    document.getElementById('rs-flagged').textContent  = _revAll.filter(function(r){return r.status==='flagged';}).length;
+}
+
+function filterRev(filter, btn) {
+    _revFilter = filter;
+    document.querySelectorAll('#sec-reviews .fb-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderReviews();
+}
+
+function renderReviews() {
+    var list = _revAll.filter(function(r) {
+        if (_revFilter === 'all') return true;
+        var s = r.status || 'pending';
+        return s === _revFilter;
+    });
+    var el = document.getElementById('revList');
+    if (!list.length) { el.innerHTML = '<div class="fb-empty">No reviews in this category.</div>'; return; }
+    el.innerHTML = list.map(function(r) {
+        var status = r.status || 'pending';
+        var av = initials(r.user_name);
+        var replyHtml = '';
+        if (r.admin_reply) {
+            replyHtml = '<div class="reply-existing"><strong>&#128736; Admin Reply</strong>' + esc(r.admin_reply) + '</div>';
+        }
+        return '<div class="fb-card" id="rcard-'+r.review_id+'">'
+            + '<div class="fb-card-header">'
+                + '<div class="fb-avatar">' + av + '</div>'
+                + '<div class="fb-meta">'
+                    + '<div class="fb-meta-name">' + esc(r.user_name||'User') + '</div>'
+                    + '<div class="fb-meta-date">' + (r.created_at||'') + '</div>'
+                    + (r.product_name ? '<div class="fb-meta-prod">&#127851; '+esc(r.product_name)+'</div>' : '')
+                + '</div>'
+                + '<div style="margin-left:auto;text-align:right">'
+                    + '<div class="fb-stars">' + stars(r.rating) + '</div>'
+                    + '<span class="pill pill-'+status+'" style="margin-top:4px;display:inline-block">'+status+'</span>'
+                + '</div>'
+            + '</div>'
+            + '<div class="fb-comment">' + esc(r.comment) + '</div>'
+            + '<div class="fb-actions">'
+                + (status !== 'approved' ? '<button class="act-btn approve" onclick="moderateReview(\''+r.review_id+'\',\'approved\')">&#10003; Approve</button>' : '')
+                + (status !== 'rejected' ? '<button class="act-btn reject"  onclick="moderateReview(\''+r.review_id+'\',\'rejected\')">&#10007; Reject</button>' : '')
+                + (status !== 'flagged'  ? '<button class="act-btn flag"    onclick="moderateReview(\''+r.review_id+'\',\'flagged\')">&#9873; Flag</button>' : '')
+                + (status !== 'hidden'   ? '<button class="act-btn hide"    onclick="moderateReview(\''+r.review_id+'\',\'hidden\')">&#128683; Hide</button>' : '')
+                + (status === 'hidden' || status === 'rejected' ? '<button class="act-btn approve" onclick="moderateReview(\''+r.review_id+'\',\'approved\')">&#8635; Restore</button>' : '')
+            + '</div>'
+            + '<div class="reply-wrap" style="margin-top:10px">'
+                + replyHtml
+                + '<div class="reply-input-row">'
+                    + '<textarea class="reply-input" id="rreply-'+r.review_id+'" placeholder="Write a reply to show under the review\u2026" rows="2"></textarea>'
+                    + '<button class="reply-send-btn" onclick="sendRevReply(\''+r.review_id+'\')">&#128736; Reply</button>'
+                + '</div>'
+            + '</div>'
+        + '</div>';
+    }).join('');
+}
+
+async function moderateReview(rid, action) {
+    var res  = await fetch('/admin/api/product-reviews/moderate', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({review_id: rid, action: action})
+    });
+    var data = await res.json();
+    if (data.success) {
+        adminToast('Review ' + action + '!', 'success');
+        loadReviews();
+    } else adminToast(data.message || 'Error', 'error');
+}
+
+async function sendRevReply(rid) {
+    var text = document.getElementById('rreply-'+rid).value.trim();
+    if (!text) { adminToast('Please write a reply first', 'error'); return; }
+    var res  = await fetch('/admin/api/product-reviews/reply', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({review_id: rid, reply: text})
+    });
+    var data = await res.json();
+    if (data.success) {
+        adminToast('Reply saved! Visible on product page.', 'success');
+        var ta = document.getElementById('rreply-'+rid);
+        if (ta) ta.value = '';
+        loadReviews();
+    } else adminToast(data.message || 'Error', 'error');
+}
+
+/* ── Escape HTML ─────────────────────────────────────────────────────────── */
+function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Init ─────────────────────────────────────────────────────────────────── */
+loadGeneral();
+loadReviews();
+</script>
+{% endblock %}

@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — ChocoBite{% endblock %}
+{% block head %}
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header" style="padding-bottom:20px">
+    <div style="display:flex;justify-content:center;gap:6px;color:var(--text-muted);font-size:.88rem;flex-wrap:wrap">
+        <a href="/">Home</a> /
+        <a href="/products">Products</a> /
+        <a href="/products?cat={{ product.slug }}">{{ product.category_name }}</a> /
+        <span style="color:var(--gold)">{{ product.name }}</span>
+    </div>
+</div>
+
+<div class="about-product-page">
+
+    <!-- LEFT: IMAGE -->
+    <div class="ap-left">
+        <div class="ap-img-wrap">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}"
+                 onerror="this.src='https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=600'">
+            {% if product.stock_quantity == 0 %}
+                <div class="ap-oos-overlay">Out of Stock</div>
+            {% endif %}
+            {% if product.pack_type %}
+                {% if product.pack_type == 'Premium' %}
+                    <div class="ap-pack-badge ap-pack-premium">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="16" height="11" fill="#d4820a" style="vertical-align:middle;margin-right:4px"><polygon points="0,14 0,5 5,9 10,0 15,9 20,5 20,14"/></svg>Premium Pack
+                    </div>
+                {% elif product.pack_type == 'Pocket Pack' %}
+                    <div class="ap-pack-badge">&#9733; Pocket Pack</div>
+                {% elif product.pack_type == 'Party Pack' %}
+                    <div class="ap-pack-badge">L &nbsp;Party Pack</div>
+                {% else %}
+                    <div class="ap-pack-badge">{{ product.pack_type }} Pack</div>
+                {% endif %}
+            {% endif %}
+            {% if product.is_sugarless %}
+                <div class="ap-sugar-badge">Sugar-Free</div>
+            {% else %}
+                <div class="ap-sugar-badge" style="background:rgba(180,90,10,0.85)">Contains Sugar</div>
+            {% endif %}
+        </div>
+
+        <div class="ap-rating">
+            <span class="ap-stars">
+                {% for i in range(1, 6) %}{% if i <= product.rating|int %}★{% else %}☆{% endif %}{% endfor %}
+            </span>
+            <span>{{ product.rating }} / 5</span>
+        </div>
+
+        <div class="ap-pills">
+            <span class="ap-pill">{{ product.weight }}</span>
+            <span class="ap-pill">{{ product.category_name }}</span>
+            {% if product.stock_quantity > 0 %}
+                <span class="ap-pill" style="background:rgba(45,122,79,.2);border-color:#2d7a4f;color:#6fcf97">In Stock</span>
+            {% else %}
+                <span class="ap-pill" style="background:rgba(139,26,26,.2);border-color:#8b1a1a;color:#f08080">Out of Stock</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- RIGHT: ALL DETAILS -->
+    <div class="ap-right">
+
+        <span class="product-category-tag">{{ product.category_name }}</span>
+        <h1 class="ap-name">{{ product.name }}</h1>
+
+        {% if product.tagline %}
+        <p class="ap-tagline">{{ product.tagline }}</p>
+        {% endif %}
+
+        <!-- PRICE BLOCK with MRP strikethrough -->
+        <div class="ap-price-block">
+            <span class="ap-price">&#8377;{{ product.price | int }}</span>
+            {% if product.mrp and product.mrp > product.price %}
+                <span class="ap-mrp">&#8377;{{ product.mrp | int }}</span>
+                <span class="ap-save">Save &#8377;{{ (product.mrp - product.price) | int }}</span>
+            {% endif %}
+            {% if product.price_per_100g %}
+                <span class="ap-per100">{{ product.price_per_100g }}</span>
+            {% endif %}
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="ap-section">
+            <h3 class="ap-section-title">About This Product</h3>
+            <p class="ap-description">{{ product.description }}</p>
+        </div>
+
+        <!-- WHY THIS PACK -->
+        {% if product.why_this %}
+        <div class="ap-section ap-why-section">
+            <h3 class="ap-section-title">Why This Pack?</h3>
+            <p class="ap-why-text">{{ product.why_this }}</p>
+        </div>
+        {% endif %}
+
+        <!-- HEALTH BENEFITS -->
+        {% if product.health_benefits %}
+        <div class="ap-section ap-health-section">
+            <h3 class="ap-section-title">Health Benefits</h3>
+            <p class="ap-health-text">{{ product.health_benefits }}</p>
+        </div>
+        {% endif %}
+
+        <!-- DETAILS TABLE -->
+        <div class="ap-section">
+            <h3 class="ap-section-title">Product Details</h3>
+            <table class="ap-details-table">
+                <tr><td>Weight</td><td>{{ product.weight }}</td></tr>
+                {% if product.pack_type %}<tr><td>Pack Size</td><td>{{ product.pack_type }}</td></tr>{% endif %}
+                <tr><td>Category</td><td>{{ product.category_name }}</td></tr>
+                <tr><td>Sugar</td><td>{% if product.is_sugarless %}<span style="color:#6fcf97">Sugar-Free</span>{% else %}<span style="color:#f5c842">Contains Sugar</span>{% endif %}</td></tr>
+                <tr><td>Rating</td><td>{{ product.rating }} / 5</td></tr>
+                <tr><td>Est. Delivery</td><td><span style="color:#6fcf97" id="deliveryDateDisplay"></span></td></tr>
+            </table>
+        </div>
+
+        {% if product.stock_quantity > 0 %}
+
+        <!-- QUANTITY -->
+        <div class="ap-section">
+            <h3 class="ap-section-title">Quantity</h3>
+            <div class="ap-qty">
+                <button onclick="changeQty(-1)">-</button>
+                <span id="qtyDisplay">1</span>
+                <button onclick="changeQty(1)">+</button>
+                <span style="color:var(--text-muted);font-size:.85rem;margin-left:10px">max {{ product.stock_quantity }}</span>
+            </div>
+        </div>
+
+        <!--
+            CART & BUY BUTTONS
+            This page is freely accessible without login.
+            Login is only asked when the customer clicks one of these buttons.
+        -->
+        <div class="ap-action-btns">
+            <button class="ap-btn-buy" onclick="openPaymentModal()">Buy Now</button>
+            <button class="ap-btn-cart" onclick="handleAddToCart()">Add to Cart</button>
+        </div>
+
+        <p class="ap-login-hint" id="apLoginHint" style="display:none">
+            Please <a href="#" onclick="openAuthModal();return false">log in</a> to add to cart or buy.
+        </p>
+
+        {% else %}
+        <div class="ap-oos-msg">
+            <span>Currently Out of Stock</span>
+            <p>This product is temporarily unavailable. Check back soon!</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+
+<!-- CUSTOMER REVIEWS SECTION -->
+<div id="reviewsSection" style="max-width:1100px;margin:0 auto 60px;padding:0 40px;">
+
+    <!-- Section header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid rgba(212,130,10,0.15)">
+        <h2 style="font-family:var(--font-display);color:var(--gold-light);font-size:1.5rem;margin:0">&#11088; Customer Reviews</h2>
+        <div id="reviewsSummary" style="font-size:0.9rem;color:var(--text-muted)"></div>
+    </div>
+
+    <!-- First review displayed inline -->
+    <div id="firstReview" style="margin-bottom:20px"></div>
+
+    <!-- View all button -->
+    <div id="viewAllWrap" style="display:none;margin-bottom:28px">
+        <button onclick="openReviewsPanel()" style="background:transparent;border:1px solid rgba(212,130,10,0.4);color:var(--gold);border-radius:8px;padding:9px 22px;font-size:0.9rem;font-family:var(--font-body);cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(212,130,10,0.08)'" onmouseout="this.style.background='transparent'">View All Reviews &#8594;</button>
+    </div>
+
+    <!-- Write a review (login required) -->
+    <div id="writeReviewWrap">
+        <h3 style="font-family:var(--font-display);color:var(--cream);font-size:1.1rem;margin:0 0 16px">Write a Review</h3>
+        <div id="reviewFormWrap">
+            <!-- Star rating picker -->
+            <div style="margin-bottom:14px">
+                <label style="display:block;color:var(--text-muted);font-size:0.85rem;margin-bottom:6px">Your Rating *</label>
+                <div id="starPicker" style="display:flex;gap:6px;font-size:1.8rem;cursor:pointer">
+                    <span data-v="1" onclick="setReviewRating(1)" onmouseover="hoverStar(1)" onmouseout="resetStars()" style="color:#444;transition:color .15s">&#9733;</span>
+                    <span data-v="2" onclick="setReviewRating(2)" onmouseover="hoverStar(2)" onmouseout="resetStars()" style="color:#444;transition:color .15s">&#9733;</span>
+                    <span data-v="3" onclick="setReviewRating(3)" onmouseover="hoverStar(3)" onmouseout="resetStars()" style="color:#444;transition:color .15s">&#9733;</span>
+                    <span data-v="4" onclick="setReviewRating(4)" onmouseover="hoverStar(4)" onmouseout="resetStars()" style="color:#444;transition:color .15s">&#9733;</span>
+                    <span data-v="5" onclick="setReviewRating(5)" onmouseover="hoverStar(5)" onmouseout="resetStars()" style="color:#444;transition:color .15s">&#9733;</span>
+                </div>
+            </div>
+            <!-- Review text -->
+            <textarea id="reviewText" placeholder="Share your experience with this chocolate..." rows="3"
+                style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(212,130,10,0.25);border-radius:10px;padding:12px 14px;color:var(--cream);font-family:var(--font-body);font-size:1rem;resize:vertical;outline:none;box-sizing:border-box;transition:border-color .2s;margin-bottom:12px"
+                onfocus="this.style.borderColor='rgba(212,130,10,0.6)'" onblur="this.style.borderColor='rgba(212,130,10,0.25)'"></textarea>
+            <button onclick="submitReview()" id="reviewSubmitBtn"
+                style="background:linear-gradient(135deg,var(--gold),#b5690a);border:none;color:#000;border-radius:8px;padding:10px 28px;font-size:0.95rem;font-family:var(--font-display);font-weight:700;cursor:pointer;transition:opacity .2s"
+                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Submit Review</button>
+            <div id="reviewMsg" style="font-size:0.9rem;margin-top:10px;min-height:20px"></div>
+        </div>
+        <div id="reviewLoginPrompt" style="display:none;padding:14px 18px;background:rgba(212,130,10,0.06);border:1px solid rgba(212,130,10,0.2);border-radius:10px;color:var(--text-muted);font-size:0.95rem">
+            &#128274; <a href="#" onclick="openAuthModal();return false" style="color:var(--gold)">Log in</a> to write a review for this product.
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ALL REVIEWS SLIDE PANEL -->
+<div id="reviewsPanelOverlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.65)" onclick="if(event.target===this)closeReviewsPanel()"></div>
+<div id="reviewsPanel" style="display:none;position:fixed;right:0;top:0;height:100vh;width:100%;max-width:480px;background:var(--dark2);border-left:1px solid rgba(212,130,10,0.2);z-index:9999;box-shadow:-8px 0 40px rgba(0,0,0,0.6);transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);display:flex!important;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid rgba(212,130,10,0.12);flex-shrink:0">
+        <h3 style="font-family:var(--font-display);color:var(--gold-light);margin:0;font-size:1.15rem">&#11088; All Customer Reviews</h3>
+        <button onclick="closeReviewsPanel()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px;line-height:1" onmouseover="this.style.color='var(--cream)'" onmouseout="this.style.color='var(--text-muted)'">&#10005;</button>
+    </div>
+    <div id="reviewsPanelList" style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px"></div>
+</div>
+
+
+<!-- PAYMENT MODAL -->
+<div id="paymentModal" class="pay-modal-overlay hidden">
+    <div class="pay-modal-box">
+        <button class="pay-modal-close" onclick="closePaymentModal()">x</button>
+        <div id="payStep1">
+            <div class="pay-modal-icon">&#127851;</div>
+            <h2 class="pay-modal-title">How would you like to proceed?</h2>
+            <p class="pay-modal-sub" id="orderSummaryText"></p>
+            <div class="pay-choices">
+                <button class="pay-choice-btn online" onclick="selectPayment('online')">
+                    <span class="pay-choice-icon">&#128179;</span>
+                    <span class="pay-choice-label">Pay Online</span>
+                    <span class="pay-choice-sub">Razorpay · UPI · Card · Net Banking</span>
+                </button>
+                <button class="pay-choice-btn cod" onclick="selectPayment('cod')">
+                    <span class="pay-choice-icon">&#128181;</span>
+                    <span class="pay-choice-label">Cash on Delivery</span>
+                    <span class="pay-choice-sub">Pay when your order arrives</span>
+                </button>
+                <button class="pay-choice-btn cart-choice" onclick="selectPayment('cart')">
+                    <span class="pay-choice-icon">&#128722;</span>
+                    <span class="pay-choice-label">Add to Cart</span>
+                    <span class="pay-choice-sub">Save for later, checkout anytime</span>
+                </button>
+            </div>
+        </div>
+        <div id="payStep2" class="hidden">
+            <div style="display:flex;justify-content:flex-start;margin-bottom:12px">
+                <button class="pay-back-btn" onclick="backToStep1()">&#8592; Back</button>
+            </div>
+            <h2 class="pay-modal-title" id="step2Title">Delivery Details</h2>
+            <p class="pay-modal-sub" id="step2Summary"></p>
+            <div class="pay-address-field">
+                <label>Full Delivery Address *</label>
+                <textarea id="deliveryAddress" rows="3" placeholder="House/Flat No., Street, Area, City, State"></textarea>
+            </div>
+            <div class="pay-address-field">
+                <label>Pincode *</label>
+                <input type="tel" id="deliveryPincode" placeholder="576xxx" maxlength="6" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(212,130,10,0.4);border-radius:8px;color:#f5e6c8;font-size:1rem;font-family:inherit;outline:none;box-sizing:border-box;"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6);pdChkPin(this.value)">
+            <div id="pdPinHint" style="font-size:12px;min-height:18px;margin-top:4px;"></div></div>
+
+            <div class="pay-address-field">
+                <label>Phone Number *</label>
+                <input type="tel" id="deliveryPhone" placeholder="+91 98765 43210" maxlength="10" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(212,130,10,0.4);border-radius:8px;color:#f5e6c8;font-size:1rem;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:8px;"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);pdChkPhone(this.value)">
+            <div id="pdPhoneHint" style="font-size:12px;min-height:18px;margin-top:4px;margin-bottom:6px;"></div></div>
+            <div class="pay-delivery-info">
+                <span class="pay-delivery-icon">&#128666;</span>
+                <div>
+                    <span class="pay-delivery-label">Estimated Delivery</span>
+                    <span class="pay-delivery-date" id="modalDeliveryDate"></span>
+                </div>
+            </div>
+            <button class="pay-confirm-btn" id="confirmPayBtn" onclick="confirmPayment()">Confirm Order</button>
+            <div id="payError" class="pay-error hidden"></div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+const PRODUCT = {
+    id:    "{{ product.product_id }}",
+    name:  "{{ product.name | e }}",
+    price: "{{ product.price }}",
+    stock: "{{ product.stock_quantity }}",
+    image: "{{ product.image_url }}",
+    delivery_pincodes: "{{ (product.delivery_pincodes or []) | tojson if product.delivery_pincodes is defined else '[]' }}"
+};
+
+function getDeliveryDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const dd = getDeliveryDate();
+    const t = document.getElementById('deliveryDateDisplay');
+    if (t) t.textContent = dd;
+    const m = document.getElementById('modalDeliveryDate');
+    if (m) m.textContent = dd;
+    // Show login hint to guests
+    if (!currentUser || !currentUser.logged_in) {
+        const hint = document.getElementById('apLoginHint');
+        if (hint) hint.style.display = 'block';
+    }
+});
+
+let qty = 1;
+function changeQty(delta) {
+    qty = Math.max(1, Math.min(PRODUCT.stock, qty + delta));
+    document.getElementById('qtyDisplay').textContent = qty;
+}
+
+// ── Cart: public page but login required to actually add ─────
+function handleAddToCart() {
+    requireLogin(async () => {
+        const res  = await fetch('/api/cart/add', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({product_id: PRODUCT.id, quantity: qty})
+        });
+        const data = await res.json();
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) updateCartBadge();
+    });
+}
+
+// ── Buy: public page but login required to purchase ──────────
+let selectedMethod = null;
+function openPaymentModal() {
+    requireLogin(() => {
+        document.getElementById('orderSummaryText').textContent =
+            PRODUCT.name + ' x ' + qty + '  =  Rs.' + (PRODUCT.price * qty);
+        const modalDel = document.getElementById('modalDeliveryDate');
+        if (modalDel) modalDel.textContent = getDeliveryDate();
+        showStep(1);
+        document.getElementById('paymentModal').classList.remove('hidden');
+    });
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.add('hidden');
+    document.getElementById('payError').classList.add('hidden');
+    document.getElementById('deliveryAddress').value  = '';
+    document.getElementById('deliveryPincode').value  = '';
+    document.getElementById('deliveryPhone').value    = '';
+    if(document.getElementById('pdPinHint'))   document.getElementById('pdPinHint').innerHTML='';
+    if(document.getElementById('pdPhoneHint')) document.getElementById('pdPhoneHint').innerHTML='';
+}
+
+function showStep(n) {
+    document.getElementById('payStep1').classList.toggle('hidden', n !== 1);
+    document.getElementById('payStep2').classList.toggle('hidden', n !== 2);
+}
+function backToStep1() { showStep(1); }
+
+function selectPayment(method) {
+    selectedMethod = method;
+    if (method === 'cart') { closePaymentModal(); handleAddToCart(); return; }
+    document.getElementById('step2Title').textContent =
+        method === 'online' ? 'Online Payment - Delivery Address' : 'Cash on Delivery - Address';
+    document.getElementById('step2Summary').textContent =
+        PRODUCT.name + ' x ' + qty + '  =  Rs.' + (PRODUCT.price * qty);
+    document.getElementById('confirmPayBtn').textContent =
+        method === 'online' ? 'Proceed to Pay Rs.' + (PRODUCT.price * qty) : 'Place Order (COD)';
+    showStep(2);
+}
+
+/* ---- Pincode helpers ---- */
+function isUdupi(pin) { return /^(576|574)\d{3}$/.test(pin); }
+
+function pinMatchesToken(userPin, token) {
+    /* token is '576xxx' (prefix wildcard) or '576201' (exact).
+       For xxx tokens only first 3 digits need to match. */
+    if (token.indexOf('x') !== -1 || token.indexOf('X') !== -1) {
+        return userPin.slice(0, 3) === token.slice(0, 3);
+    }
+    return userPin === token;
+}
+
+function isDeliverable(pin) {
+    if (PRODUCT.delivery_pincodes && PRODUCT.delivery_pincodes.length > 0) {
+        return PRODUCT.delivery_pincodes.some(function(token) {
+            return pinMatchesToken(pin, token);
+        });
+    }
+    return isUdupi(pin);
+}
+
+function pdChkPin(v) {
+    var el = document.getElementById('pdPinHint');
+    if (!v)           { el.innerHTML=''; return; }
+    if (v.length < 6) { el.innerHTML='<span style="color:#e07840">Enter all 6 digits</span>'; return; }
+    el.innerHTML = isDeliverable(v)
+        ? '<span style="color:#6fcf97">&#10003; Delivery available in your area!</span>'
+        : '<span style="color:#e04040">&#10007; This product is not available for your pincode</span>';
+}
+function pdChkPhone(v) {
+    var el = document.getElementById('pdPhoneHint');
+    if (!v)            { el.innerHTML=''; return; }
+    if (v.length < 10) { el.innerHTML='<span style="color:#e07840">Must be exactly 10 digits</span>'; return; }
+    el.innerHTML='<span style="color:#6fcf97">&#10003; Looks good</span>';
+}
+
+/* ---- Sliding region alert ---- */
+function showRegionAlert(msg) {
+    var el = document.getElementById('apRegionAlert');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'apRegionAlert';
+        el.style.cssText =
+            'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-120px);'
+            + 'background:#1a0000;border:2px solid #e04040;color:#ffaaaa;'
+            + 'padding:14px 28px;border-radius:12px;font-size:14px;font-family:inherit;'
+            + 'z-index:99999;box-shadow:0 8px 32px rgba(0,0,0,0.85);'
+            + 'transition:transform 0.45s cubic-bezier(0.34,1.4,0.64,1),opacity 0.35s;'
+            + 'opacity:0;max-width:92vw;text-align:center;line-height:1.6;';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.transform = 'translateX(-50%) translateY(0)';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(function() {
+        el.style.transform = 'translateX(-50%) translateY(-120px)';
+        el.style.opacity = '0';
+    }, 5000);
+}
+
+async function confirmPayment() {
+    var address = document.getElementById('deliveryAddress').value.trim();
+    var pincode = document.getElementById('deliveryPincode').value.trim();
+    var phone   = document.getElementById('deliveryPhone').value.trim();
+    var errEl   = document.getElementById('payError');
+
+    if (!address) { errEl.textContent='Please enter your delivery address.'; errEl.classList.remove('hidden'); return; }
+    if (pincode.length !== 6) { showRegionAlert('Please enter a valid 6-digit pincode.'); document.getElementById('deliveryPincode').focus(); return; }
+    if (phone.length !== 10)  { errEl.textContent='Please enter a valid 10-digit phone number.'; errEl.classList.remove('hidden'); return; }
+    errEl.classList.add('hidden');
+
+    /* Save pincode to DB */
+    await fetch('/api/user/save-pincode', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({pincode: pincode})
+    }).catch(function(){});
+
+    /* Block non-Udupi */
+    if (!isDeliverable(pincode)) {
+        if (PRODUCT.delivery_pincodes && PRODUCT.delivery_pincodes.length > 0) {
+            showRegionAlert('Sorry - this product is not available for delivery to your pincode.');
+        } else {
+            showRegionAlert('Sorry - we currently deliver only within the Udupi region (pincodes 574xxx or 576xxx).');
+        }
+        return;
+    }
+
+    var items = [{product_id: PRODUCT.id, name: PRODUCT.name, price: PRODUCT.price, quantity: qty}];
+    var total = PRODUCT.price * qty;
+    if (selectedMethod === 'cod') await placeCOD(items, address, phone, pincode, total);
+    else placeOnline(items, address, phone, pincode, total);
+}
+
+async function placeCOD(items, address, phone, pincode, total) {
+    var res  = await fetch('/api/order/cod', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({items: items, address: address, phone: phone, pincode: pincode, total: total})
+    });
+    var data = await res.json();
+    if (data.success) {
+        closePaymentModal();
+        showToast('Order placed! Delivery by ' + getDeliveryDate(), 'success');
+        setTimeout(() => window.location.href = '/', 2000);
+    } else {
+        document.getElementById('payError').textContent = data.message;
+        document.getElementById('payError').classList.remove('hidden');
+    }
+}
+
+function placeOnline(items, address, phone, pincode, total) {
+    var overlay = document.getElementById('rzpIframeOverlay');
+    if (overlay) overlay.remove();
+
+    overlay = document.createElement('div');
+    overlay.id = 'rzpIframeOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    overlay.innerHTML = '<iframe id="rzpIframe" src="/payment" style="border:none;border-radius:8px;width:100%;max-width:420px;height:620px;"></iframe>';
+    document.body.appendChild(overlay);
+
+    closePaymentModal();
+
+    document.getElementById('rzpIframe').onload = function() {
+        this.contentWindow.postMessage({
+            type: 'RZP_INIT',
+            config: { amount: total, items: items, address: address, phone: phone, pincode: pincode }
+        }, '*');
+    };
+
+    window.addEventListener('message', function rzpListener(e) {
+        if (e.data && e.data.type === 'RZP_DONE') {
+            window.removeEventListener('message', rzpListener);
+            overlay.remove();
+            showToast('Payment successful! Delivery by ' + getDeliveryDate(), 'success');
+            setTimeout(() => window.location.href = '/', 2500);
+        }
+        if (e.data && e.data.type === 'RZP_CANCEL') {
+            window.removeEventListener('message', rzpListener);
+            overlay.remove();
+        }
+    });
+}
+window.addEventListener('load', () => {
+    if (new URLSearchParams(window.location.search).get('buy') === '1') {
+        setTimeout(() => { if (PRODUCT.stock > 0) openPaymentModal(); }, 400);
+    }
+});
+
+/* =====================================================================
+   CUSTOMER REVIEWS
+   ===================================================================== */
+var _reviewRating = 0;
+var _allReviews   = [];
+
+/* ---- star rating UI ---- */
+function hoverStar(n) {
+    document.querySelectorAll('#starPicker span').forEach(function(s) {
+        s.style.color = parseInt(s.dataset.v) <= n ? '#f5c842' : '#444';
+    });
+}
+function resetStars() {
+    document.querySelectorAll('#starPicker span').forEach(function(s) {
+        s.style.color = parseInt(s.dataset.v) <= _reviewRating ? '#f5c842' : '#444';
+    });
+}
+function setReviewRating(n) {
+    _reviewRating = n;
+    resetStars();
+}
+
+/* ---- render a single review card ---- */
+function buildReviewCard(r) {
+    var starsHtml = '';
+    for (var i = 1; i <= 5; i++) starsHtml += (i <= r.rating ? '\u2605' : '\u2606');
+    var displayName = (r.user_name || r.name || 'Anonymous').trim();
+    var ini = displayName.split(' ').map(function(w){ return w[0]||''; }).join('').toUpperCase().slice(0,2) || 'A';
+    var commentTxt = (r.comment||'').replace(/</g,'&lt;');
+    var replyHtml = '';
+    if (r.admin_reply) {
+        replyHtml = '<div style="margin-top:10px;background:rgba(212,130,10,0.06);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:10px 14px">'
+            + '<div style="color:var(--gold);font-size:11px;font-family:var(--font-display);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">&#128736; ChocoBite Reply</div>'
+            + '<p style="color:var(--cream);font-size:0.9rem;line-height:1.5;margin:0">' + (r.admin_reply||'').replace(/</g,'&lt;') + '</p></div>';
+    }
+    return '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(212,130,10,0.12);border-radius:12px;padding:16px 18px">'
+        + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
+            + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#b5690a);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:700;color:#000;flex-shrink:0">' + ini + '</div>'
+            + '<div style="flex:1;min-width:0">'
+                + '<div style="font-weight:600;color:var(--cream);font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + displayName.replace(/</g,'&lt;') + '</div>'
+                + '<div style="color:#f5c842;font-size:0.9rem;letter-spacing:1px">' + starsHtml + '</div>'
+            + '</div>'
+            + '<div style="font-size:11px;color:var(--text-muted);flex-shrink:0">' + (r.created_at||'') + '</div>'
+        + '</div>'
+        + '<p style="color:var(--cream);font-size:0.95rem;line-height:1.6;margin:0">' + commentTxt + '</p>'
+        + replyHtml
+        + '</div>';
+}
+
+/* ---- load reviews from API ---- */
+async function loadReviews() {
+    var pid = PRODUCT.id;
+    if (!pid) return;
+    try {
+        var res  = await fetch('/api/product-review/list?product_id=' + encodeURIComponent(pid));
+        var allRev = await res.json();
+        // Only show approved or still-pending reviews publicly
+        _allReviews = allRev.filter(function(r){
+            var s = r.status || 'pending';
+            return s === 'approved' || s === 'pending';
+        });
+    } catch(e) { _allReviews = []; }
+
+    var firstEl  = document.getElementById('firstReview');
+    var summEl   = document.getElementById('reviewsSummary');
+    var viewWrap = document.getElementById('viewAllWrap');
+
+    if (!_allReviews.length) {
+        firstEl.innerHTML = '<p style="color:var(--text-muted);font-style:italic;font-size:0.95rem">No reviews yet. Be the first to review this product!</p>';
+        summEl.textContent = '';
+        viewWrap.style.display = 'none';
+    } else {
+        /* summary */
+        var avg = (_allReviews.reduce(function(s,r){ return s + r.rating; }, 0) / _allReviews.length).toFixed(1);
+        summEl.innerHTML = '<span style="color:#f5c842;font-size:1rem">\u2605 ' + avg + '</span>&nbsp;&nbsp;<span style="color:var(--text-muted)">' + _allReviews.length + ' review' + (_allReviews.length > 1 ? 's' : '') + '</span>';
+        /* first review */
+        firstEl.innerHTML = buildReviewCard(_allReviews[0]);
+        /* view all button */
+        if (_allReviews.length > 1) {
+            viewWrap.style.display = 'block';
+        }
+    }
+
+    /* show form or login prompt */
+    checkLoginStatus().then(function(status) {
+        if (status && status.logged_in) {
+            document.getElementById('reviewFormWrap').style.display  = 'block';
+            document.getElementById('reviewLoginPrompt').style.display = 'none';
+        } else {
+            document.getElementById('reviewFormWrap').style.display  = 'none';
+            document.getElementById('reviewLoginPrompt').style.display = 'block';
+        }
+    }).catch(function(){});
+}
+
+/* ---- panel open/close ---- */
+function openReviewsPanel() {
+    var panel   = document.getElementById('reviewsPanel');
+    var overlay = document.getElementById('reviewsPanelOverlay');
+    var list    = document.getElementById('reviewsPanelList');
+
+    list.innerHTML = _allReviews.map(buildReviewCard).join('');
+    overlay.style.display = 'block';
+    panel.style.display   = 'flex';
+    /* force reflow then slide in */
+    panel.getBoundingClientRect();
+    panel.style.transform = 'translateX(0)';
+    document.body.style.overflow = 'hidden';
+}
+function closeReviewsPanel() {
+    var panel   = document.getElementById('reviewsPanel');
+    var overlay = document.getElementById('reviewsPanelOverlay');
+    panel.style.transform = 'translateX(100%)';
+    document.body.style.overflow = '';
+    setTimeout(function() {
+        overlay.style.display = 'none';
+        panel.style.display   = 'none';
+    }, 360);
+}
+
+/* ---- submit review ---- */
+async function submitReview() {
+    var text   = document.getElementById('reviewText').value.trim();
+    var msgEl  = document.getElementById('reviewMsg');
+    var btn    = document.getElementById('reviewSubmitBtn');
+
+    if (!_reviewRating) {
+        msgEl.innerHTML = '<span style="color:#e04040">Please select a star rating.</span>';
+        return;
+    }
+    if (!text) {
+        msgEl.innerHTML = '<span style="color:#e04040">Please write your review.</span>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    var status = await checkLoginStatus().catch(function(){ return {logged_in:false}; });
+    var userName = (status && status.name) ? status.name : '';
+
+    try {
+        var res  = await fetch('/api/product-review', {
+            method:  'POST',
+            headers: {'Content-Type':'application/json'},
+            body:    JSON.stringify({
+                product_id: PRODUCT.id,
+                rating:     _reviewRating,
+                comment:    text,
+                name:       userName
+            })
+        });
+        var data = await res.json();
+        if (data.success) {
+            msgEl.innerHTML = '<span style="color:#6fcf97">\u2713 ' + data.message + '</span>';
+            document.getElementById('reviewText').value = '';
+            _reviewRating = 0;
+            resetStars();
+            setTimeout(function(){ msgEl.textContent = ''; loadReviews(); }, 1500);
+        } else {
+            msgEl.innerHTML = '<span style="color:#e04040">' + data.message + '</span>';
+        }
+    } catch(e) {
+        msgEl.innerHTML = '<span style="color:#e04040">Error submitting review. Try again.</span>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Review';
+    }
+}
+
+/* load on page ready */
+document.addEventListener('DOMContentLoaded', loadReviews);
+
+</script>
+
+{% endblock %}

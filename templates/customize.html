@@ -1,0 +1,1933 @@
+{% extends "base.html" %}
+{% block title %}Customize — ChocoBite{% endblock %}
+{% block content %}
+<div class="page-header cust-header">
+    <div class="cust-header-inner">
+        <span class="cust-eyebrow">&#10022; Made Just For You &#10022;</span>
+        <h1 class="cust-main-title">Customize Your Chocolate</h1>
+        <p class="cust-sub">Craft moments, not just chocolates — for every occasion, every feeling, every story.</p>
+    </div>
+</div>
+
+<div class="cust-tabs-bar">
+    <button class="cust-tab active" data-tab="gifts"         onclick="switchCustTab('gifts',this)"><span class="ct-icon">&#127873;</span><span class="ct-label">Gifts</span></button>
+    <button class="cust-tab"        data-tab="seasonal"      onclick="switchCustTab('seasonal',this)"><span class="ct-icon">&#127774;</span><span class="ct-label">Seasonal Offers</span></button>
+    <button class="cust-tab"        data-tab="yourdesign"    onclick="switchCustTab('yourdesign',this)"><span class="ct-icon">&#127912;</span><span class="ct-label">Your Design</span></button>
+</div>
+
+<!-- GIFTS -->
+<div class="cust-panel active" id="panel-gifts">
+    <div class="cust-section-intro"><h2>Curated Gift Collections</h2><p>Thoughtful chocolate gifts, packaged beautifully.</p></div>
+    <div class="gifts-grid">
+        <div class="gift-card"><div class="gift-badge">Most Popular</div><div class="gift-img-area">&#127864;</div><h3>Signature Gift Box</h3><p class="gift-desc">6 assorted premium bars in a hand-tied ribbon box.</p><div class="gift-tags"><span>Custom Message Card</span><span>Ribbon Wrapping</span></div><div class="gift-price">From <span id="giftPrice0">&#8377;499</span></div><button class="cust-btn-primary" onclick="openGiftWizard('Signature Gift Box',499,6)">Customise &amp; Order</button></div>
+        <div class="gift-card"><div class="gift-img-area">&#127851;</div><h3>Connoisseur Collection</h3><p class="gift-desc">12 single-origin dark chocolate bars in a gold-foil magnetic box.</p><div class="gift-tags"><span>Gold Foil Box</span><span>Tasting Notes Card</span></div><div class="gift-price">From <span id="giftPrice1">&#8377;999</span></div><button class="cust-btn-primary" onclick="openGiftWizard('Connoisseur Collection',999,12)">Customise &amp; Order</button></div>
+        <div class="gift-card"><div class="gift-img-area">&#127800;</div><h3>Wellness &amp; Sugar-Free Set</h3><p class="gift-desc">8 sugar-free GloryBean bars — thoughtful for health-conscious loved ones.</p><div class="gift-tags"><span>Sugar Free</span><span>Eco Packaging</span></div><div class="gift-price">From <span id="giftPrice2">&#8377;699</span></div><button class="cust-btn-primary" onclick="openGiftWizard('Wellness Sugar-Free Set',699,8)">Customise &amp; Order</button></div>
+        <div class="gift-card"><div class="gift-img-area">&#127970;</div><h3>Corporate Hamper</h3><p class="gift-desc">Bulk branded boxes with your company name/logo. MOQ: 20.</p><div class="gift-tags"><span>Logo Branding</span><span>Bulk Pricing</span><span>GST Invoice</span></div><div class="gift-price">From <span id="giftPrice3">&#8377;1499</span></div><button class="cust-btn-primary" onclick="openGiftWizard('Corporate Hamper',1499,20)">Get Quote</button></div>
+    </div>
+
+    <!-- GIFT WIZARD -->
+    <div id="giftWizardOverlay" class="gw-overlay hidden">
+        <div class="gw-modal">
+            <div class="gw-progress">
+                <span class="gw-dot active"></span><span class="gw-dot"></span><span class="gw-dot"></span>
+                <span class="gw-dot"></span><span class="gw-dot"></span><span class="gw-dot"></span><span class="gw-dot"></span>
+            </div>
+
+            <!-- S1: Occasion -->
+            <div class="gw-slide active" id="gwSlide1">
+                <h2 class="gw-heading">Select Occasion</h2>
+                <p class="gw-sub">What's the celebration? We'll wrap it perfectly.</p>
+                <div class="gw-occ-grid">
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Birthday','&#127874;')"><div class="gw-occ-emoji">&#127874;</div><div class="gw-occ-name">Birthday</div><div class="gw-occ-line">Make someone feel truly special on their big day</div><div class="gw-occ-tick">&#10003;</div></div>
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Wedding','&#128141;')"><div class="gw-occ-emoji">&#128141;</div><div class="gw-occ-name">Wedding</div><div class="gw-occ-line">A timeless sweet gesture for a timeless union</div><div class="gw-occ-tick">&#10003;</div></div>
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Anniversary','&#128145;')"><div class="gw-occ-emoji">&#128145;</div><div class="gw-occ-name">Anniversary</div><div class="gw-occ-line">Celebrate love with the finest chocolate for two</div><div class="gw-occ-tick">&#10003;</div></div>
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Baby Shower','&#128118;')"><div class="gw-occ-emoji">&#128118;</div><div class="gw-occ-name">Baby Shower</div><div class="gw-occ-line">Welcome the little one with the sweetest gift</div><div class="gw-occ-tick">&#10003;</div></div>
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Diwali','&#129676;')"><div class="gw-occ-emoji">&#129676;</div><div class="gw-occ-name">Diwali</div><div class="gw-occ-line">Light up the festival with golden chocolate delight</div><div class="gw-occ-tick">&#10003;</div></div>
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Valentine\'s Day','&#10084;')"><div class="gw-occ-emoji">&#10084;</div><div class="gw-occ-name">Valentine's Day</div><div class="gw-occ-line">Pour your heart out, one rich chocolate at a time</div><div class="gw-occ-tick">&#10003;</div></div>
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Graduation','&#127891;')"><div class="gw-occ-emoji">&#127891;</div><div class="gw-occ-name">Graduation</div><div class="gw-occ-line">Reward the hard work with something indulgent</div><div class="gw-occ-tick">&#10003;</div></div>
+                    <div class="gw-occ-card" onclick="gwSelectOcc(this,'Just Because','&#127873;')"><div class="gw-occ-emoji">&#127873;</div><div class="gw-occ-name">Just Because</div><div class="gw-occ-line">No reason needed — chocolate is always a good idea</div><div class="gw-occ-tick">&#10003;</div></div>
+                </div>
+                <div class="gw-nav">
+                    <button class="gw-btn-cancel" onclick="closeGiftWizard()">&#10005; Cancel</button>
+                    <button class="gw-btn-next" id="gwNext1" onclick="gwGoTo(2)" disabled>Next &#8594;</button>
+                </div>
+            </div>
+
+            <!-- S2: Name & Message -->
+            <div class="gw-slide" id="gwSlide2">
+                <div class="gw-slide-topbar">
+                    <button class="gw-back-top" onclick="gwGoTo(1)">&#8592; Back</button>
+                </div>
+                <h2 class="gw-heading">Personal Touch</h2>
+                <p class="gw-sub">Add a name and a heartfelt message — optional but lovely.</p>
+                <div class="gw-field">
+                    <label>Recipient's Name <span class="gw-req">*</span></label>
+                    <input type="text" id="gwRecipientName" class="cust-input" placeholder="e.g. Priya, Mom, Rohan..." maxlength="30">
+                    <span class="field-hint">This name will appear on the gift card</span>
+                </div>
+                <div class="gw-field" style="margin-top:18px">
+                    <label>Your Message <span style="color:#a07840;font-size:12px">(optional)</span></label>
+                    <textarea id="gwMessage" class="cust-input cust-textarea" rows="3" placeholder="e.g. Wishing you all the sweetness life can offer!" maxlength="100"></textarea>
+                    <span class="field-hint" id="gwMsgCount">0 / 100 characters</span>
+                </div>
+                <div class="gw-nav">
+                    <button class="gw-btn-cancel" onclick="closeGiftWizard()">&#10005; Cancel</button>
+                    <button class="gw-btn-next" onclick="gwGoTo(3)">Next &#8594;</button>
+                </div>
+            </div>
+
+            <!-- S3: Products -->
+            <div class="gw-slide" id="gwSlide3">
+                <div class="gw-slide-topbar">
+                    <button class="gw-back-top" onclick="gwGoTo(2)">&#8592; Back</button>
+                </div>
+                <h2 class="gw-heading">Pick Your Chocolates</h2>
+                <p class="gw-sub">Your box fits <strong id="gwSlotCount">6</strong> bars. Choose how to fill it.</p>
+                <div class="gw-pick-btns">
+                    <button class="gw-pick-btn active" id="gwPickSingle" onclick="gwSetPickMode('single',this)">
+                        <div class="gw-pick-icon">&#127851;</div>
+                        <div class="gw-pick-label">Single Flavour</div>
+                        <div class="gw-pick-desc">All <span class="gw-slot-label">6</span> bars of one chocolate</div>
+                    </button>
+                    <button class="gw-pick-btn" id="gwPickSpecial" onclick="gwSetPickMode('special',this)">
+                        <div class="gw-pick-icon">&#10024;</div>
+                        <div class="gw-pick-label">Special AI Mix</div>
+                        <div class="gw-pick-desc">ML picks the best combo for your occasion</div>
+                    </button>
+                </div>
+                <div id="gwProductGrid" class="gw-product-grid"><div class="gw-prod-loading">Loading...</div></div>
+                <div id="gwSpecialMix" class="gw-special-mix hidden">
+                    <div class="gw-mix-badge">&#10024; AI-Curated Mix</div>
+                    <div id="gwMixResult" class="gw-mix-result"></div>
+                    <p class="gw-mix-note">Recommendation engine selected these based on your occasion.</p>
+                </div>
+                <div id="gwProdError" style="color:#e04040;font-size:13px;display:none;margin-top:8px"></div>
+                <div class="gw-nav">
+                    <button class="gw-btn-cancel" onclick="closeGiftWizard()">&#10005; Cancel</button>
+                    <button class="gw-btn-next" id="gwNext3" onclick="gwGoTo(35)" disabled>Next &#8594;</button>
+                </div>
+            </div>
+
+            <!-- S3.5: Sugar Preference -->
+            <div class="gw-slide" id="gwSlide35">
+                <div class="gw-slide-topbar">
+                    <button class="gw-back-top" onclick="gwGoTo(3)">&#8592; Back</button>
+                </div>
+                <h2 class="gw-heading">One Quick Thing</h2>
+                <p class="gw-sub">Would you prefer chocolates with sugar or sugar-free?</p>
+                <div class="gw-sugar-choice">
+                    <button class="gw-sugar-big-btn" id="gwSugarOptSugar" onclick="gwPickSugarPref('sugar',this)">
+                        <div class="gw-sugar-big-icon">&#127851;</div>
+                        <div class="gw-sugar-big-label">With Sugar</div>
+                        <div class="gw-sugar-big-desc">Rich, indulgent chocolate &mdash; the classic choice</div>
+                    </button>
+                    <button class="gw-sugar-big-btn" id="gwSugarOptFree" onclick="gwPickSugarPref('sugarfree',this)">
+                        <div class="gw-sugar-big-icon">&#127807;</div>
+                        <div class="gw-sugar-big-label">Sugar Free</div>
+                        <div class="gw-sugar-big-desc">Same great taste, zero guilt</div>
+                    </button>
+                </div>
+                <div class="gw-nav" style="margin-top:24px">
+                    <button class="gw-btn-cancel" onclick="closeGiftWizard()">&#10005; Cancel</button>
+                    <button class="gw-btn-next" id="gwNext35" onclick="gwGoTo(4)" disabled>Next &#8594;</button>
+                </div>
+            </div>
+
+            <!-- S4: Offer -->
+            <div class="gw-slide" id="gwSlide4">
+                <div class="gw-slide-topbar">
+                    <button class="gw-back-top" onclick="gwBackFromOffer()">&#8592; Back</button>
+                </div>
+                <div class="gw-offer-wrap">
+                    <div class="gw-offer-confetti">&#127881;</div>
+                    <h2 class="gw-offer-title" id="gwOfferTitle">Congratulations!</h2>
+                    <div class="gw-offer-disc-badge" id="gwOfferBadge">10% OFF</div>
+                    <p class="gw-offer-msg" id="gwOfferMsg">You unlocked a special discount!</p>
+                    <div class="gw-offer-code-row">
+                        <span class="gw-offer-code-lbl">Auto-applied at checkout</span>
+                        <span class="gw-offer-code-chip" id="gwOfferCode">GIFT10</span>
+                    </div>
+                </div>
+                <div class="gw-nav" style="margin-top:24px">
+                    <button class="gw-btn-cancel" onclick="closeGiftWizard()">&#10005; Cancel</button>
+                    <button class="gw-btn-next" onclick="gwGoTo(5)">Next &#8594;</button>
+                </div>
+            </div>
+
+            <!-- S5: Delivery Date -->
+            <div class="gw-slide" id="gwSlide5">
+                <div class="gw-slide-topbar">
+                    <button class="gw-back-top" onclick="gwGoTo(4)">&#8592; Back</button>
+                </div>
+                <h2 class="gw-heading">Choose Delivery Date</h2>
+                <p class="gw-sub">Pick a date — or skip and we'll deliver in 8 days.</p>
+                <div class="gw-date-wrap">
+                    <div class="gw-date-field">
+                        <label>Preferred Date <span style="color:#a07840;font-size:12px">(optional)</span></label>
+                        <input type="date" id="gwDeliveryDate" class="cust-input" style="max-width:220px" oninput="gwValidateDate()">
+                        <span class="field-hint">Leave blank to deliver on <strong id="gwDefaultDate"></strong></span>
+                    </div>
+                    <div class="gw-date-info">
+                        <div class="gw-date-info-row">&#128666; Earliest: 2 days from today &nbsp;|&nbsp; Latest: 14 days from today</div>
+                        <div class="gw-date-info-row">&#127873; Express wrapping included at no extra cost</div>
+                    </div>
+                </div>
+                <div id="gwDateError" style="color:#e04040;font-size:13px;display:none;margin-top:6px"></div>
+                <div class="gw-nav">
+                    <button class="gw-btn-cancel" onclick="closeGiftWizard()">&#10005; Cancel</button>
+                    <button class="gw-btn-next" onclick="gwGoTo(6)">Next &#8594;</button>
+                </div>
+            </div>
+
+            <!-- S6: Summary -->
+            <div class="gw-slide" id="gwSlide6">
+                <div class="gw-slide-topbar">
+                    <button class="gw-back-top" onclick="gwGoTo(5)">&#8592; Back</button>
+                </div>
+                <h2 class="gw-heading">Your Gift Summary</h2>
+                <p class="gw-sub">Everything looks perfect — review and place your order!</p>
+                <div class="gw-summary">
+                    <div class="gw-sum-row"><span class="gw-sum-lbl">&#127873; Gift Box</span><span class="gw-sum-val" id="sumGiftName">—</span></div>
+                    <div class="gw-sum-row"><span class="gw-sum-lbl">&#127881; Occasion</span><span class="gw-sum-val" id="sumOccasion">—</span></div>
+                    <div class="gw-sum-row"><span class="gw-sum-lbl">&#128100; Recipient</span><span class="gw-sum-val" id="sumRecipient">—</span></div>
+                    <div class="gw-sum-row"><span class="gw-sum-lbl">&#128172; Message</span><span class="gw-sum-val" id="sumMessage" style="font-style:italic">—</span></div>
+                    <div class="gw-sum-row"><span class="gw-sum-lbl">&#127851; Selection</span><span class="gw-sum-val" id="sumSelection">—</span></div>
+                    <div class="gw-sum-row"><span class="gw-sum-lbl">&#127807; Preference</span><span class="gw-sum-val" id="sumSugarPref">—</span></div>
+                    <div class="gw-sum-row"><span class="gw-sum-lbl">&#128666; Delivery</span><span class="gw-sum-val" id="sumDelivery">—</span></div>
+                    <div class="gw-sum-divider"></div>
+                    <div class="gw-sum-row gw-sum-price-row">
+                        <span class="gw-sum-lbl">&#128176; Price</span>
+                        <span class="gw-sum-val">
+                            <span class="gw-price-original" id="sumOrigPrice">&#8377;499</span>
+                            <span class="gw-price-final" id="sumFinalPrice">&#8377;399</span>
+                            <span class="gw-price-saved" id="sumSaved">You save &#8377;100!</span>
+                        </span>
+                    </div>
+                </div>
+                <button class="gw-buy-btn" onclick="gwPlaceOrder()">&#128722; Buy Now &mdash; <span id="sumBuyPrice">&#8377;399</span></button>
+                <p class="gw-buy-note">Our team will confirm your custom order within 24 hours before dispatch.</p>
+                <div style="text-align:center;margin-top:12px">
+                    <button class="gw-btn-cancel" onclick="closeGiftWizard()">&#10005; Cancel Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gift Payment Modal -->
+    <div id="gwPayModal" class="pay-modal-overlay hidden" style="z-index:4000">
+        <div class="pay-modal-box">
+            <button class="pay-modal-close" onclick="gwClosePayModal()">&#10005;</button>
+            <div id="gwPayStep1">
+                <div class="pay-modal-icon">&#127873;</div>
+                <h2 class="pay-modal-title">Complete Your Gift Order</h2>
+                <p class="pay-modal-sub" id="gwPaySummary"></p>
+                <div class="pay-choices">
+                    <button class="pay-choice-btn online" onclick="gwSelectPayMethod('online')"><span class="pay-choice-icon">&#128179;</span><span class="pay-choice-label" id="gwPayOnlineBtn">Pay Online</span><span class="pay-choice-sub">Razorpay &middot; UPI &middot; Card</span></button>
+                    <button class="pay-choice-btn cod" onclick="gwSelectPayMethod('cod')"><span class="pay-choice-icon">&#128181;</span><span class="pay-choice-label" id="gwPayCODBtn">Cash on Delivery</span><span class="pay-choice-sub">Pay when your gift arrives</span></button>
+                </div>
+            </div>
+            <div id="gwPayStep2" class="hidden">
+                <div style="display:flex;justify-content:flex-start;margin-bottom:12px">
+                    <button class="pay-back-btn" onclick="document.getElementById('gwPayStep1').classList.remove('hidden');document.getElementById('gwPayStep2').classList.add('hidden')">&#8592; Back</button>
+                </div>
+                <h2 class="pay-modal-title" id="gwPayStep2Title">Delivery Details</h2>
+                <div class="pay-address-field"><label>Full Delivery Address *</label><textarea id="gwPayAddress" rows="3" placeholder="House/Flat No., Street, Area, City, State, PIN"></textarea></div>
+                <div class="pay-address-field"><label>Phone Number *</label><input type="tel" id="gwPayPhone" placeholder="+91 98765 43210" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);gwChkPhone(this.value)"></div>
+                <div id="gwPhoneHint" style="font-size:12px;min-height:16px;margin:-6px 0 6px 2px;"></div>
+                <div class="pay-address-field"><label>Pincode *</label><input type="text" id="gwPayPincode" placeholder="6-digit pincode" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6);gwChkPin(this.value)"></div>
+                <div id="gwPinHint" style="font-size:12px;min-height:16px;margin:-6px 0 6px 2px;"></div>
+                <button class="pay-confirm-btn" id="gwConfirmBtn" onclick="gwConfirmPayment()">Confirm Gift Order</button>
+                <div id="gwPayError" class="pay-error hidden"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- OFFERS -->
+
+
+<!-- SEASONAL OFFERS -->
+<div class="cust-panel hidden" id="panel-seasonal">
+    <div class="cust-section-intro">
+        <h2 id="soSeasonTitle">&#127774; Seasonal Offers</h2>
+        <p id="soSeasonDesc">Handpicked deals for this season — freshly curated just for you.</p>
+    </div>
+    <div id="soOffersContainer" class="so-offers-list">
+        <div class="so-loading">&#127774; Detecting your season and curating offers...</div>
+    </div>
+</div>
+
+<!-- YOUR DESIGN -->
+<div class="cust-panel hidden" id="panel-yourdesign">
+    <div class="cust-section-intro"><h2>Design Your Own Chocolate Bar</h2><p>Write a name, pick a colour, add a pattern.</p></div>
+    <div class="designer-wrap">
+        <div class="bar-preview-col">
+            <div class="bar-preview-shell" id="barPreviewShell">
+                <div class="bar-preview-wrapper" id="barPreviewWrapper">
+                    <div class="bar-top-label" id="barTopLabel">ChocoBite</div>
+                    <div class="bar-name-text" id="barNameText">Your Name</div>
+                    <div class="bar-msg-text" id="barMsgText">Your Message</div>
+                    <div class="bar-pattern" id="barPattern"></div>
+                    <div class="bar-grid"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+                </div>
+            </div>
+            <p class="bar-preview-note">&#10022; Live preview</p>
+        </div>
+        <div class="bar-controls-col">
+            <div class="design-step"><div class="step-num">1</div><div class="step-body">
+                    <h4>Select Chocolate Bar</h4>
+                    <div id="dsSelectedProduct" class="ds-selected-prod hidden">
+                        <img id="dsSelImg" src="" alt="" onerror="this.style.display='none'" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0">
+                        <div>
+                            <div id="dsSelName" style="color:#f5c842;font-weight:700;font-size:13px"></div>
+                            <div id="dsSelPrice" style="color:#d4820a;font-size:12px;margin-top:2px"></div>
+                            <div id="dsSelSugar" style="color:#a07840;font-size:11px;margin-top:2px"></div>
+                        </div>
+                    </div>
+                    <button class="cust-btn-primary" style="margin-top:10px;width:100%" onclick="dsOpenProductSlide()">
+                        &#127851; Select Product
+                    </button>
+                    <span id="dsSelError" style="color:#e04040;font-size:12px;display:none;margin-top:6px;display:none">Please select a product first.</span>
+                </div></div>
+            <div class="design-step"><div class="step-num">2</div><div class="step-body"><h4>Wrapper Colour</h4><div class="colour-swatches"><button class="swatch active" style="background:#0a0a0a" onclick="setColour(this,'#0a0a0a')"></button><button class="swatch" style="background:#8b0000" onclick="setColour(this,'#8b0000')"></button><button class="swatch" style="background:#4a0080" onclick="setColour(this,'#4a0080')"></button><button class="swatch" style="background:#006040" onclick="setColour(this,'#006040')"></button><button class="swatch" style="background:#0a2a5e" onclick="setColour(this,'#0a2a5e')"></button><button class="swatch" style="background:#8b4513" onclick="setColour(this,'#8b4513')"></button><button class="swatch" style="background:#2a2a2a" onclick="setColour(this,'#2a2a2a')"></button><button class="swatch swatch-gold" style="background:linear-gradient(135deg,#d4820a,#f5c842)" onclick="setColour(this,'gold')"></button></div></div></div>
+            <div class="design-step"><div class="step-num">3</div><div class="step-body"><h4>Pattern</h4><div class="pattern-btns"><button class="pat-btn active" onclick="setPattern(this,'none')">None</button><button class="pat-btn" onclick="setPattern(this,'dots')">Dots</button><button class="pat-btn" onclick="setPattern(this,'stripes')">Stripes</button><button class="pat-btn" onclick="setPattern(this,'hearts')">Hearts</button><button class="pat-btn" onclick="setPattern(this,'stars')">Stars</button></div></div></div>
+            <div class="design-step"><div class="step-num">4</div><div class="step-body"><h4>Name / Text</h4><input type="text" id="barNameInput" placeholder="e.g. Happy Birthday Priya!" maxlength="24" class="cust-input" oninput="updateBarText()"><span class="field-hint">Max 24 characters</span><input type="text" id="barMsgInput" placeholder="Short message (optional)" maxlength="36" class="cust-input" style="margin-top:10px" oninput="updateBarText()"><span class="field-hint">Max 36 characters</span></div></div>
+            <div class="design-step"><div class="step-num">5</div><div class="step-body"><h4>Text Style</h4><div class="font-style-btns"><button class="font-btn active" onclick="setFont(this,'elegant')">Elegant Script</button><button class="font-btn" onclick="setFont(this,'bold')">Bold Caps</button><button class="font-btn" onclick="setFont(this,'handwritten')">Handwritten</button><button class="font-btn" onclick="setFont(this,'minimal')">Minimal</button></div></div></div>
+            <div class="design-step"><div class="step-num">6</div><div class="step-body">
+                    <h4>Quantity &amp; Order</h4>
+                    <div class="design-order-row">
+                        <div class="cust-field" style="flex:0 0 130px">
+                            <label>Qty (bars)</label>
+                            <input type="number" id="designQty" value="1" min="1" max="100" class="cust-input" oninput="updateDesignPrice()">
+                        </div>
+                        <div class="design-price-box" id="designPriceBox">
+                            <div id="dsPriceNoProduct" style="color:#a07840;font-size:13px;line-height:1.5">
+                                Select a product above to see price
+                            </div>
+                            <div id="dsPriceBreakdown" style="display:none">
+                                <div class="dp-row"><span class="dp-row-lbl">Product price</span><span class="dp-row-val" id="dpProductPrice">—</span></div>
+                                <div class="dp-row"><span class="dp-row-lbl">Qty</span><span class="dp-row-val" id="dpQtyVal">×1</span></div>
+                                <div class="dp-row"><span class="dp-row-lbl">Customisation fee</span><span class="dp-row-val" id="dpCustomFee">+ ₹50</span></div>
+                                <div class="dp-divider"></div>
+                                <div class="dp-row dp-total-row"><span class="dp-row-lbl">Total (before offer)</span><span class="dp-row-val dp-total" id="dpTotalVal">—</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="cust-btn-primary design-order-btn" onclick="dsPlaceOrder()">&#10022; Order My Custom Bar</button>
+                    <p class="design-note">Our team will confirm your design within 24 hours before production.</p>
+                </div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ DESIGN WIZARD OVERLAY (Offer → Date → Summary → Buy) ══════════════ -->
+<div id="dsWizardOverlay" class="gw-overlay hidden">
+    <div class="gw-modal">
+
+        <!-- Progress dots -->
+        <div class="gw-progress" id="dsProgress">
+            <span class="gw-dot active"></span>
+            <span class="gw-dot"></span>
+            <span class="gw-dot"></span>
+        </div>
+
+        <!-- DS Slide 1: Offer -->
+        <div class="gw-slide active" id="dsSlide1">
+            <div class="gw-offer-wrap">
+                <div class="gw-offer-confetti">&#127881;</div>
+                <h2 class="gw-offer-title" id="dsOfferTitle">Congratulations!</h2>
+                <div class="gw-offer-disc-badge" id="dsOfferBadge">10% OFF</div>
+                <p class="gw-offer-msg" id="dsOfferMsg">Your custom bar gets a special discount!</p>
+                <div class="gw-offer-code-row">
+                    <span class="gw-offer-code-lbl">Auto-applied at checkout</span>
+                    <span class="gw-offer-code-chip" id="dsOfferCode">CUSTOM10</span>
+                </div>
+            </div>
+            <div class="gw-nav" style="margin-top:24px">
+                <button class="gw-btn-cancel" onclick="dsCloseWizard()">&#10005; Cancel</button>
+                <button class="gw-btn-next" onclick="dsGoTo(2)">Next &#8594;</button>
+            </div>
+        </div>
+
+        <!-- DS Slide 2: Delivery Date -->
+        <div class="gw-slide" id="dsSlide2">
+            <div class="gw-slide-topbar">
+                <button class="gw-back-top" onclick="dsGoTo(1)">&#8592; Back</button>
+            </div>
+            <h2 class="gw-heading">Choose Delivery Date</h2>
+            <p class="gw-sub">Pick a date — or skip and we'll deliver in 8 days.</p>
+            <div class="gw-date-wrap">
+                <div class="gw-date-field">
+                    <label>Preferred Date <span style="color:#a07840;font-size:12px">(optional)</span></label>
+                    <input type="date" id="dsDeliveryDate" class="cust-input" style="max-width:220px" oninput="dsValidateDate()">
+                    <span class="field-hint">Leave blank to deliver on <strong id="dsDefaultDate"></strong></span>
+                </div>
+                <div class="gw-date-info">
+                    <div class="gw-date-info-row">&#128666; Earliest: 2 days from today &nbsp;|&nbsp; Latest: 14 days from today</div>
+                    <div class="gw-date-info-row">&#127873; Custom bars are handcrafted — allow extra time</div>
+                </div>
+            </div>
+            <div id="dsDateError" style="color:#e04040;font-size:13px;display:none;margin-top:6px"></div>
+            <div class="gw-nav">
+                <button class="gw-btn-cancel" onclick="dsCloseWizard()">&#10005; Cancel</button>
+                <button class="gw-btn-next" onclick="dsGoTo(3)">Next &#8594;</button>
+            </div>
+        </div>
+
+        <!-- DS Slide 3: Summary -->
+        <div class="gw-slide" id="dsSlide3">
+            <div class="gw-slide-topbar">
+                <button class="gw-back-top" onclick="dsGoTo(2)">&#8592; Back</button>
+            </div>
+            <h2 class="gw-heading">Your Custom Bar Summary</h2>
+            <p class="gw-sub">Review your design and place your order.</p>
+            <div class="gw-summary">
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#127851; Product</span><span class="gw-sum-val" id="dsSumProduct">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#127807; Sugar Pref.</span><span class="gw-sum-val" id="dsSumSugar">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#127912; Wrapper</span><span class="gw-sum-val" id="dsSumWrapper">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#10022; Text on Bar</span><span class="gw-sum-val" id="dsSumText">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#128203; Message</span><span class="gw-sum-val" id="dsSumMsg" style="font-style:italic">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#128203; Quantity</span><span class="gw-sum-val" id="dsSumQty">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#128666; Delivery</span><span class="gw-sum-val" id="dsSumDelivery">—</span></div>
+                <div class="gw-sum-divider"></div>
+                <div class="gw-sum-row gw-sum-price-row">
+                    <span class="gw-sum-lbl">&#128176; Price</span>
+                    <span class="gw-sum-val">
+                        <span class="gw-price-original" id="dsSumOrigPrice">—</span>
+                        <span class="gw-price-final" id="dsSumFinalPrice">—</span>
+                        <span class="gw-price-saved" id="dsSumSaved">—</span>
+                    </span>
+                </div>
+            </div>
+            <button class="gw-buy-btn" onclick="dsBuyNow()">&#128722; Buy Now &mdash; <span id="dsSumBuyPrice">—</span></button>
+            <p class="gw-buy-note">Your custom bar will be crafted and dispatched within 24 hours of confirmation.</p>
+            <div style="text-align:center;margin-top:10px">
+                <button class="gw-btn-cancel" onclick="dsCloseWizard()">&#10005; Cancel</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ══ PRODUCT SELECTION OVERLAY (reused from Gift wizard) ═══════════════ -->
+<div id="dsProdOverlay" class="gw-overlay hidden">
+    <div class="gw-modal">
+        <div class="gw-progress">
+            <span class="gw-dot active"></span>
+            <span class="gw-dot"></span>
+        </div>
+
+        <!-- DS-P Slide 1: Product selection -->
+        <div class="gw-slide active" id="dsPSlide1">
+            <h2 class="gw-heading">Pick Your Chocolate</h2>
+            <p class="gw-sub">Select one bar to use as the base for your custom design.</p>
+            <div class="gw-pick-btns">
+                <button class="gw-pick-btn active" id="dsPMSingle" onclick="dsPSetMode('single',this)">
+                    <div class="gw-pick-icon">&#127851;</div>
+                    <div class="gw-pick-label">Single Flavour</div>
+                    <div class="gw-pick-desc">Pick one chocolate you love</div>
+                </button>
+                <button class="gw-pick-btn" id="dsPMSpecial" onclick="dsPSetMode('special',this)">
+                    <div class="gw-pick-icon">&#10024;</div>
+                    <div class="gw-pick-label">AI Recommendation</div>
+                    <div class="gw-pick-desc">Best bar for your preferences</div>
+                </button>
+            </div>
+            <div id="dsProdGrid" class="gw-product-grid"><div class="gw-prod-loading">Loading...</div></div>
+            <div id="dsAIResult" class="gw-special-mix hidden">
+                <div class="gw-mix-badge">&#10024; AI Recommended Bar</div>
+                <div id="dsAIChip" class="gw-mix-result"></div>
+                <p class="gw-mix-note">Best match for your customisation style.</p>
+            </div>
+            <div id="dsProdError" style="color:#e04040;font-size:13px;display:none;margin-top:6px"></div>
+            <div class="gw-nav">
+                <button class="gw-btn-cancel" onclick="dsProdOverlayClose()">&#10005; Cancel</button>
+                <button class="gw-btn-next" id="dsPNext1" onclick="dsPGoTo(2)" disabled>Next &#8594;</button>
+            </div>
+        </div>
+
+        <!-- DS-P Slide 2: Sugar preference -->
+        <div class="gw-slide" id="dsPSlide2">
+            <div class="gw-slide-topbar">
+                <button class="gw-back-top" onclick="dsPGoTo(1)">&#8592; Back</button>
+            </div>
+            <h2 class="gw-heading">Sugar Preference</h2>
+            <p class="gw-sub">Would you prefer your bar with sugar or sugar-free?</p>
+            <div class="gw-sugar-choice">
+                <button class="gw-sugar-big-btn" id="dsSugarYes" onclick="dsPPickSugar('sugar',this)">
+                    <div class="gw-sugar-big-icon">&#127851;</div>
+                    <div class="gw-sugar-big-label">With Sugar</div>
+                    <div class="gw-sugar-big-desc">Classic rich indulgence</div>
+                </button>
+                <button class="gw-sugar-big-btn" id="dsSugarNo" onclick="dsPPickSugar('sugarfree',this)">
+                    <div class="gw-sugar-big-icon">&#127807;</div>
+                    <div class="gw-sugar-big-label">Sugar Free</div>
+                    <div class="gw-sugar-big-desc">Same taste, zero guilt</div>
+                </button>
+            </div>
+            <div class="gw-nav" style="margin-top:24px">
+                <button class="gw-btn-cancel" onclick="dsProdOverlayClose()">&#10005; Cancel</button>
+                <button class="gw-btn-next" id="dsPNext2" onclick="dsPConfirm()" disabled>Done &#10003;</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="custToast" class="cust-toast hidden"></div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.gw-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:16px;animation:gwFI .25s ease}
+.gw-overlay.hidden{display:none}
+@keyframes gwFI{from{opacity:0}to{opacity:1}}
+@keyframes gwSU{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.gw-modal{background:#0a0a0a;border:1px solid rgba(212,130,10,.3);border-radius:18px;width:100%;max-width:540px;max-height:88vh;overflow-y:auto;padding:28px 28px 24px;box-shadow:0 24px 64px rgba(0,0,0,.7);animation:gwSU .3s ease;scrollbar-width:thin;scrollbar-color:#d4820a44 transparent}
+.gw-progress{display:flex;gap:8px;justify-content:center;margin-bottom:22px}
+.gw-dot{width:8px;height:8px;border-radius:50%;background:rgba(212,130,10,.25);transition:all .3s}
+.gw-dot.active{background:#d4820a;width:22px;border-radius:4px}
+.gw-dot.done{background:rgba(212,130,10,.55)}
+.gw-slide{display:none}
+.gw-slide.active{display:block;animation:gwSU .28s ease}
+.gw-heading{color:#f5c842;font-size:22px;font-weight:700;font-family:Georgia,serif;margin:0 0 6px}
+.gw-sub{color:#b0906a;font-size:14px;margin:0 0 20px;line-height:1.5}
+.gw-occ-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:22px}
+.gw-occ-card{background:#111111;border:1.5px solid #1a1a1a;border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.gw-occ-card:hover{border-color:#d4820a88;background:#111111}
+.gw-occ-card.selected{border-color:#d4820a;background:#1a1a1a}
+.gw-occ-emoji{font-size:28px;margin-bottom:6px}
+.gw-occ-name{color:#f5c842;font-weight:700;font-size:13px;margin-bottom:4px}
+.gw-occ-line{color:#a07840;font-size:11px;line-height:1.4}
+.gw-occ-tick{position:absolute;top:8px;right:8px;background:#d4820a;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:none;align-items:center;justify-content:center}
+.gw-occ-card.selected .gw-occ-tick{display:flex}
+.gw-field label{display:block;color:#d4820a;font-size:13px;font-weight:600;margin-bottom:6px}
+.gw-req{color:#e04040}
+.gw-pick-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.gw-pick-btn{background:#111111;border:1.5px solid #1a1a1a;border-radius:12px;padding:16px 12px;cursor:pointer;text-align:center;transition:all .2s}
+.gw-pick-btn:hover{border-color:#d4820a88}
+.gw-pick-btn.active{border-color:#d4820a;background:#1a1a1a}
+.gw-pick-icon{font-size:26px;margin-bottom:6px}
+.gw-pick-label{color:#f5c842;font-weight:700;font-size:13px;margin-bottom:4px}
+.gw-pick-desc{color:#a07840;font-size:11px;line-height:1.4}
+.gw-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;max-height:220px;overflow-y:auto;padding:4px;margin-bottom:10px;scrollbar-width:thin;scrollbar-color:#d4820a44 transparent}
+.gw-prod-card{background:#111111;border:1.5px solid #1a1a1a;border-radius:10px;padding:12px 10px;cursor:pointer;transition:all .2s;position:relative}
+.gw-prod-card:hover{border-color:#d4820a88}
+.gw-prod-card.selected{border-color:#d4820a;background:#1a1a1a}
+.gw-prod-img{width:100%;height:70px;object-fit:cover;border-radius:6px;margin-bottom:8px}
+.gw-prod-name{color:#f5c842;font-size:12px;font-weight:700;margin-bottom:4px;line-height:1.3}
+.gw-prod-desc{color:#a07840;font-size:10px;line-height:1.4}
+.gw-prod-price{color:#d4820a;font-size:12px;font-weight:700;margin-top:6px}
+.gw-prod-tick{position:absolute;top:6px;right:6px;background:#d4820a;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:none;align-items:center;justify-content:center}
+.gw-prod-card.selected .gw-prod-tick{display:flex}
+.gw-prod-loading{color:#a07840;text-align:center;padding:30px 0}
+.gw-special-mix{background:#111111;border:1px solid #d4820a44;border-radius:12px;padding:16px;margin-bottom:10px}
+.gw-mix-badge{color:#f5c842;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.gw-mix-result{display:flex;flex-wrap:wrap;gap:8px}
+.gw-mix-chip{background:#1a1a1a;border:1px solid #d4820a44;border-radius:20px;padding:5px 12px;color:#e8d5b0;font-size:12px}
+.gw-mix-note{color:#a07840;font-size:11px;margin:10px 0 0;line-height:1.5}
+.gw-sugar-choice{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}
+.gw-sugar-big-btn{background:#111111;border:2px solid #1a1a1a;border-radius:14px;padding:22px 16px;cursor:pointer;text-align:center;transition:all .25s}
+.gw-sugar-big-btn:hover{border-color:#d4820a88;background:#111111}
+.gw-sugar-big-btn.selected{border-color:#d4820a;background:#1a1a1a;box-shadow:0 0 0 3px rgba(212,130,10,.18)}
+.gw-sugar-big-icon{font-size:36px;margin-bottom:10px}
+.gw-sugar-big-label{color:#f5c842;font-size:16px;font-weight:700;margin-bottom:6px;font-family:Georgia,serif}
+.gw-sugar-big-desc{color:#a07840;font-size:12px;line-height:1.5}
+.gw-offer-wrap{text-align:center;padding:10px 0 6px}
+.gw-offer-confetti{font-size:48px;margin-bottom:10px;animation:gwB .6s ease}
+@keyframes gwB{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.gw-offer-title{color:#f5c842;font-size:24px;font-weight:700;font-family:Georgia,serif;margin:0 0 14px}
+.gw-offer-disc-badge{display:inline-block;background:linear-gradient(135deg,#d4820a,#f5c842);color:#0a0a0a;font-size:28px;font-weight:900;padding:10px 28px;border-radius:40px;margin-bottom:14px}
+.gw-offer-msg{color:#e8d5b0;font-size:15px;margin-bottom:18px}
+.gw-offer-code-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.gw-offer-code-lbl{color:#a07840;font-size:12px}
+.gw-offer-code-chip{background:#111111;border:1.5px dashed #d4820a;color:#f5c842;font-weight:700;font-size:14px;padding:6px 16px;border-radius:6px;letter-spacing:1px}
+.gw-date-info{background:#111111;border-radius:10px;padding:14px 16px;margin-top:16px}
+.gw-date-info-row{color:#b0906a;font-size:13px;padding:5px 0}
+.gw-summary{background:#111111;border-radius:12px;padding:18px 20px;margin-bottom:20px}
+.gw-sum-row{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(212,130,10,.1)}
+.gw-sum-row:last-child{border-bottom:none}
+.gw-sum-lbl{color:#a07840;font-size:13px;min-width:110px}
+.gw-sum-val{color:#e8d5b0;font-size:13px;text-align:right;flex:1}
+.gw-sum-divider{border-top:1px solid rgba(212,130,10,.3);margin:6px 0}
+.gw-sum-price-row .gw-sum-val{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.gw-price-original{color:#888;text-decoration:line-through;font-size:13px}
+.gw-price-final{color:#f5c842;font-size:20px;font-weight:700}
+.gw-price-saved{color:#6fcf97;font-size:12px}
+.gw-buy-btn{width:100%;padding:15px;background:linear-gradient(135deg,#d4820a,#b5690a);color:#fff;border:none;border-radius:10px;font-size:17px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.gw-buy-btn:hover{opacity:.9}
+.gw-buy-note{color:#a07840;font-size:12px;text-align:center;margin-top:10px}
+.gw-nav{display:flex;align-items:center;justify-content:space-between;margin-top:22px;gap:8px}
+.gw-btn-cancel{background:transparent;border:1.5px solid #5a1a1a;color:#c07070;border-radius:8px;padding:10px 18px;font-size:13px;cursor:pointer;transition:all .2s}
+.gw-btn-cancel:hover{border-color:#e04040;color:#e04040}
+.gw-btn-back{background:transparent;border:1.5px solid #1a1a1a;color:#a07840;border-radius:8px;padding:10px 18px;font-size:13px;cursor:pointer;transition:all .2s}
+.gw-btn-back:hover{border-color:#d4820a44;color:#d4820a}
+/* Top-bar back button (top-right corner of each slide) */
+.gw-slide-topbar{display:flex;justify-content:flex-start;margin-bottom:8px}
+.dp-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px}
+.dp-row-lbl{color:#a07840}
+.dp-row-val{color:#e8d5b0;font-weight:600}
+.dp-divider{border-top:1px solid rgba(212,130,10,0.2);margin:6px 0}
+.dp-total-row .dp-row-lbl{color:#d4820a;font-weight:700;font-size:13px}
+.dp-total{color:#f5c842 !important;font-size:15px !important;font-weight:700 !important}
+.gw-back-top{background:transparent;border:none;color:#a07840;font-size:13px;cursor:pointer;padding:2px 0;transition:color .2s;display:flex;align-items:center;gap:4px}
+.gw-back-top:hover{color:#d4820a}
+/* Payment modal back button — top left */
+.pay-back-btn{background:none;border:none;color:#a07840;font-size:13px;cursor:pointer;padding:0;transition:color .2s}
+.pay-back-btn:hover{color:#d4820a}
+.gw-btn-next{background:linear-gradient(135deg,#d4820a,#b5690a);color:#fff;border:none;border-radius:8px;padding:11px 28px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;flex:1;max-width:160px}
+.gw-btn-next:hover:not(:disabled){opacity:.9}
+.gw-btn-next:disabled{opacity:.4;cursor:not-allowed}
+</style>
+<script>
+// Tab switching
+// switchCustTab defined below with seasonal support
+// Occasions
+var selectedOccasion='';
+function selectOccasion(card,name){document.querySelectorAll('.occ-card').forEach(function(c){c.classList.remove('selected');});card.classList.add('selected');selectedOccasion=name;document.getElementById('occEnquiryTitle').textContent='Customise for '+name;document.getElementById('occEnquiry').classList.remove('hidden');document.getElementById('occEnquiry').scrollIntoView({behavior:'smooth',block:'center'});}
+function closeOccEnquiry(){document.getElementById('occEnquiry').classList.add('hidden');document.querySelectorAll('.occ-card').forEach(function(c){c.classList.remove('selected');});}
+// Offers
+function copyCode(code){if(navigator.clipboard){navigator.clipboard.writeText(code);}else{var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);}showCustToast('Code "'+code+'" copied! &#127851;','success');}
+
+// ── GW State ──────────────────────────────────────────────────────────────────
+var GW={giftName:'',basePrice:0,slotCount:0,occasion:'',occasionEmoji:'',recipientName:'',message:'',pickMode:'single',selectedProduct:null,specialMix:[],discountPct:0,discountCode:'',deliveryDate:null,allProducts:[],sugarPref:null,forcesugarfree:false,_offerLocked:false,_currentSlide:1};
+
+var OCC_WEIGHTS={'Birthday':[0.3,0.9,0.6,0.8,0.5,0.2,0.1],'Wedding':[0.8,0.5,0.9,0.3,0.4,0.1,0.2],'Anniversary':[0.9,0.6,0.5,0.4,0.3,0.3,0.1],'Baby Shower':[0.2,0.9,0.8,0.7,0.3,0.1,0.4],'Diwali':[0.6,0.7,0.4,0.3,0.9,0.8,0.2],"Valentine's Day":[0.9,0.7,0.5,0.5,0.3,0.2,0.1],'Graduation':[0.5,0.8,0.6,0.6,0.7,0.3,0.2],'Just Because':[0.5,0.5,0.5,0.5,0.5,0.5,0.3]};
+var OCC_MSGS={'Birthday':'Your {OCC} gift unlocked a sweet surprise!','Wedding':'A magical occasion deserves a magical deal!','Anniversary':'Celebrating love has its delicious perks!','Baby Shower':'The sweetest welcome gift, now even sweeter!','Diwali':'Festival season special \u2014 a gift for the gifter!',"Valentine's Day":'Love is in the air, and so are the savings!','Graduation':'You worked hard \u2014 here\u2019s your sweet reward!','Just Because':'No reason needed \u2014 but here\u2019s a reason to smile!'};
+
+function scoreProduct(prod,w){var n=(prod.name+' '+prod.description).toLowerCase();var a=[/dark|bitter|70%/.test(n)?1:0,/milk|creamy|smooth/.test(n)?1:0,/white|vanilla/.test(n)?1:0,/fruit|berry|mango/.test(n)?1:0,/nut|almond|hazel/.test(n)?1:0,/spice|cinnamon|chilli/.test(n)?1:0,prod.is_sugarless?1:0];return a.reduce(function(s,v,i){return s+v*w[i];},0);}
+
+function gwGetSpecialMix(occ,count){
+    var w=OCC_WEIGHTS[occ]||OCC_WEIGHTS['Just Because'];
+    var pool=GW.sugarPref==='sugarfree'?GW.allProducts.filter(function(p){return p.is_sugarless;}):GW.sugarPref==='sugar'?GW.allProducts.filter(function(p){return !p.is_sugarless;}):GW.allProducts;
+    if(!pool.length)pool=GW.allProducts;
+    var s=pool.map(function(p){return{p:p,score:scoreProduct(p,w)+Math.random()*0.15};});
+    s.sort(function(a,b){return b.score-a.score;});
+    return s.slice(0,count).map(function(x){return x.p;});
+}
+
+// ML Discount: single 3-13% (higher total = more), special 15-20%
+function gwMLDiscount(mode,totalAmt){
+    if(mode==='special'){var tiers=[{pct:15,w:10},{pct:16,w:14},{pct:17,w:20},{pct:18,w:24},{pct:19,w:18},{pct:20,w:14}];}
+    else{var bias=Math.min((totalAmt||0)/5000,1);var base=[{pct:3,bw:20},{pct:4,bw:18},{pct:5,bw:16},{pct:6,bw:14},{pct:7,bw:12},{pct:8,bw:10},{pct:9,bw:8},{pct:10,bw:6},{pct:11,bw:5},{pct:12,bw:3},{pct:13,bw:2}];var tiers=base.map(function(t,i){return{pct:t.pct,w:Math.max(0.5,t.bw-(base.length-1-i)*bias*1.2+bias*i*1.5)};});}
+    var tot=tiers.reduce(function(s,t){return s+t.w;},0);var r=Math.random()*tot,c=0;
+    for(var i=0;i<tiers.length;i++){c+=tiers[i].w;if(r<=c)return tiers[i].pct;}
+    return tiers[tiers.length-1].pct;
+}
+
+function gwCalcOrigTotal(){var t=0;if(GW.pickMode==='special'){GW.specialMix.forEach(function(p){t+=parseFloat(p.price)||0;});}else if(GW.selectedProduct){t=(parseFloat(GW.selectedProduct.price)||0)*GW.slotCount;}return t||GW.basePrice;}
+
+function gwBuildOffer(){
+    if(GW._offerLocked)return; // NEVER change once set
+    var tot=gwCalcOrigTotal();
+    var pct=gwMLDiscount(GW.pickMode,tot);
+    var code='GIFT'+pct+GW.occasion.replace(/[^A-Z]/gi,'').substring(0,4).toUpperCase();
+    var msg=(OCC_MSGS[GW.occasion]||'Your gift just got sweeter!').replace('{OCC}',GW.occasion);
+    var extra=GW.pickMode==='special'?' &#129302; Our AI curated the best mix \u2014 best discount guaranteed!':'';
+    GW.discountPct=pct; GW.discountCode=code; GW._offerLocked=true;
+    document.getElementById('gwOfferTitle').textContent='Congratulations!';
+    document.getElementById('gwOfferBadge').textContent=pct+'% OFF';
+    document.getElementById('gwOfferMsg').innerHTML=msg+extra;
+    document.getElementById('gwOfferCode').textContent=code;
+}
+
+function openGiftWizard(name,price,slots){
+    GW.giftName=name;GW.basePrice=price;GW.slotCount=slots;
+    GW.occasion='';GW.recipientName='';GW.message='';GW.pickMode='single';GW.selectedProduct=null;GW.specialMix=[];
+    GW._offerLocked=false;GW.sugarPref=null;
+    GW.forcesugarfree=(name==='Wellness Sugar-Free Set');
+    if(GW.forcesugarfree)GW.sugarPref='sugarfree';
+    document.querySelectorAll('.gw-occ-card').forEach(function(c){c.classList.remove('selected');});
+    document.querySelectorAll('.gw-pick-btn').forEach(function(b){b.classList.remove('active');});
+    document.getElementById('gwPickSingle').classList.add('active');
+    document.getElementById('gwRecipientName').value='';document.getElementById('gwMessage').value='';
+    document.getElementById('gwMsgCount').textContent='0 / 100 characters';
+    document.getElementById('gwDeliveryDate').value='';
+    document.getElementById('gwDateError').style.display='none';document.getElementById('gwProdError').style.display='none';
+    document.getElementById('gwNext1').disabled=true;document.getElementById('gwNext3').disabled=true;
+    document.querySelectorAll('.gw-slot-label').forEach(function(el){el.textContent=slots;});
+    document.getElementById('gwSlotCount').textContent=slots;
+    var def=new Date();def.setDate(def.getDate()+8);
+    document.getElementById('gwDefaultDate').textContent=def.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    var minD=new Date();minD.setDate(minD.getDate()+2);
+    var maxD=new Date();maxD.setDate(maxD.getDate()+14);
+    document.getElementById('gwDeliveryDate').min=minD.toISOString().split('T')[0];
+    document.getElementById('gwDeliveryDate').max=maxD.toISOString().split('T')[0];
+    document.getElementById('gwMessage').oninput=function(){document.getElementById('gwMsgCount').textContent=this.value.length+' / 100 characters';};
+    document.getElementById('giftWizardOverlay').classList.remove('hidden');
+    gwGoTo(1);gwLoadProducts();
+}
+
+function closeGiftWizard(){document.getElementById('giftWizardOverlay').classList.add('hidden');}
+
+document.addEventListener('DOMContentLoaded',function(){
+    document.getElementById('giftWizardOverlay').addEventListener('click',function(e){if(e.target===this)closeGiftWizard();});
+});
+
+var DOT_ORDER=[1,2,3,35,4,5,6];
+function gwGoTo(step){
+    if(step===3&&!GW.occasion){showCustToast('Please select an occasion first.','error');return;}
+    if(step===3){
+        // Validate name ONLY when coming forward from slide 2 (not when going back from slide 35+)
+        var comingFromSlide2 = (GW._currentSlide===2);
+        if(comingFromSlide2){
+            var n=document.getElementById('gwRecipientName').value.trim();
+            if(!n){
+                var inp=document.getElementById('gwRecipientName');
+                inp.style.borderColor='#e04040';
+                inp.focus();
+                var hint=inp.nextElementSibling;
+                if(hint){hint.textContent='Please enter the recipient\'s name to continue.';hint.style.color='#e04040';}
+                return;
+            }
+            document.getElementById('gwRecipientName').style.borderColor='';
+            var hint2=document.getElementById('gwRecipientName').nextElementSibling;
+            if(hint2){hint2.textContent='This name will appear on the gift card';hint2.style.color='';}
+            GW.recipientName=n;
+            GW.message=document.getElementById('gwMessage').value.trim();
+        }
+        // Re-apply correct mode display
+        var grid3=document.getElementById('gwProductGrid');
+        var mix3=document.getElementById('gwSpecialMix');
+        if(GW.pickMode==='single'){
+            grid3.classList.remove('hidden'); mix3.classList.add('hidden');
+            gwRenderProducts();
+        } else {
+            grid3.classList.add('hidden'); mix3.classList.remove('hidden');
+        }
+    }
+    if(step===35){
+        if(GW.pickMode==='single'&&!GW.selectedProduct){document.getElementById('gwProdError').textContent='Please select a chocolate bar.';document.getElementById('gwProdError').style.display='block';return;}
+        document.getElementById('gwProdError').style.display='none';
+        if(GW.forcesugarfree){GW.sugarPref='sugarfree';gwGoTo(4);return;}
+        gwRefreshSugarUI();document.getElementById('gwNext35').disabled=!GW.sugarPref;
+    }
+    if(step===4){gwBuildOffer();} // offer locks here — never changes after
+    if(step===6){gwValidateDate();GW.deliveryDate=document.getElementById('gwDeliveryDate').value||null;gwBuildSummary();}
+    GW._currentSlide = step; // track where we are
+    document.querySelectorAll('.gw-slide').forEach(function(s){s.classList.remove('active');});
+    document.getElementById(step===35?'gwSlide35':'gwSlide'+step).classList.add('active');
+    var idx=DOT_ORDER.indexOf(step);
+    document.querySelectorAll('.gw-dot').forEach(function(d,i){d.classList.remove('active','done');if(i<idx)d.classList.add('done');if(i===idx)d.classList.add('active');});
+    document.querySelector('.gw-modal').scrollTop=0;
+}
+
+function gwSelectOcc(card,name,emoji){document.querySelectorAll('.gw-occ-card').forEach(function(c){c.classList.remove('selected');});card.classList.add('selected');GW.occasion=name;GW.occasionEmoji=emoji;document.getElementById('gwNext1').disabled=false;}
+
+function gwLoadProducts(){if(GW.allProducts.length){gwRenderProducts();return;}fetch('/api/products').then(function(r){return r.json();}).then(function(d){GW.allProducts=d;gwRenderProducts();}).catch(function(){document.getElementById('gwProductGrid').innerHTML='<div class="gw-prod-loading" style="color:#e04040">Failed to load. Try again.</div>';});}
+
+function gwRenderProducts(){
+    var g=document.getElementById('gwProductGrid');
+    if(!GW.allProducts.length){g.innerHTML='<div class="gw-prod-loading">No products found.</div>';return;}
+    // Filter by sugar preference if set (from slide 35)
+    var prods=GW.allProducts.filter(function(p){
+        if(GW.sugarPref==='sugarfree') return p.is_sugarless===true;
+        if(GW.sugarPref==='sugar')     return p.is_sugarless!==true;
+        return true;
+    });
+    if(!prods.length){g.innerHTML='<div class="gw-prod-loading" style="color:#a07840">No products match. Try changing your preference.</div>';return;}
+    var sid=GW.selectedProduct?GW.selectedProduct.product_id:null;
+    g.innerHTML=prods.map(function(p){
+        var sel=sid===p.product_id?' selected':'';
+        return '<div class="gw-prod-card'+sel+'" onclick="gwSelProd(this,\''+p.product_id+'\')">'+(p.image_url?'<img class="gw-prod-img" src="'+p.image_url+'" alt="'+p.name+'" onerror="this.style.display=\'none\'">':'')+'<div class="gw-prod-name">'+p.name+'</div><div class="gw-prod-desc">'+(p.tagline||p.description.substring(0,55)+'...')+'</div><div class="gw-prod-price">&#8377;'+p.price+'/bar</div><div class="gw-prod-tick">&#10003;</div></div>';
+    }).join('');
+    if(sid&&prods.find(function(p){return p.product_id===sid;}))document.getElementById('gwNext3').disabled=false;
+}
+
+function gwSelProd(card,id){document.querySelectorAll('.gw-prod-card').forEach(function(c){c.classList.remove('selected');});card.classList.add('selected');GW.selectedProduct=GW.allProducts.find(function(p){return p.product_id===id;});document.getElementById('gwNext3').disabled=false;document.getElementById('gwProdError').style.display='none';}
+
+function gwSetPickMode(mode,btn){
+    document.querySelectorAll('.gw-pick-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    GW.pickMode = mode;
+    var grid = document.getElementById('gwProductGrid');
+    var mixDiv = document.getElementById('gwSpecialMix');
+    if(mode === 'single'){
+        // Always show grid, always hide mix
+        grid.classList.remove('hidden');
+        mixDiv.classList.add('hidden');
+        // Re-render with current sugar filter
+        gwRenderProducts();
+        document.getElementById('gwNext3').disabled = !GW.selectedProduct;
+    } else {
+        // Always hide grid, always show mix
+        grid.classList.add('hidden');
+        mixDiv.classList.remove('hidden');
+        // Regenerate AI mix fresh
+        var mix = gwGetSpecialMix(GW.occasion, GW.slotCount);
+        GW.specialMix = mix;
+        document.getElementById('gwMixResult').innerHTML = mix.map(function(p){
+            return '<span class="gw-mix-chip">&#127851; ' + p.name + '</span>';
+        }).join('');
+        document.getElementById('gwNext3').disabled = false;
+    }
+}
+
+function gwPickSugarPref(pref,btn){
+    GW.sugarPref=pref;
+    document.querySelectorAll('.gw-sugar-big-btn').forEach(function(b){b.classList.remove('selected');});btn.classList.add('selected');
+    document.getElementById('gwNext35').disabled=false;
+    if(GW.pickMode==='special'){var mix=gwGetSpecialMix(GW.occasion,GW.slotCount);GW.specialMix=mix;document.getElementById('gwMixResult').innerHTML=mix.map(function(p){return '<span class="gw-mix-chip">&#127851; '+p.name+'</span>';}).join('');}
+}
+
+function gwRefreshSugarUI(){
+    document.querySelectorAll('.gw-sugar-big-btn').forEach(function(b){b.classList.remove('selected');});
+    if(GW.sugarPref==='sugar'){document.getElementById('gwSugarOptSugar').classList.add('selected');document.getElementById('gwNext35').disabled=false;}
+    else if(GW.sugarPref==='sugarfree'){document.getElementById('gwSugarOptFree').classList.add('selected');document.getElementById('gwNext35').disabled=false;}
+}
+
+function gwBackFromOffer(){
+    // If Wellness gift (forcesugarfree), skip slide35 — go straight back to slide 3
+    if(GW.forcesugarfree){ gwGoTo(3); }
+    else { gwGoTo(35); }
+}
+
+function gwValidateDate(){var val=document.getElementById('gwDeliveryDate').value;var e=document.getElementById('gwDateError');if(!val){e.style.display='none';return;}var p=new Date(val);var mn=new Date();mn.setDate(mn.getDate()+2);var mx=new Date();mx.setDate(mx.getDate()+14);if(p<mn||p>mx){e.textContent='Pick a date between '+mn.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' and '+mx.toLocaleDateString('en-IN',{day:'numeric',month:'short'});e.style.display='block';}else{e.style.display='none';}}
+
+function gwBuildSummary(){
+    var sel=GW.pickMode==='special'?'Special AI Mix ('+GW.slotCount+' bars)':GW.slotCount+'\u00d7 '+(GW.selectedProduct?GW.selectedProduct.name:'');
+    var del=GW.deliveryDate?new Date(GW.deliveryDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):(function(){var d=new Date();d.setDate(d.getDate()+8);return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});})();
+    var orig=gwCalcOrigTotal();GW.origPrice=orig;
+    var fin=Math.round(orig*(1-GW.discountPct/100));var sav=orig-fin;
+    document.getElementById('sumGiftName').textContent=GW.giftName;
+    document.getElementById('sumOccasion').textContent=GW.occasionEmoji+' '+GW.occasion;
+    document.getElementById('sumRecipient').textContent=GW.recipientName;
+    document.getElementById('sumMessage').textContent=GW.message||'(none)';
+    document.getElementById('sumSelection').textContent=sel;
+    document.getElementById('sumSugarPref').textContent=GW.sugarPref==='sugarfree'?'Sugar Free':'With Sugar';
+    document.getElementById('sumDelivery').textContent=del;
+    document.getElementById('sumOrigPrice').textContent='\u20b9'+orig;
+    document.getElementById('sumFinalPrice').textContent='\u20b9'+fin;
+    document.getElementById('sumSaved').textContent='You save \u20b9'+sav+'! ('+GW.discountPct+'% off)';
+    document.getElementById('sumBuyPrice').textContent='\u20b9'+fin;
+}
+
+function gwBuildItems(){var it=[];if(GW.pickMode==='special'){GW.specialMix.forEach(function(p){it.push({product_id:p.product_id,name:p.name,price:p.price,quantity:1});});}else if(GW.selectedProduct){it.push({product_id:GW.selectedProduct.product_id,name:GW.selectedProduct.name,price:GW.selectedProduct.price,quantity:GW.slotCount});}return it;}
+
+function gwPlaceOrder(){
+    var it=gwBuildItems();
+    if(!it.length){showCustToast('No products selected.','error');return;}
+    GW.origPrice=gwCalcOrigTotal();
+    GW.finalPrice=Math.round(GW.origPrice*(1-GW.discountPct/100));
+    GW.items=it;
+    // Login check before opening payment
+    if(typeof requireLogin==='function'){
+        requireLogin(function(){ closeGiftWizard(); gwOpenPayModal(); });
+    } else {
+        closeGiftWizard(); gwOpenPayModal();
+    }
+}
+
+function gwOpenPayModal(){
+    document.getElementById('gwPaySummary').textContent=GW.giftName+' \u2014 '+GW.occasion+' Gift = \u20b9'+GW.finalPrice;
+    document.getElementById('gwPayOnlineBtn').textContent='Pay Online \u20b9'+GW.finalPrice;
+    document.getElementById('gwPayCODBtn').textContent='Cash on Delivery \u20b9'+GW.finalPrice;
+    document.getElementById('gwPayStep1').classList.remove('hidden');document.getElementById('gwPayStep2').classList.add('hidden');
+    document.getElementById('gwPayAddress').value='';document.getElementById('gwPayPhone').value='';
+    document.getElementById('gwPayError').classList.add('hidden');
+    document.getElementById('gwPayModal').classList.remove('hidden');
+}
+function gwClosePayModal(){document.getElementById('gwPayModal').classList.add('hidden');}
+
+var gwPayMethod='online';
+function gwSelectPayMethod(m){gwPayMethod=m;document.getElementById('gwPayStep1').classList.add('hidden');document.getElementById('gwPayStep2').classList.remove('hidden');document.getElementById('gwPayStep2Title').textContent=m==='online'?'Online Payment \u2014 Address':'Cash on Delivery \u2014 Address';document.getElementById('gwConfirmBtn').textContent=(m==='online'?'Proceed to Pay \u20b9':'Place Gift Order (COD) \u20b9')+(m==='online'?GW.finalPrice:'');}
+
+/* ---- Shared pincode helpers for all customize flows ---- */
+function custIsUdupi(pin) { return /^(576|574)\d{3}$/.test(pin); }
+
+function showCustRegionAlert(msg) {
+    var el = document.getElementById('custRegionAlert');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'custRegionAlert';
+        el.style.cssText =
+            'position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-120px);'
+            + 'background:#1a0000;border:2px solid #e04040;color:#ffaaaa;'
+            + 'padding:14px 28px;border-radius:12px;font-size:14px;font-family:inherit;'
+            + 'z-index:99999;box-shadow:0 8px 32px rgba(0,0,0,0.85);'
+            + 'transition:transform 0.45s cubic-bezier(0.34,1.4,0.64,1),opacity 0.35s;'
+            + 'opacity:0;max-width:92vw;text-align:center;line-height:1.6;';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.transform = 'translateX(-50%) translateY(0)';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(function() {
+        el.style.transform = 'translateX(-50%) translateY(-120px)';
+        el.style.opacity = '0';
+    }, 5000);
+}
+
+function gwChkPin(v) {
+    var el = document.getElementById('gwPinHint');
+    if (!v) { el.innerHTML=''; return; }
+    if (v.length < 6) { el.innerHTML='<span style="color:#e07840">Enter all 6 digits</span>'; return; }
+    el.innerHTML = custIsUdupi(v)
+        ? '<span style="color:#6fcf97">&#10003; Delivery available!</span>'
+        : '<span style="color:#e04040">&#10007; Outside delivery zone (Udupi only)</span>';
+}
+function gwChkPhone(v) {
+    var el = document.getElementById('gwPhoneHint');
+    if (!v) { el.innerHTML=''; return; }
+    if (v.length < 10) { el.innerHTML='<span style="color:#e07840">Must be 10 digits</span>'; return; }
+    el.innerHTML='<span style="color:#6fcf97">&#10003; Looks good</span>';
+}
+
+_gwSubmitting = false;
+async function gwConfirmPayment(){
+    if (_gwSubmitting) return;
+    _gwSubmitting = true;
+    var btn = document.getElementById('gwConfirmBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; }
+    var addr    = document.getElementById('gwPayAddress').value.trim();
+    var ph      = document.getElementById('gwPayPhone').value.trim();
+    var pincode = document.getElementById('gwPayPincode').value.trim();
+    var e       = document.getElementById('gwPayError');
+    if(!addr){ e.textContent='Please enter your delivery address.'; e.classList.remove('hidden'); _gwSubmitting=false; if(btn){btn.disabled=false;btn.textContent='Confirm Gift Order';} return; }
+    if(ph.length!==10){ e.textContent='Please enter a valid 10-digit phone number.'; e.classList.remove('hidden'); _gwSubmitting=false; if(btn){btn.disabled=false;btn.textContent='Confirm Gift Order';} return; }
+    if(pincode.length!==6){ showCustRegionAlert('Please enter a valid 6-digit pincode.'); _gwSubmitting=false; if(btn){btn.disabled=false;btn.textContent='Confirm Gift Order';} return; }
+    e.classList.add('hidden');
+    await fetch('/api/user/save-pincode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pincode:pincode})}).catch(function(){});
+    if(!custIsUdupi(pincode)){
+        showCustRegionAlert('Sorry - we currently deliver only within the Udupi region (pincodes 574xxx or 576xxx).');
+        _gwSubmitting=false; if(btn){btn.disabled=false;btn.textContent='Confirm Gift Order';} return;
+    }
+    GW.address=addr; GW.phone=ph; GW.pincode=pincode;
+    if(gwPayMethod==='cod'){await gwPlaceCOD();}else{gwLaunchRzp();}
+}
+
+function gwDelDate(){return GW.deliveryDate?new Date(GW.deliveryDate).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'}):(function(){var d=new Date();d.setDate(d.getDate()+8);return d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});})();}
+
+async function gwPlaceCOD(){
+    var r=await fetch('/api/order/gift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:GW.items,address:GW.address,phone:GW.phone||'',pincode:GW.pincode||'',total:GW.finalPrice,method:'cod',occasion:GW.occasion,recipient:GW.recipientName,message:GW.message,pick_mode:GW.pickMode,discount_pct:GW.discountPct,discount_code:GW.discountCode,delivery_date:document.getElementById('gwDeliveryDate').value||''})});
+    var d=await r.json();gwClosePayModal();
+    if(d.success){showToast('&#127873; Gift for '+GW.recipientName+' confirmed! Arriving by '+gwDelDate(),'success');setTimeout(function(){window.location.href='/orders';},2800);}
+    else{showToast(d.message||'Order failed.','error');}
+}
+
+function gwLaunchRzp(){
+    gwClosePayModal();var o=document.getElementById('gwRzpOv');if(o)o.remove();
+    o=document.createElement('div');o.id='gwRzpOv';o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    o.innerHTML='<iframe id="gwRzpFr" src="/payment" style="border:none;border-radius:8px;width:100%;max-width:420px;height:620px;"></iframe>';
+    document.body.appendChild(o);
+    document.getElementById('gwRzpFr').onload=function(){this.contentWindow.postMessage({type:'RZP_INIT',config:{amount:GW.finalPrice,items:GW.items,address:GW.address,phone:GW.phone||'',pincode:GW.pincode||''}},'*');};
+    window.addEventListener('message',function L(e){
+        if(e.data&&e.data.type==='RZP_DONE'){window.removeEventListener('message',L);o.remove();
+            fetch('/api/order/gift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:GW.items,address:GW.address,phone:GW.phone||'',pincode:GW.pincode||'',total:GW.finalPrice,method:'online',txn_id:e.data.txn_id||'',occasion:GW.occasion,recipient:GW.recipientName,message:GW.message,pick_mode:GW.pickMode,discount_pct:GW.discountPct,discount_code:GW.discountCode,delivery_date:document.getElementById('gwDeliveryDate').value||''})}).then(function(r){return r.json();}).then(function(d){if(d.success){showToast('&#127873; Gift for '+GW.recipientName+' confirmed! '+GW.discountPct+'% saved \u00b7 Arriving by '+gwDelDate(),'success');setTimeout(function(){window.location.href='/orders';},2800);}else{showToast('Payment received but save failed. Contact support.','error');}});
+        }
+        if(e.data&&e.data.type==='RZP_CANCEL'){window.removeEventListener('message',L);o.remove();showToast('Payment cancelled.','error');}
+    });
+}
+
+// Dynamic gift card prices
+(function(){fetch('/api/products').then(function(r){return r.json();}).then(function(p){if(!p||!p.length)return;var c=p.slice().sort(function(a,b){return a.price-b.price;})[0].price;[6,12,8,20].forEach(function(s,i){var el=document.getElementById('giftPrice'+i);if(el)el.textContent='\u20b9'+(c*s).toLocaleString('en-IN');});}).catch(function(){});})();
+
+// Design tab
+var barFonts={elegant:"'Cinzel',Georgia,serif",bold:"'Impact','Arial Black',sans-serif",handwritten:"'Brush Script MT',cursive",minimal:"'Courier New',monospace"};
+var chocColours={dark:'#2c1a08',milk:'#6b3a1f',white:'#f0e0c0',ruby:'#8b1a4a'};
+function setColour(btn,col){document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('active');});btn.classList.add('active');var sh=document.getElementById('barPreviewShell');sh.style.background=col==='gold'?'linear-gradient(135deg,#d4820a,#f5c842)':col;}
+// setChocType removed — product selected via DB instead
+function setPattern(btn,p){document.querySelectorAll('.pat-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');var s=document.getElementById('barPreviewShell');s.className='bar-preview-shell';if(p!=='none')s.classList.add('pat-'+p);}
+function setFont(btn,f){document.querySelectorAll('.font-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');document.getElementById('barNameText').style.fontFamily=barFonts[f];document.getElementById('barMsgText').style.fontFamily=barFonts[f];}
+function updateBarText(){document.getElementById('barNameText').textContent=document.getElementById('barNameInput').value||'Your Name';document.getElementById('barMsgText').textContent=document.getElementById('barMsgInput').value||'Your Message';}
+function updateDesignPrice(){
+    var q = parseInt(document.getElementById('designQty').value) || 1;
+    var noSel = document.getElementById('dsPriceNoProduct');
+    var breakdown = document.getElementById('dsPriceBreakdown');
+
+    if (!DS.selectedProduct) {
+        if (noSel) noSel.style.display = 'block';
+        if (breakdown) breakdown.style.display = 'none';
+        return;
+    }
+
+    var price     = parseFloat(DS.selectedProduct.price) || 0;
+    var customFee = 50 * q;
+    var total     = price * q + customFee;
+
+    if (noSel) noSel.style.display = 'none';
+    if (breakdown) breakdown.style.display = 'block';
+
+    document.getElementById('dpProductPrice').textContent = '₹' + price + ' / bar';
+    document.getElementById('dpQtyVal').textContent       = '×' + q;
+    document.getElementById('dpCustomFee').textContent    = '+ ₹' + customFee + ' (customisation)';
+    document.getElementById('dpTotalVal').textContent     = '₹' + total;
+}
+function submitEnquiry(t){showCustToast('Enquiry sent! Our team contacts you within 24h. &#127851;','success');if(t==='occasion')closeOccEnquiry();}
+function submitDesignOrder(){dsPlaceOrder();}
+
+// ─── DESIGN WIZARD STATE ─────────────────────────────────────────────────────
+var DS = {
+    selectedProduct: null, // product from DB
+    sugarPref: null,       // 'sugar' | 'sugarfree'
+    pickMode: 'single',    // 'single' | 'special'
+    aiProduct: null,
+    discountPct: 0,
+    discountCode: '',
+    deliveryDate: null,
+    _offerLocked: false,
+    allProducts: []
+};
+
+// ─── Open product selection overlay ──────────────────────────────────────────
+function dsOpenProductSlide() {
+    // Reset product overlay state
+    DS.pickMode = 'single';
+    document.querySelectorAll('#dsProdOverlay .gw-pick-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('dsPMSingle').classList.add('active');
+    document.getElementById('dsProdGrid').classList.remove('hidden');
+    document.getElementById('dsAIResult').classList.add('hidden');
+    document.getElementById('dsPNext1').disabled = true;
+    document.getElementById('dsProdError').style.display = 'none';
+    document.querySelectorAll('.gw-sugar-big-btn').forEach(function(b){ b.classList.remove('selected'); });
+    document.getElementById('dsPNext2').disabled = true;
+    document.getElementById('dsProdOverlay').classList.remove('hidden');
+    // Switch to slide 1
+    document.querySelectorAll('#dsProdOverlay .gw-slide').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('dsPSlide1').classList.add('active');
+    dsPUpdateDots(1);
+    // Load products
+    if (DS.allProducts.length) { dsPRenderProducts(); return; }
+    fetch('/api/products').then(function(r){ return r.json(); }).then(function(d){
+        DS.allProducts = d;
+        dsPRenderProducts();
+    }).catch(function(){
+        document.getElementById('dsProdGrid').innerHTML = '<div class="gw-prod-loading" style="color:#e04040">Failed to load. Refresh and try again.</div>';
+    });
+}
+
+function dsProdOverlayClose() {
+    document.getElementById('dsProdOverlay').classList.add('hidden');
+}
+
+function dsPGoTo(step) {
+    if (step === 2) {
+        if (DS.pickMode === 'single' && !DS.selectedProduct) {
+            document.getElementById('dsProdError').textContent = 'Please select a chocolate bar.';
+            document.getElementById('dsProdError').style.display = 'block';
+            return;
+        }
+        document.getElementById('dsProdError').style.display = 'none';
+        // Restore sugar pref state if already selected
+        document.querySelectorAll('.gw-sugar-big-btn').forEach(function(b){ b.classList.remove('selected'); });
+        if (DS.sugarPref === 'sugar') { document.getElementById('dsSugarYes').classList.add('selected'); document.getElementById('dsPNext2').disabled = false; }
+        else if (DS.sugarPref === 'sugarfree') { document.getElementById('dsSugarNo').classList.add('selected'); document.getElementById('dsPNext2').disabled = false; }
+        else { document.getElementById('dsPNext2').disabled = true; }
+    }
+    document.querySelectorAll('#dsProdOverlay .gw-slide').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('dsPSlide' + step).classList.add('active');
+    dsPUpdateDots(step);
+}
+
+function dsPUpdateDots(step) {
+    var dots = document.querySelectorAll('#dsProdOverlay .gw-dot');
+    dots.forEach(function(d, i){ d.classList.remove('active','done'); if(i < step-1) d.classList.add('done'); if(i === step-1) d.classList.add('active'); });
+}
+
+function dsPRenderProducts() {
+    var g = document.getElementById('dsProdGrid');
+    var prods = DS.allProducts.filter(function(p){
+        if (DS.sugarPref === 'sugarfree') return p.is_sugarless === true;
+        if (DS.sugarPref === 'sugar')     return p.is_sugarless !== true;
+        return true;
+    });
+    if (!prods.length) { g.innerHTML = '<div class="gw-prod-loading" style="color:#a07840">No products match this filter.</div>'; return; }
+    var sid = DS.selectedProduct ? DS.selectedProduct.product_id : null;
+    g.innerHTML = prods.map(function(p){
+        var sel = sid === p.product_id ? ' selected' : '';
+        return '<div class="gw-prod-card' + sel + '" onclick="dsPSelProd(this,\'' + p.product_id + '\')">' +
+            (p.image_url ? '<img class="gw-prod-img" src="' + p.image_url + '" alt="' + p.name + '" onerror="this.style.display=\'none\'\'">' : '') +
+            '<div class="gw-prod-name">' + p.name + '</div>' +
+            '<div class="gw-prod-desc">' + (p.tagline || p.description.substring(0,55) + '...') + '</div>' +
+            '<div class="gw-prod-price">&#8377;' + p.price + '/bar</div>' +
+            '<div class="gw-prod-tick">&#10003;</div></div>';
+    }).join('');
+    if (sid && prods.find(function(p){ return p.product_id === sid; })) document.getElementById('dsPNext1').disabled = false;
+}
+
+function dsPSelProd(card, id) {
+    document.querySelectorAll('#dsProdGrid .gw-prod-card').forEach(function(c){ c.classList.remove('selected'); });
+    card.classList.add('selected');
+    DS.selectedProduct = DS.allProducts.find(function(p){ return p.product_id === id; });
+    document.getElementById('dsPNext1').disabled = false;
+    document.getElementById('dsProdError').style.display = 'none';
+}
+
+function dsPSetMode(mode, btn) {
+    document.querySelectorAll('#dsProdOverlay .gw-pick-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    DS.pickMode = mode;
+    var grid = document.getElementById('dsProdGrid');
+    var ai   = document.getElementById('dsAIResult');
+    if (mode === 'single') {
+        grid.classList.remove('hidden'); ai.classList.add('hidden');
+        dsPRenderProducts();
+        document.getElementById('dsPNext1').disabled = !DS.selectedProduct;
+    } else {
+        grid.classList.add('hidden'); ai.classList.remove('hidden');
+        // AI picks best matching bar — simple: highest rating
+        var pool = DS.allProducts.filter(function(p){
+            if (DS.sugarPref === 'sugarfree') return p.is_sugarless === true;
+            if (DS.sugarPref === 'sugar')     return p.is_sugarless !== true;
+            return true;
+        });
+        if (!pool.length) pool = DS.allProducts;
+        var best = pool.reduce(function(a, b){ return (parseFloat(b.rating)||0) > (parseFloat(a.rating)||0) ? b : a; }, pool[0]);
+        DS.aiProduct = best;
+        DS.selectedProduct = best;
+        document.getElementById('dsAIChip').innerHTML = '<span class="gw-mix-chip">&#127851; ' + best.name + ' &mdash; &#8377;' + best.price + '/bar</span>';
+        document.getElementById('dsPNext1').disabled = false;
+    }
+}
+
+function dsPPickSugar(pref, btn) {
+    DS.sugarPref = pref;
+    document.querySelectorAll('.gw-sugar-big-btn').forEach(function(b){ b.classList.remove('selected'); });
+    btn.classList.add('selected');
+    document.getElementById('dsPNext2').disabled = false;
+    // Re-filter product grid
+    dsPRenderProducts();
+}
+
+function dsPConfirm() {
+    if (!DS.sugarPref) { showCustToast('Please select sugar preference.', 'error'); return; }
+    if (!DS.selectedProduct) { showCustToast('Please select a product.', 'error'); return; }
+    // If selected product doesn't match sugar pref (edge case), pick best match
+    var matchesPref = DS.sugarPref === 'sugarfree' ? DS.selectedProduct.is_sugarless === true : DS.selectedProduct.is_sugarless !== true;
+    if (!matchesPref) {
+        var pool2 = DS.allProducts.filter(function(p){ return DS.sugarPref === 'sugarfree' ? p.is_sugarless === true : p.is_sugarless !== true; });
+        if (pool2.length) DS.selectedProduct = pool2[0];
+    }
+    // Close product overlay, update the design panel display
+    dsProdOverlayClose();
+    dsShowSelectedProduct();
+    updateDesignPrice(); // shows 'select product' state on load // refresh price breakdown
+}
+
+function dsShowSelectedProduct() {
+    var p = DS.selectedProduct;
+    if (!p) return;
+    var el = document.getElementById('dsSelectedProduct');
+    el.classList.remove('hidden');
+    el.style.display = 'flex';
+    el.style.gap = '12px';
+    el.style.alignItems = 'center';
+    el.style.background = '#111111';
+    el.style.borderRadius = '10px';
+    el.style.padding = '10px 12px';
+    el.style.marginTop = '10px';
+    var img = document.getElementById('dsSelImg');
+    img.src = p.image_url || '';
+    img.style.display = p.image_url ? 'block' : 'none';
+    document.getElementById('dsSelName').textContent  = p.name;
+    document.getElementById('dsSelPrice').textContent = '₹' + p.price + ' per bar';
+    document.getElementById('dsSelSugar').textContent = DS.sugarPref === 'sugarfree' ? '&#127807; Sugar Free' : '&#127851; With Sugar';
+    // Also update preview label in bar preview
+    document.getElementById('barTopLabel').textContent = p.name;
+}
+
+// ─── Design Wizard (Offer → Date → Summary → Buy) ────────────────────────────
+function dsPlaceOrder() {
+    if (!DS.selectedProduct) {
+        document.getElementById('dsSelError').style.display = 'block';
+        showCustToast('Please select a product first.', 'error');
+        return;
+    }
+    if (!document.getElementById('barNameInput').value.trim()) {
+        showCustToast('Please enter a name or text for your bar (Step 4).', 'error');
+        return;
+    }
+    // Login check before opening wizard
+    if (typeof requireLogin === 'function') {
+        requireLogin(function() { dsLaunchWizard(); });
+    } else {
+        dsLaunchWizard();
+    }
+}
+function dsLaunchWizard() {
+    // Reset offer lock if no offer yet
+    DS._offerLocked = false;
+    // Set delivery defaults
+    var def = new Date(); def.setDate(def.getDate() + 8);
+    document.getElementById('dsDefaultDate').textContent = def.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+    var minD = new Date(); minD.setDate(minD.getDate() + 2);
+    var maxD = new Date(); maxD.setDate(maxD.getDate() + 14);
+    document.getElementById('dsDeliveryDate').min = minD.toISOString().split('T')[0];
+    document.getElementById('dsDeliveryDate').max = maxD.toISOString().split('T')[0];
+    document.getElementById('dsDeliveryDate').value = '';
+    document.getElementById('dsDateError').style.display = 'none';
+    // Open wizard at offer slide
+    document.getElementById('dsWizardOverlay').classList.remove('hidden');
+    dsGoTo(1);
+}
+function dsCloseWizard() {
+    document.getElementById('dsWizardOverlay').classList.add('hidden');
+}
+
+var DS_DOTS = [1,2,3];
+function dsGoTo(step) {
+    if (step === 1 && !DS._offerLocked) { dsBuildOffer(); }
+    if (step === 3) { dsValidateDate(); dsBuildSummary(); }
+    document.querySelectorAll('#dsWizardOverlay .gw-slide').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('dsSlide' + step).classList.add('active');
+    var idx = DS_DOTS.indexOf(step);
+    document.querySelectorAll('#dsWizardOverlay .gw-dot').forEach(function(d, i){
+        d.classList.remove('active','done');
+        if (i < idx) d.classList.add('done');
+        if (i === idx) d.classList.add('active');
+    });
+    document.querySelector('#dsWizardOverlay .gw-modal').scrollTop = 0;
+}
+
+function dsBuildOffer() {
+    var qty   = parseInt(document.getElementById('designQty').value) || 1;
+    var total = (parseFloat(DS.selectedProduct.price) || 0) * qty;
+    // ML discount: higher total = higher %, max 13% for custom bars
+    var bias  = Math.min(total / 3000, 1);
+    var tiers = [
+        {pct:3,w:20},{pct:4,w:18},{pct:5,w:16},{pct:6,w:14},
+        {pct:7,w:12},{pct:8,w:10},{pct:9,w:8},{pct:10,w:6},
+        {pct:11,w:5},{pct:12,w:3},{pct:13,w:2}
+    ].map(function(t,i,arr){ return {pct:t.pct, w:Math.max(0.5, t.w - (arr.length-1-i)*bias*1.2 + bias*i*1.5)}; });
+    var tot = tiers.reduce(function(s,t){ return s+t.w; },0);
+    var r = Math.random()*tot, c = 0, pct = tiers[tiers.length-1].pct;
+    for (var i = 0; i < tiers.length; i++) { c += tiers[i].w; if (r <= c){ pct = tiers[i].pct; break; } }
+    DS.discountPct  = pct;
+    DS.discountCode = 'CUSTOM' + pct;
+    DS._offerLocked = true;
+    document.getElementById('dsOfferBadge').textContent = pct + '% OFF';
+    document.getElementById('dsOfferMsg').textContent   = 'Your custom bar order gets ' + pct + '% off — just for you!';
+    document.getElementById('dsOfferCode').textContent  = 'CUSTOM' + pct;
+}
+
+function dsValidateDate() {
+    var val = document.getElementById('dsDeliveryDate').value;
+    var err = document.getElementById('dsDateError');
+    if (!val) { err.style.display = 'none'; return; }
+    var picked = new Date(val);
+    var minD = new Date(); minD.setDate(minD.getDate() + 2);
+    var maxD = new Date(); maxD.setDate(maxD.getDate() + 14);
+    if (picked < minD || picked > maxD) {
+        err.textContent = 'Pick a date from ' + minD.toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ' to ' + maxD.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+        err.style.display = 'block';
+    } else { err.style.display = 'none'; }
+}
+
+function dsBuildSummary() {
+    var p     = DS.selectedProduct;
+    var qty   = parseInt(document.getElementById('designQty').value) || 1;
+    var orig  = (parseFloat(p.price) || 0) * qty + qty * 50; // +₹50/bar customisation
+    var final = Math.round(orig * (1 - DS.discountPct / 100));
+    var saved = orig - final;
+    DS.finalPrice = final; DS.origPrice = orig;
+
+    var del = document.getElementById('dsDeliveryDate').value
+        ? new Date(document.getElementById('dsDeliveryDate').value).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
+        : (function(){ var d=new Date(); d.setDate(d.getDate()+8); return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); })();
+
+    // Wrapper colour
+    var colEl = document.querySelector('.swatch.active');
+    var col   = colEl ? (colEl.title || colEl.dataset.colour || 'Custom') : 'Dark Chocolate';
+
+    // Pattern
+    var patEl = document.querySelector('.pat-btn.active');
+    var pat   = patEl ? patEl.textContent.trim() : 'None';
+
+    document.getElementById('dsSumProduct').textContent  = p.name;
+    document.getElementById('dsSumSugar').textContent    = DS.sugarPref === 'sugarfree' ? 'Sugar Free' : 'With Sugar';
+    document.getElementById('dsSumWrapper').textContent  = col + (pat !== 'None' ? ' · ' + pat + ' pattern' : '');
+    document.getElementById('dsSumText').textContent     = document.getElementById('barNameInput').value.trim() || '(none)';
+    document.getElementById('dsSumMsg').textContent      = document.getElementById('barMsgInput').value.trim() || '(none)';
+    document.getElementById('dsSumQty').textContent      = qty + ' bar' + (qty > 1 ? 's' : '');
+    document.getElementById('dsSumDelivery').textContent = del;
+    document.getElementById('dsSumOrigPrice').textContent  = '₹' + orig + ' (incl. ₹50/bar custom fee)';
+    document.getElementById('dsSumFinalPrice').textContent = '₹' + final;
+    document.getElementById('dsSumSaved').textContent      = 'You save ₹' + saved + '! (' + DS.discountPct + '% off)';
+    document.getElementById('dsSumBuyPrice').textContent   = '₹' + final;
+}
+
+function dsBuyNow() {
+    var p   = DS.selectedProduct;
+    var qty = parseInt(document.getElementById('designQty').value) || 1;
+    var items = [{ product_id: p.product_id, name: p.name + ' (Custom Bar)', price: p.price, quantity: qty }];
+    dsCloseWizard();
+
+    // Build payment modal using DOM (avoids nested quote issues)
+    var ov = document.createElement('div');
+    ov.id  = 'dsPayOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#0a0a0a;border:1px solid #d4820a44;border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.7)';
+
+    box.innerHTML =
+        '<button id="dsPayCloseBtn" style="float:right;background:none;border:none;color:#a07840;font-size:18px;cursor:pointer">&#10005;</button>' +
+        '<div style="font-size:36px;text-align:center;margin-bottom:10px">&#127912;</div>' +
+        '<h2 style="color:#f5c842;font-family:Georgia,serif;font-size:18px;text-align:center;margin:0 0 6px">Complete Custom Bar Order</h2>' +
+        '<p style="color:#b0906a;font-size:13px;text-align:center;margin:0 0 18px">' + p.name + ' ×' + qty + ' = ₹' + DS.finalPrice + '</p>' +
+        '<div id="dsPayChoices">' +
+            '<button id="dsBtnOnline" style="width:100%;padding:12px;background:#1a1a1a;border:1.5px solid #d4820a44;border-radius:10px;color:#f5c842;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">&#128179; Pay Online — ₹' + DS.finalPrice + '</button>' +
+            '<button id="dsBtnCOD" style="width:100%;padding:12px;background:#1a1a1a;border:1.5px solid #d4820a44;border-radius:10px;color:#e8d5b0;font-size:14px;cursor:pointer">&#128181; Cash on Delivery</button>' +
+        '</div>' +
+        '<div id="dsPayAddr" style="display:none;margin-top:14px">' +
+            '<div style="margin-bottom:10px"><label style="color:#d4820a;font-size:13px;font-weight:600;display:block;margin-bottom:5px">Full Delivery Address *</label><textarea id="dsAddr" rows="3" placeholder="House/Flat, Street, City, PIN" style="width:100%;background:#111111;border:1px solid #1a1a1a;border-radius:8px;color:#e8d5b0;padding:10px;font-size:13px;resize:none;box-sizing:border-box"></textarea></div>' +
+            '<div style="margin-bottom:14px"><label style="color:#d4820a;font-size:13px;font-weight:600;display:block;margin-bottom:5px">Phone Number *</label><input id="dsPh" type="tel" placeholder="+91 98765 43210" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,10);dsChkPhone(this.value)" style="width:100%;background:#111111;border:1px solid #1a1a1a;border-radius:8px;color:#e8d5b0;padding:10px;font-size:13px;box-sizing:border-box"></div>' +
+            '<div id="dsPhoneHint" style="font-size:12px;min-height:16px;margin:-4px 0 8px 2px;"></div>' +
+            '<div style="margin-bottom:14px"><label style="color:#d4820a;font-size:13px;font-weight:600;display:block;margin-bottom:5px">Pincode *</label><input id="dsPincode" type="text" placeholder="6-digit pincode" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,\'\').slice(0,6);dsChkPin(this.value)" style="width:100%;background:#111111;border:1px solid #1a1a1a;border-radius:8px;color:#e8d5b0;padding:10px;font-size:13px;box-sizing:border-box"></div>' +
+            '<div id="dsPinHint" style="font-size:12px;min-height:16px;margin:-4px 0 8px 2px;"></div>' +
+            '<div id="dsPayErr" style="color:#e04040;font-size:12px;margin-bottom:8px;display:none"></div>' +
+            '<button id="dsConfirmBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#d4820a,#b5690a);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer">Confirm Order</button>' +
+        '</div>';
+
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+
+    // Wire up events after DOM insertion
+    document.getElementById('dsPayCloseBtn').onclick = function(){ ov.remove(); };
+    document.getElementById('dsBtnOnline').onclick   = function(){ dsSelectPay('online', items); };
+    document.getElementById('dsBtnCOD').onclick      = function(){ dsSelectPay('cod', items); };
+    ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+}
+
+
+var _dsPayMethod = 'online';
+var _dsPayItems  = [];
+function dsSelectPay(method, items) {
+    if (items) _dsPayItems = items;
+    _dsPayMethod = method;
+    document.getElementById('dsPayChoices').style.display = 'none';
+    // Add back button at top-left if not already there
+    var addr = document.getElementById('dsPayAddr');
+    if (!document.getElementById('dsPayBackBtn')) {
+        var backBtn = document.createElement('button');
+        backBtn.id = 'dsPayBackBtn';
+        backBtn.innerHTML = '&#8592; Back';
+        backBtn.style.cssText = 'background:none;border:none;color:#a07840;font-size:13px;cursor:pointer;padding:0;margin-bottom:14px;display:flex;align-items:center;gap:4px;';
+        backBtn.onmouseover = function(){ this.style.color='#d4820a'; };
+        backBtn.onmouseout  = function(){ this.style.color='#a07840'; };
+        backBtn.onclick = function(){
+            document.getElementById('dsPayAddr').style.display = 'none';
+            document.getElementById('dsPayChoices').style.display = 'block';
+        };
+        addr.insertBefore(backBtn, addr.firstChild);
+    }
+    addr.style.display = 'block';
+    document.getElementById('dsConfirmBtn').onclick = dsConfirmPay;
+    document.getElementById('dsConfirmBtn').textContent = method === 'online'
+        ? 'Proceed to Pay ₹' + DS.finalPrice
+        : 'Place Order (COD) ₹' + DS.finalPrice;
+}
+
+// Collect all custom bar design metadata for the API call
+function dsGetOrderPayload(method, txnId) {
+    var colEl  = document.querySelector('.swatch.active');
+    var patEl  = document.querySelector('.pat-btn.active');
+    var fontEl = document.querySelector('.font-btn.active');
+    return {
+        items:          _dsPayItems,
+        address:        document.getElementById('dsAddr').value.trim(),
+        phone:          document.getElementById('dsPh').value.trim(),
+        pincode:        (document.getElementById('dsPincode') ? document.getElementById('dsPincode').value.trim() : ''),
+        total:          DS.finalPrice,
+        method:         method,
+        txn_id:         txnId || '',
+        bar_name:       document.getElementById('barNameInput').value.trim(),
+        bar_message:    document.getElementById('barMsgInput').value.trim(),
+        wrapper_colour: colEl ? (colEl.title || colEl.getAttribute('data-colour') || '') : '',
+        pattern:        patEl ? patEl.textContent.trim() : 'None',
+        font_style:     fontEl ? fontEl.textContent.trim() : 'Elegant Script',
+        sugar_pref:     DS.sugarPref || '',
+        discount_pct:   DS.discountPct,
+        discount_code:  DS.discountCode,
+        delivery_date:  document.getElementById('dsDeliveryDate').value || '',
+    };
+}
+
+function dsGetDelDateStr() {
+    var del = document.getElementById('dsDeliveryDate').value;
+    if (del) return new Date(del).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+    var dt = new Date(); dt.setDate(dt.getDate()+8);
+    return dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function dsChkPin(v) {
+    var el = document.getElementById('dsPinHint');
+    if (!v) { el.innerHTML=''; return; }
+    if (v.length < 6) { el.innerHTML='<span style="color:#e07840">Enter all 6 digits</span>'; return; }
+    el.innerHTML = custIsUdupi(v)
+        ? '<span style="color:#6fcf97">&#10003; Delivery available!</span>'
+        : '<span style="color:#e04040">&#10007; Outside delivery zone (Udupi only)</span>';
+}
+function dsChkPhone(v) {
+    var el = document.getElementById('dsPhoneHint');
+    if (!v) { el.innerHTML=''; return; }
+    if (v.length < 10) { el.innerHTML='<span style="color:#e07840">Must be 10 digits</span>'; return; }
+    el.innerHTML='<span style="color:#6fcf97">&#10003; Looks good</span>';
+}
+
+var _dsSubmitting = false;
+async function dsConfirmPay() {
+    if (_dsSubmitting) return;
+    _dsSubmitting = true;
+    var btn = document.getElementById('dsConfirmBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; }
+    var addr    = document.getElementById('dsAddr').value.trim();
+    var ph      = document.getElementById('dsPh').value.trim();
+    var pincode = document.getElementById('dsPincode') ? document.getElementById('dsPincode').value.trim() : '';
+    var err     = document.getElementById('dsPayErr');
+    if (!addr)          { err.textContent='Please enter your delivery address.'; err.style.display='block'; _dsSubmitting=false; if(btn){btn.disabled=false;} return; }
+    if (ph.length!==10) { err.textContent='Please enter a valid 10-digit phone number.'; err.style.display='block'; _dsSubmitting=false; if(btn){btn.disabled=false;} return; }
+    if (pincode.length!==6) { showCustRegionAlert('Please enter a valid 6-digit pincode.'); _dsSubmitting=false; if(btn){btn.disabled=false;} return; }
+    err.style.display = 'none';
+    await fetch('/api/user/save-pincode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pincode:pincode})}).catch(function(){});
+    if (!custIsUdupi(pincode)) { showCustRegionAlert('Sorry - we deliver only within the Udupi region (574xxx or 576xxx).'); _dsSubmitting=false; if(btn){btn.disabled=false;} return; }
+
+    if (_dsPayMethod === 'cod') {
+        var payload = dsGetOrderPayload('cod', '');
+        var r = await fetch('/api/order/custom-bar', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        });
+        var d = await r.json();
+        document.getElementById('dsPayOverlay').remove();
+        if (d.success) {
+            showToast('&#127912; Custom bar order confirmed! Arriving by ' + dsGetDelDateStr(), 'success');
+            setTimeout(function(){ window.location.href='/orders'; }, 2800);
+        } else { showToast(d.message||'Order failed.','error'); }
+
+    } else {
+        // Online: open Razorpay first, then save order on RZP_DONE
+        var ov2 = document.getElementById('dsPayOverlay');
+        if (ov2) ov2.remove();
+        var rz = document.createElement('div');
+        rz.id  = 'dsRzpOv';
+        rz.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        rz.innerHTML = '<iframe id="dsRzpFr" src="/payment" style="border:none;border-radius:8px;width:100%;max-width:420px;height:620px;"></iframe>';
+        document.body.appendChild(rz);
+
+        document.getElementById('dsRzpFr').onload = function(){
+            this.contentWindow.postMessage({
+                type:'RZP_INIT',
+                config:{ amount:DS.finalPrice, items:_dsPayItems, address: addr, phone: ph, pincode: (document.getElementById('dsPincode') ? document.getElementById('dsPincode').value.trim() : '') }
+            },'*');
+        };
+
+        window.addEventListener('message', function dsL(e){
+            if (e.data && e.data.type === 'RZP_DONE') {
+                window.removeEventListener('message', dsL);
+                rz.remove();
+                // Save order with all design metadata
+                var payload = dsGetOrderPayload('online', e.data.txn_id || '');
+                fetch('/api/order/custom-bar', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(payload)
+                }).then(function(r){ return r.json(); }).then(function(d){
+                    if (d.success) {
+                        showToast('&#127912; Custom bar confirmed! ' + DS.discountPct + '% saved · Arriving by ' + dsGetDelDateStr(), 'success');
+                        setTimeout(function(){ window.location.href='/orders'; }, 2800);
+                    } else {
+                        showToast('Payment received but order save failed. Please contact support.','error');
+                    }
+                });
+            }
+            if (e.data && e.data.type === 'RZP_CANCEL') {
+                window.removeEventListener('message', dsL); rz.remove();
+                showToast('Payment cancelled.','error');
+            }
+        });
+    }
+}
+function showCustToast(msg,type){var t=document.getElementById('custToast');t.innerHTML=msg;t.className='cust-toast '+(type||'success');setTimeout(function(){t.classList.add('hidden');},4000);}
+
+updateDesignPrice();
+</script>
+
+<!-- ══ SEASONAL OFFER BUY WIZARD ══════════════════════════════════════════ -->
+<div id="soWizardOverlay" class="gw-overlay hidden">
+    <div class="gw-modal">
+        <div class="gw-progress">
+            <span class="gw-dot active"></span>
+            <span class="gw-dot"></span>
+            <span class="gw-dot"></span>
+        </div>
+
+        <!-- Slide 1: Offer confirmation -->
+        <div class="gw-slide active" id="soSlide1">
+            <div class="gw-offer-wrap">
+                <div class="gw-offer-confetti" id="soOfferEmoji">&#127774;</div>
+                <h2 class="gw-offer-title">Your Seasonal Deal!</h2>
+                <div class="gw-offer-disc-badge" id="soOfferBadge">18% OFF</div>
+                <p class="gw-offer-msg" id="soOfferProdName">Product Name</p>
+                <p class="gw-offer-msg" id="soOfferDesc" style="font-size:13px;opacity:0.8"></p>
+                <div class="gw-offer-code-row">
+                    <span class="gw-offer-code-lbl">Auto-applied at checkout</span>
+                    <span class="gw-offer-code-chip" id="soOfferCode">SUMMER18</span>
+                </div>
+            </div>
+            <div class="gw-nav" style="margin-top:20px">
+                <button class="gw-btn-cancel" onclick="soCloseWizard()">&#10005; Cancel</button>
+                <button class="gw-btn-next" onclick="soGoTo(2)">Next &#8594;</button>
+            </div>
+        </div>
+
+        <!-- Slide 2: Summary + Buy -->
+        <div class="gw-slide" id="soSlide2">
+            <div class="gw-slide-topbar">
+                <button class="gw-back-top" onclick="soGoTo(1)">&#8592; Back</button>
+            </div>
+            <h2 class="gw-heading">Order Summary</h2>
+            <p class="gw-sub">Review your seasonal offer order.</p>
+            <div class="gw-summary">
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#127774; Season</span><span class="gw-sum-val" id="soSumSeason">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#127851; Product</span><span class="gw-sum-val" id="soSumProduct">—</span></div>
+                <div class="gw-sum-row"><span class="gw-sum-lbl">&#128666; Delivery</span><span class="gw-sum-val" id="soSumDelivery">—</span></div>
+                <div class="gw-sum-divider"></div>
+                <div class="gw-sum-row gw-sum-price-row">
+                    <span class="gw-sum-lbl">&#128176; Price</span>
+                    <span class="gw-sum-val">
+                        <span class="gw-price-original" id="soSumOrig">—</span>
+                        <span class="gw-price-final" id="soSumFinal">—</span>
+                        <span class="gw-price-saved" id="soSumSaved">—</span>
+                    </span>
+                </div>
+            </div>
+            <button class="gw-buy-btn" onclick="soBuyNow()">&#128722; Buy Now — <span id="soSumBuyPrice">—</span></button>
+            <div style="text-align:center;margin-top:10px">
+                <button class="gw-btn-cancel" onclick="soCloseWizard()">&#10005; Cancel</button>
+            </div>
+        </div>
+
+        <!-- Slide 3: Payment method -->
+        <div class="gw-slide" id="soSlide3">
+            <div class="gw-slide-topbar">
+                <button class="gw-back-top" onclick="soGoTo(2)">&#8592; Back</button>
+            </div>
+            <div class="pay-modal-icon">&#127774;</div>
+            <h2 class="pay-modal-title">Complete Your Order</h2>
+            <p class="pay-modal-sub" id="soPaySummary"></p>
+            <div id="soPayChoices">
+                <button class="pay-choice-btn online" onclick="soSelectPay('online')">
+                    <span class="pay-choice-icon">&#128179;</span>
+                    <span class="pay-choice-label" id="soOnlineBtn">Pay Online</span>
+                    <span class="pay-choice-sub">Razorpay · UPI · Card</span>
+                </button>
+                <button class="pay-choice-btn cod" onclick="soSelectPay('cod')">
+                    <span class="pay-choice-icon">&#128181;</span>
+                    <span class="pay-choice-label" id="soCODBtn">Cash on Delivery</span>
+                    <span class="pay-choice-sub">Pay when your order arrives</span>
+                </button>
+            </div>
+            <div id="soPayAddr" style="display:none;margin-top:14px">
+                <div style="margin-bottom:10px">
+                    <label style="color:#d4820a;font-size:13px;font-weight:600;display:block;margin-bottom:5px">Delivery Address *</label>
+                    <textarea id="soAddr" rows="3" placeholder="House/Flat, Street, City, PIN" class="cust-input cust-textarea"></textarea>
+                </div>
+                <div style="margin-bottom:14px">
+                    <label style="color:#d4820a;font-size:13px;font-weight:600;display:block;margin-bottom:5px">Phone *</label>
+                    <input id="soPh" type="tel" placeholder="+91 98765 43210" class="cust-input" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);soChkPhone(this.value)">
+                </div>
+                <div id="soPhoneHint" style="font-size:12px;min-height:16px;margin:-6px 0 6px 2px;"></div>
+                <div style="margin-bottom:10px"><label style="color:#d4820a;font-size:13px;font-weight:600;display:block;margin-bottom:5px">Pincode *</label><input id="soPincode" type="text" placeholder="6-digit pincode" class="cust-input" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6);soChkPin(this.value)"></div>
+                <div id="soPinHint" style="font-size:12px;min-height:16px;margin:-6px 0 6px 2px;"></div>
+                <div id="soPayErr" style="color:#e04040;font-size:12px;margin-bottom:8px;display:none"></div>
+                <button id="soConfirmBtn" class="gw-buy-btn" onclick="soConfirmPay()">Confirm Order</button>
+            </div>
+            <div style="text-align:center;margin-top:12px">
+                <button class="gw-btn-cancel" onclick="soCloseWizard()">&#10005; Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ SEASONAL OFFER STYLES ══════════════════════════════════════════════ -->
+<style>
+.so-offers-list { display:flex; flex-direction:column; gap:14px; max-width:720px; margin:0 auto; }
+.so-offer-row {
+    display:flex; align-items:center; gap:16px;
+    background:#000; border:1px solid rgba(212,130,10,0.25);
+    border-radius:14px; padding:16px 20px;
+    transition:border-color .2s;
+}
+.so-offer-row:hover { border-color:#d4820a; }
+.so-season-emoji { font-size:28px; flex-shrink:0; }
+.so-offer-body { flex:1; min-width:0; }
+.so-prod-name { color:#f5c842; font-size:15px; font-weight:700; font-family:'Playfair Display',serif; margin-bottom:3px; }
+.so-offer-desc { color:#a07840; font-size:13px; line-height:1.4; }
+.so-badge {
+    background:#000; border:1.5px solid #d4820a;
+    color:#d4820a; font-size:13px; font-weight:700;
+    padding:4px 12px; border-radius:20px; white-space:nowrap; flex-shrink:0;
+}
+.so-redeem-btn {
+    background:linear-gradient(135deg,#d4820a,#b5690a);
+    border:none; color:#fff; font-size:13px; font-weight:700;
+    padding:9px 20px; border-radius:8px; cursor:pointer;
+    white-space:nowrap; flex-shrink:0; transition:opacity .2s;
+}
+.so-redeem-btn:hover { opacity:.88; }
+.so-loading { color:#a07840; text-align:center; padding:40px; font-size:15px; }
+.so-loading-dots-wrap { text-align:center; padding:40px 20px; }
+.so-dot-loader { display:inline-flex; gap:8px; align-items:center; }
+.so-dot-loader span {
+    width:10px; height:10px; border-radius:50%;
+    background:#d4820a; display:inline-block;
+    animation:soDotBounce 1.2s ease-in-out infinite;
+}
+.so-dot-loader span:nth-child(2) { animation-delay:.2s; }
+.so-dot-loader span:nth-child(3) { animation-delay:.4s; }
+@keyframes soDotBounce {
+    0%,80%,100% { transform:scale(0.6); opacity:0.4; }
+    40%          { transform:scale(1.1); opacity:1;   }
+}
+
+/* ── Floating notification bubble ── */
+#soFloatBubble {
+    position:fixed; bottom:28px; right:28px; z-index:8888;
+    display:flex; align-items:center; gap:10px;
+    background:#000; border:1.5px solid #d4820a;
+    border-radius:50px; padding:10px 18px 10px 14px;
+    cursor:pointer; box-shadow:0 4px 24px rgba(212,130,10,0.25);
+    transition:transform .2s, box-shadow .2s;
+    max-width:280px;
+    animation: soBubblePop .5s ease;
+}
+#soFloatBubble:hover { transform:translateY(-3px); box-shadow:0 8px 32px rgba(212,130,10,0.4); }
+@keyframes soBubblePop { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+.so-bubble-emoji { font-size:22px; flex-shrink:0; }
+.so-bubble-text  { flex:1; min-width:0; }
+.so-bubble-title { color:#f5c842; font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.so-bubble-sub   { color:#a07840; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.so-bubble-close {
+    background:none; border:none; color:#a07840;
+    font-size:14px; cursor:pointer; flex-shrink:0; line-height:1;
+    padding:0 0 0 4px;
+}
+.so-bubble-close:hover { color:#e04040; }
+</style>
+
+<!-- ══ SEASONAL OFFER SCRIPT ══════════════════════════════════════════════ -->
+<script>
+// ── Season detection (India-centric) ──────────────────────────────────────
+function soGetSeason() {
+    var m = new Date().getMonth() + 1; // 1-12
+    if (m >= 3  && m <= 5)  return { name:'Summer',  emoji:'&#9728;',  code:'SUMMER' };
+    if (m >= 6  && m <= 9)  return { name:'Monsoon', emoji:'&#127783;', code:'MONSOON' };
+    if (m >= 10 && m <= 11) return { name:'Autumn',  emoji:'&#127810;', code:'AUTUMN' };
+    return                          { name:'Winter',  emoji:'&#10052;',  code:'WINTER' };
+}
+
+// ── Season-specific product suggestions ───────────────────────────────────
+var SO_SEASON_PRODUCTS = {
+    Summer: [
+        { name:'Mango Burst Chocolate Bar', desc:'Tropical mango & white chocolate — the perfect summer indulgence' },
+        { name:'Citrus Dark Delight',        desc:'Zesty orange peel meets 70% dark cacao for a refreshing bite' },
+        { name:'Coconut Milk Chocolate',     desc:'Creamy coconut-infused milk chocolate, light and tropical' },
+        { name:'Passionfruit Truffle Box',   desc:'Six handmade passionfruit truffles in a gift-ready box' },
+        { name:'Chilled Mint Crisp Bar',     desc:'Cool peppermint chips in silky dark chocolate — beat the heat' },
+        { name:'Watermelon White Bark',      desc:'White chocolate bark with real watermelon pieces & seeds' }
+    ],
+    Monsoon: [
+        { name:'Masala Chai Chocolate',      desc:'Aromatic cardamom, ginger & cinnamon infused dark chocolate' },
+        { name:'Hazelnut Comfort Bar',       desc:'Roasted hazelnut praline — the cosiest monsoon companion' },
+        { name:'Ginger Dark Crunch',         desc:'Candied ginger pieces in 65% dark cacao — warm and bold' },
+        { name:'Hot Cocoa Powder Blend',     desc:'Rich Dutch-processed cocoa for the perfect rainy-day drink' },
+        { name:'Salted Caramel Bark',        desc:'Hand-poured salted caramel chocolate bark with sea salt flakes' },
+        { name:'Spiced Nutmeg Bar',          desc:'A hint of nutmeg and clove in smooth milk chocolate' }
+    ],
+    Autumn: [
+        { name:'Dark Praline Collection',    desc:'Six assorted dark pralines — earthy, rich and complex' },
+        { name:'Fig & Walnut Chocolate Bar', desc:'Dried figs and walnuts folded into 72% dark cacao' },
+        { name:'Cinnamon Spice Truffle',     desc:'Warm cinnamon cream ganache in a dark chocolate shell' },
+        { name:'Caramelised Almond Bark',    desc:'Whole caramelised almonds in golden milk chocolate' },
+        { name:'Pumpkin Spice Bar',          desc:'Seasonal pumpkin spice notes with roasted cacao nibs' },
+        { name:'Ruby Harvest Box',           desc:'Four ruby chocolates celebrating the autumn harvest' }
+    ],
+    Winter: [
+        { name:'Peppermint Candy Cane Bar',  desc:'Cool peppermint candy cane pieces in festive dark chocolate' },
+        { name:'Drinking Chocolate Blend',   desc:'Extra-thick hot chocolate powder — pure winter warmth' },
+        { name:'Truffle Gift Box',           desc:'Twelve premium truffles — the perfect winter gift' },
+        { name:'Chilli Dark Bar',            desc:'Bold chilli heat in 85% dark cacao — fiery and warming' },
+        { name:'Cardamom Gold Bar',          desc:'Fragrant cardamom and gold luster in silky milk chocolate' },
+        { name:'Snow White Bark',            desc:'White chocolate bark with crushed candy canes & coconut' }
+    ]
+};
+
+// ── Generate fixed discount (14%-24%) using season+product as seed ─────────
+function soGenDiscount(seasonCode, prodIdx) {
+    // Deterministic pseudo-random based on season + product position
+    var seed = (seasonCode.charCodeAt(0) + seasonCode.charCodeAt(1) + prodIdx * 7) % 11;
+    return 14 + seed; // 14 to 24
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+var SO = {
+    season: null, offers: [], locked: false,
+    current: null, // the offer being redeemed
+    payMethod: 'online'
+};
+
+// ── Render seasonal offers panel ─────────────────────────────────────────
+function soRenderOffers() {
+    if (SO.locked) { soDisplayOffers(); return; }
+
+    document.getElementById('soOffersContainer').innerHTML =
+        '<div class="so-loading-dots-wrap">' +
+            '<span style="color:#d4820a;font-size:14px;margin-bottom:10px;display:block">Loading seasonal offers</span>' +
+            '<div class="so-dot-loader"><span></span><span></span><span></span></div>' +
+        '</div>';
+
+    // 4s timeout — never let loading hang
+    var soTimeout = setTimeout(function() {
+        if (!SO.locked) {
+            document.getElementById('soOffersContainer').innerHTML =
+                '<div class="so-loading" style="color:#e04040">Offers taking longer than usual — please refresh.</div>';
+        }
+    }, 4000);
+
+    fetch('/api/seasonal-offers')
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            clearTimeout(soTimeout);
+            SO.season = { name: data.season, emoji: data.emoji };
+            SO.offers = data.offers.map(function(o) {
+                return {
+                    product_id: o.product_id,
+                    name:       o.name,
+                    desc:       o.tagline,
+                    image_url:  o.image_url,
+                    price:      o.price,
+                    finalPrice: o.final_price,
+                    discount:   o.discount,
+                    code:       o.code,
+                    similar:    o.similar || []
+                };
+            });
+            SO.locked = true;
+            soDisplayOffers();
+        })
+        .catch(function() {
+            document.getElementById('soOffersContainer').innerHTML =
+                '<div class="so-loading" style="color:#e04040">Could not load offers. Please try again.</div>';
+        });
+}
+
+function soDisplayOffers() {
+    var s = SO.season;
+    document.getElementById('soSeasonTitle').innerHTML  = s.emoji + ' ' + s.name + ' Offers';
+    document.getElementById('soSeasonDesc').textContent =
+        'Products our customers love this ' + s.name + ' — curated from real purchase trends.';
+
+    var html = SO.offers.map(function(o, i) {
+        var simHtml = o.similar && o.similar.length
+            ? '<div style="font-size:11px;color:#a07840;margin-top:3px">Similar: ' + o.similar[0].name + '</div>'
+            : '';
+        return '<div class="so-offer-row">' +
+            (o.image_url
+                ? '<img src="'+o.image_url+'" style="width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.remove()">'
+                : '<div class="so-season-emoji">'+s.emoji+'</div>') +
+            '<div class="so-offer-body">' +
+                '<div class="so-prod-name">'+o.name+'</div>' +
+                '<div class="so-offer-desc">'+o.desc+'</div>' +
+                simHtml +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">' +
+                '<span class="so-badge">'+o.discount+'% OFF</span>' +
+                '<span style="color:#a07840;font-size:11px"><s>&#8377;'+o.price+'</s>&nbsp;&#8377;'+o.finalPrice+'</span>' +
+            '</div>' +
+            '<button class="so-redeem-btn" onclick="soRedeem('+i+')">Redeem &#8594;</button>' +
+        '</div>';
+    }).join('');
+    document.getElementById('soOffersContainer').innerHTML = html || '<div class="so-loading">No offers found for this season yet.</div>';
+}
+
+
+// Render when tab is switched to seasonal
+var _soRendered = false;
+function switchCustTab(tab, btn) {
+    document.querySelectorAll('.cust-tab').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.cust-panel').forEach(function(p){ p.classList.add('hidden'); });
+    btn.classList.add('active');
+    document.getElementById('panel-' + tab).classList.remove('hidden');
+    if (tab === 'seasonal' && !_soRendered) { soRenderOffers(); _soRendered = true; }
+}
+
+// ── Redeem → open buy wizard ──────────────────────────────────────────────
+function soRedeem(idx) {
+    var o   = SO.offers[idx];
+    var s   = SO.season;
+    SO.current = { offer: o, idx: idx };
+
+    // Populate offer slide
+    document.getElementById('soOfferEmoji').innerHTML  = s.emoji;
+    document.getElementById('soOfferBadge').textContent = o.discount + '% OFF';
+    document.getElementById('soOfferProdName').textContent = o.name;
+    document.getElementById('soOfferDesc').textContent     = o.desc;
+    document.getElementById('soOfferCode').textContent     = o.code;
+
+    // Reset pay area
+    document.getElementById('soPayChoices').style.display = 'block';
+    document.getElementById('soPayAddr').style.display    = 'none';
+    document.getElementById('soAddr').value = '';
+    document.getElementById('soPh').value   = '';
+
+    document.getElementById('soWizardOverlay').classList.remove('hidden');
+    soGoTo(1);
+}
+
+function soCloseWizard() {
+    document.getElementById('soWizardOverlay').classList.add('hidden');
+}
+
+var SO_DOTS = [1,2,3];
+function soGoTo(step) {
+    if (step === 2) { soPopulateSummary(); }
+    document.querySelectorAll('#soWizardOverlay .gw-slide').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('soSlide' + step).classList.add('active');
+    var idx = SO_DOTS.indexOf(step);
+    document.querySelectorAll('#soWizardOverlay .gw-dot').forEach(function(d, i){
+        d.classList.remove('active','done');
+        if (i < idx) d.classList.add('done');
+        if (i === idx) d.classList.add('active');
+    });
+    document.querySelector('#soWizardOverlay .gw-modal').scrollTop = 0;
+}
+
+function soPopulateSummary() {
+    var o   = SO.current.offer;
+    var s   = SO.season;
+    var basePrice = o.price || 399;
+    var final     = o.finalPrice || Math.round(basePrice * (1 - o.discount/100));
+    var saved     = basePrice - final;
+    SO.current.basePrice  = basePrice;
+    SO.current.finalPrice = final;
+
+    var delDate = (function(){ var d=new Date(); d.setDate(d.getDate()+8);
+        return d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'}); })();
+
+    document.getElementById('soSumSeason').textContent   = s.emoji + ' ' + s.name;
+    document.getElementById('soSumProduct').textContent  = o.name;
+    document.getElementById('soSumDelivery').textContent = delDate;
+    document.getElementById('soSumOrig').textContent     = '\u20b9' + basePrice;
+    document.getElementById('soSumFinal').textContent    = '\u20b9' + final;
+    document.getElementById('soSumSaved').textContent    = 'You save \u20b9' + saved + '! (' + o.discount + '% off)';
+    document.getElementById('soSumBuyPrice').textContent = '\u20b9' + final;
+    document.getElementById('soPaySummary').textContent  = o.name + ' \u2014 \u20b9' + final;
+    document.getElementById('soOnlineBtn').textContent   = 'Pay Online \u20b9' + final;
+    document.getElementById('soCODBtn').textContent      = 'Cash on Delivery \u20b9' + final;
+}
+
+function soBuyNow() {
+    // requireLogin is defined in main.js — opens login modal if not logged in,
+    // then calls the callback automatically after successful login
+    if (typeof requireLogin === 'function') {
+        requireLogin(function() { soGoTo(3); });
+    } else {
+        soGoTo(3); // fallback if main.js not loaded
+    }
+}
+
+function soSelectPay(method) {
+    SO.payMethod = method;
+    document.getElementById('soPayChoices').style.display = 'none';
+    document.getElementById('soPayAddr').style.display    = 'block';
+    document.getElementById('soConfirmBtn').textContent   =
+        method === 'online' ? 'Proceed to Pay \u20b9' + SO.current.finalPrice
+                            : 'Place Order (COD) \u20b9' + SO.current.finalPrice;
+}
+
+function soChkPin(v) {
+    var el = document.getElementById('soPinHint');
+    if (!v) { el.innerHTML=''; return; }
+    if (v.length < 6) { el.innerHTML='<span style="color:#e07840">Enter all 6 digits</span>'; return; }
+    el.innerHTML = custIsUdupi(v)
+        ? '<span style="color:#6fcf97">&#10003; Delivery available!</span>'
+        : '<span style="color:#e04040">&#10007; Outside delivery zone (Udupi only)</span>';
+}
+function soChkPhone(v) {
+    var el = document.getElementById('soPhoneHint');
+    if (!v) { el.innerHTML=''; return; }
+    if (v.length < 10) { el.innerHTML='<span style="color:#e07840">Must be 10 digits</span>'; return; }
+    el.innerHTML='<span style="color:#6fcf97">&#10003; Looks good</span>';
+}
+
+var _soSubmitting = false;
+async function soConfirmPay() {
+    if (_soSubmitting) return;
+    _soSubmitting = true;
+    var btn = document.getElementById('soConfirmBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Placing order…'; }
+    var addr    = document.getElementById('soAddr').value.trim();
+    var ph      = document.getElementById('soPh').value.trim();
+    var pincode = document.getElementById('soPincode') ? document.getElementById('soPincode').value.trim() : '';
+    var err     = document.getElementById('soPayErr');
+    if (!addr)          { err.textContent='Please enter your delivery address.'; err.style.display='block'; _soSubmitting=false; if(btn){btn.disabled=false;} return; }
+    if (ph.length!==10) { err.textContent='Please enter a valid 10-digit phone number.'; err.style.display='block'; _soSubmitting=false; if(btn){btn.disabled=false;} return; }
+    if (pincode.length!==6) { showCustRegionAlert('Please enter a valid 6-digit pincode.'); _soSubmitting=false; if(btn){btn.disabled=false;} return; }
+    err.style.display = 'none';
+    await fetch('/api/user/save-pincode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pincode:pincode})}).catch(function(){});
+    if (!custIsUdupi(pincode)) { showCustRegionAlert('Sorry - we deliver only within the Udupi region (574xxx or 576xxx).'); _soSubmitting=false; if(btn){btn.disabled=false;} return; }
+    var address = addr;
+    var items   = [{ 
+        product_id:       SO.current.offer.product_id || ('SEASONAL-'+Date.now()), 
+        name:             SO.current.offer.name + ' (Seasonal Offer)', 
+        price:            SO.current.finalPrice, 
+        quantity:         1,
+        is_seasonal_offer: true,
+        season_name:      SO.season ? SO.season.name : '',
+        discount_pct:     SO.current.offer.discount || 0
+    }];
+
+    if (SO.payMethod === 'cod') {
+        var r = await fetch('/api/order/cod', {method:'POST',headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({items:items, address:address, phone:ph, pincode:pincode, total:SO.current.finalPrice})});
+        var d = await r.json();
+        soCloseWizard();
+        if (d.success) { showToast('\u2728 Seasonal offer order placed! Check your email.', 'success'); setTimeout(function(){ window.location.href='/orders'; }, 2500); }
+        else showToast(d.message||'Order failed.','error');
+    } else {
+        soCloseWizard();
+        var ov = document.createElement('div');
+        ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        ov.innerHTML='<iframe id="soRzpFr" src="/payment" style="border:none;border-radius:8px;width:100%;max-width:420px;height:620px;"></iframe>';
+        document.body.appendChild(ov);
+        document.getElementById('soRzpFr').onload = function(){
+            this.contentWindow.postMessage({type:'RZP_INIT',config:{amount:SO.current.finalPrice,items:items,address:address,phone:ph,pincode:pincode}},'*');
+        };
+        window.addEventListener('message',function soL(e){
+            if (e.data&&e.data.type==='RZP_DONE'){
+                window.removeEventListener('message',soL); ov.remove();
+                showToast('\u2728 Seasonal offer confirmed! Arriving in 8 days.','success');
+                setTimeout(function(){ window.location.href='/orders'; },2500);
+            }
+            if (e.data&&e.data.type==='RZP_CANCEL'){ window.removeEventListener('message',soL); ov.remove(); }
+        });
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// FLOATING NOTIFICATION BUBBLE — shown on every page
+// Picks 1 random offer per session (changes on login/logout)
+// Clicking takes to /customize#seasonal
+// ══════════════════════════════════════════════════════════════════════════
+// Floating bubble handled globally by main.js
+
+// Auto-open seasonal tab when URL has ?tab=seasonal
+document.addEventListener('DOMContentLoaded', function() {
+    // Wire overlay backdrop close
+    document.getElementById('soWizardOverlay').addEventListener('click', function(e){
+        if (e.target === this) soCloseWizard();
+    });
+    // Auto-open seasonal tab if ?tab=seasonal in URL
+    if (window.location.search.indexOf('tab=seasonal') !== -1) {
+        var btn = document.querySelector('[data-tab="seasonal"]');
+        if (btn) {
+            switchCustTab('seasonal', btn);
+            setTimeout(function() {
+                var el = document.getElementById('panel-seasonal');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 400);
+        }
+    }
+});
+</script>
+{% endblock %}

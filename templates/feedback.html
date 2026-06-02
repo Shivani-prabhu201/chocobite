@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Feedback - ChocoBite{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Your Feedback</h1>
+    <p>Tell us about your ChocoBite experience</p>
+</div>
+<section class="feedback-page">
+    <div class="feedback-grid">
+        <form class="feedback-form" onsubmit="submitFeedback(event)">
+            <h3>Share Your Experience</h3>
+            <input type="text" id="fbName" placeholder="Your Name" required class="form-input" oninput="this.value=this.value.replace(/[0-9]/g,'')">
+            <input type="email" id="fbEmail" placeholder="Email Address" required class="form-input">
+            <div class="rating-selector">
+                <label>Rating</label>
+                <div class="stars-input">
+                    <span class="star-opt" data-val="1" onclick="setRating(1)">★</span>
+                    <span class="star-opt" data-val="2" onclick="setRating(2)">★</span>
+                    <span class="star-opt" data-val="3" onclick="setRating(3)">★</span>
+                    <span class="star-opt" data-val="4" onclick="setRating(4)">★</span>
+                    <span class="star-opt" data-val="5" onclick="setRating(5)">★</span>
+                </div>
+                <input type="hidden" id="fbRating" value="5">
+            </div>
+            <textarea id="fbMessage" placeholder="Share your thoughts about our products and service..." rows="5" class="form-input" required></textarea>
+            <button type="submit" class="auth-btn">Submit Feedback 💬</button>
+            <div id="fbMsg" class="auth-message hidden"></div>
+        </form>
+
+        <div class="feedbacks-list">
+            <h3 style="display:flex;align-items:center;gap:10px">&#128172; Replies to Your Reviews <span id="replyBadge" style="display:none;background:#d4820a;color:#000;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px"></span></h3>
+            <div id="myRepliesList">
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+let selectedRating = 5;
+setRating(5);
+
+function setRating(val) {
+    selectedRating = val;
+    document.getElementById('fbRating').value = val;
+    document.querySelectorAll('.star-opt').forEach(s => {
+        s.style.color = parseInt(s.dataset.val) <= val ? '#f5c842' : '#555';
+    });
+}
+
+async function submitFeedback(e) {
+    e.preventDefault();
+    const res = await fetch('/api/feedback', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            name:    document.getElementById('fbName').value,
+            email:   document.getElementById('fbEmail').value,
+            rating:  selectedRating,
+            message: document.getElementById('fbMessage').value,
+            comment: document.getElementById('fbMessage').value
+        })
+    });
+    const data = await res.json();
+    const el = document.getElementById('fbMsg');
+    el.textContent = data.message;
+    el.className = 'auth-message ' + (data.success ? 'success' : 'error');
+    if (data.success) { e.target.reset(); setRating(5); }
+}
+
+async function viewAndMarkSeen(reviewId, productId) {
+    // Mark reply as seen in DB, then redirect to product page
+    try {
+        await fetch('/api/user/mark-reply-seen', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({review_id: reviewId})
+        });
+    } catch(e) {}
+    window.location.href = '/about-product/' + productId;
+}
+
+async function loadMyReplies() {
+    var el = document.getElementById('myRepliesList');
+    try {
+        var res     = await fetch('/api/user/my-review-replies');
+        var replies = await res.json();
+
+        if (replies.length > 0) {
+            var badge = document.getElementById('replyBadge');
+            if (badge) { badge.textContent = replies.length; badge.style.display = 'inline'; }
+        }
+
+        if (!replies.length) {
+            el.innerHTML = '<p style="color:var(--text-muted,#9a8060);font-style:italic;font-size:0.95rem">No replies yet. Submit a product review to see admin responses here.</p>';
+            return;
+        }
+
+        el.innerHTML = replies.map(function(r) {
+            var stars = '';
+            for (var i=1;i<=5;i++) stars += (i <= r.rating ? '\u2605' : '\u2606');
+            var pname = (r.product_name||'Product').replace(/</g,'&lt;');
+            var comment = (r.comment||'').replace(/</g,'&lt;');
+            var reply   = (r.admin_reply||'').replace(/</g,'&lt;');
+            return '<div class="feedback-card" style="cursor:pointer" onclick="viewAndMarkSeen(\''+r.review_id+'\',\''+r.product_id+'\')">' 
+                + '<div class="fb-header">'
+                    + '<strong>' + pname + '</strong>'
+                    + '<span class="fb-stars" style="color:#f5c842">' + stars + '</span>'
+                + '</div>'
+                + '<p style="font-size:0.9rem;color:var(--text-muted,#9a8060);margin-bottom:6px">Your review: ' + comment + '</p>'
+                + '<div style="background:rgba(212,130,10,0.08);border-left:3px solid #d4820a;padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:4px">'
+                    + '<div style="font-size:11px;color:#d4820a;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">&#128736; ChocoBite Reply</div>'
+                    + '<p style="font-size:0.9rem;color:var(--cream,#f5e6c8);margin:0">' + reply + '</p>'
+                + '</div>'
+                + '<small style="color:var(--text-muted,#9a8060)">' + (r.replied_at||r.created_at||'') + ' &nbsp;&middot;&nbsp; <span style="color:#d4820a">View product &rarr;</span></small>'
+                + '</div>';
+        }).join('');
+    } catch(e2) {
+        el.innerHTML = '<p style="color:var(--text-muted,#9a8060)">Log in to see replies to your reviews.</p>';
+    }
+}
+loadMyReplies();
+</script>
+{% endblock %}

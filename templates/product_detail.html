@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} - ChocoBite{% endblock %}
+{% block head %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{% endblock %}
+{% block content %}
+
+<div class="product-detail-page">
+    <div class="breadcrumb">
+        <a href="/">Home</a> / <a href="/products">Products</a> / {{ product.name }}
+    </div>
+
+    <div class="product-detail-grid">
+        <!-- Product Image -->
+        <div class="product-detail-img">
+            <div class="img-wrapper">
+                <img src="{{ product.image }}" alt="{{ product.name }}" onerror="this.src='https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=400'">
+                {% if product.stock == 0 %}
+                <div class="out-of-stock-badge">Out of Stock</div>
+                {% endif %}
+            </div>
+            <div class="product-rating-display">
+                <span class="stars-display">{{ '★' * (product.rating|int) }}{{ '☆' * (5 - product.rating|int) }}</span>
+                <span>{{ product.rating }} / 5</span>
+            </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="product-detail-info">
+            <span class="product-category-tag">{{ product.category|capitalize }}</span>
+            <h1 class="product-detail-name">{{ product.name }}</h1>
+            <div class="product-detail-price">&#8377;{{ product.price }}</div>
+            <p class="product-weight">Weight: <strong>{{ product.weight }}</strong></p>
+            <p class="product-detail-desc">{{ product.description }}</p>
+
+            {% if product.stock == 0 %}
+            <div class="stock-alert">
+                <span>&#9888;&#65039;</span>
+                <div>
+                    <strong>Currently Out of Stock</strong>
+                    <p>This product is temporarily unavailable. Check back soon!</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="stock-available">&#9989; In Stock ({{ product.stock }} units available)</p>
+
+            <!-- Quantity Selector -->
+            <div class="qty-selector">
+                <button onclick="changeQty(-1)">&#8722;</button>
+                <span id="qty">1</span>
+                <button onclick="changeQty(1)">+</button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="product-actions">
+                <button class="btn-cart" onclick="handleAddToCart('{{ product._id }}')">
+                    &#x1F6D2; Add to Cart
+                </button>
+                <button class="btn-buy" onclick="showBuyOptions('{{ product._id }}', '{{ product.name }}', '{{ product.price }}')">
+                    &#9889; Buy Now
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Buy Modal -->
+            <div id="buyOptionsModal" class="buy-modal hidden">
+                <div class="buy-modal-inner">
+                    <h3>Choose Payment Method</h3>
+                    <p id="buyOrderSummary"></p>
+                    <div class="address-field">
+                        <label>Delivery Address</label>
+                        <textarea id="deliveryAddress" placeholder="Enter your full delivery address" rows="3"></textarea>
+
+                        <label style="display:block;margin-top:14px;margin-bottom:6px;">Pincode <span style="color:#e04040;">*</span></label>
+                        <input type="text" id="deliveryPincode" placeholder="6-digit pincode" maxlength="6"
+                            style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(212,130,10,0.4);border-radius:8px;color:#f5e6c8;font-size:1rem;font-family:inherit;outline:none;box-sizing:border-box;"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6);pdChkPin(this.value)">
+                        <div id="pdPinHint" style="font-size:12px;min-height:18px;margin-top:4px;"></div>
+
+                        <label style="display:block;margin-top:12px;margin-bottom:6px;">Phone Number <span style="color:#e04040;">*</span></label>
+                        <input type="tel" id="deliveryPhone" placeholder="10-digit mobile number" maxlength="10"
+                            style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(212,130,10,0.4);border-radius:8px;color:#f5e6c8;font-size:1rem;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:8px;"
+                            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10);pdChkPhone(this.value)">
+                        <div id="pdPhoneHint" style="font-size:12px;min-height:18px;margin-top:4px;margin-bottom:6px;"></div>
+                    </div>
+                    <div class="buy-options">
+                        <button class="buy-opt cod" onclick="placeCODOrder()">&#x1F4B5; Cash on Delivery</button>
+                        <button class="buy-opt online" onclick="placeRazorpayOrder()">&#x1F4B3; Pay Online (Razorpay)</button>
+                    </div>
+                    <button class="btn-close-buy" onclick="closeBuyModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const PRODUCT_ID = '{{ product._id }}';
+const PRODUCT_NAME = '{{ product.name }}';
+const PRODUCT_PRICE = '{{ product.price }}';
+let qty = 1;
+let currentProductId, currentProductName, currentProductPrice;
+
+function changeQty(d) {
+    qty = Math.max(1, qty + d);
+    document.getElementById('qty').textContent = qty;
+}
+
+function handleAddToCart(pid) {
+    requireLogin(async () => {
+        const res = await fetch('/api/cart/add', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({product_id: pid, quantity: qty})
+        });
+        const data = await res.json();
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) updateCartBadge();
+    });
+}
+
+function showBuyOptions(pid, name, price) {
+    requireLogin(() => {
+        currentProductId    = pid;
+        currentProductName  = name;
+        currentProductPrice = price;
+        document.getElementById('buyOrderSummary').textContent =
+            name + ' x ' + qty + ' = Rs.' + (price * qty);
+        document.getElementById('deliveryAddress').value  = '';
+        document.getElementById('deliveryPincode').value  = '';
+        document.getElementById('deliveryPhone').value    = '';
+        document.getElementById('pdPinHint').innerHTML    = '';
+        document.getElementById('pdPhoneHint').innerHTML  = '';
+        document.getElementById('buyOptionsModal').classList.remove('hidden');
+    });
+}
+
+function closeBuyModal() {
+    document.getElementById('buyOptionsModal').classList.add('hidden');
+}
+
+/* -- Live hints -- */
+function isUdupi(pin) { return /^(576|574)\d{3}$/.test(pin); }
+
+function pdChkPin(v) {
+    var el = document.getElementById('pdPinHint');
+    if (!v)           { el.innerHTML = ''; return; }
+    if (v.length < 6) { el.innerHTML = '<span style="color:#e07840;">Enter all 6 digits</span>'; return; }
+    if (isUdupi(v)) {
+        el.innerHTML = '<span style="color:#6fcf97;">&#10003; Delivery available in your area!</span>';
+    } else {
+        el.innerHTML = '<span style="color:#e04040;">&#10007; Delivery not available for your region</span>';
+    }
+}
+
+function pdChkPhone(v) {
+    var el = document.getElementById('pdPhoneHint');
+    if (!v)            { el.innerHTML = ''; return; }
+    if (v.length < 10) { el.innerHTML = '<span style="color:#e07840;">Must be exactly 10 digits</span>'; return; }
+    el.innerHTML = '<span style="color:#6fcf97;">&#10003; Looks good</span>';
+}
+
+/* -- Sliding region alert -- */
+function showRegionAlert(msg) {
+    var el = document.getElementById('cbRegionAlert');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'cbRegionAlert';
+        el.style.cssText =
+            'position:fixed;top:24px;left:50%;'
+            + 'transform:translateX(-50%) translateY(-120px);'
+            + 'background:#1a0000;border:2px solid #e04040;color:#ffaaaa;'
+            + 'padding:14px 28px;border-radius:12px;font-size:14px;font-family:inherit;'
+            + 'z-index:99999;box-shadow:0 8px 32px rgba(0,0,0,0.85);'
+            + 'transition:transform 0.45s cubic-bezier(0.34,1.4,0.64,1),opacity 0.35s;'
+            + 'opacity:0;max-width:92vw;text-align:center;line-height:1.6;';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.transform = 'translateX(-50%) translateY(0)';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(function() {
+        el.style.transform = 'translateX(-50%) translateY(-120px)';
+        el.style.opacity = '0';
+    }, 5000);
+}
+
+/* -- Validate before order -- */
+async function validateDelivery() {
+    var address = document.getElementById('deliveryAddress').value.trim();
+    var pincode = document.getElementById('deliveryPincode').value.trim();
+    var phone   = document.getElementById('deliveryPhone').value.trim();
+
+    if (!address) { showToast('Please enter delivery address', 'error'); return null; }
+
+    if (pincode.length !== 6) {
+        showRegionAlert('Please enter a valid 6-digit pincode.');
+        document.getElementById('deliveryPincode').focus();
+        return null;
+    }
+
+    fetch('/api/user/save-pincode', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({pincode: pincode})
+    }).catch(function(){});
+
+    if (!isUdupi(pincode)) {
+        showRegionAlert('Sorry — we currently deliver only within the Udupi region (pincodes 574xxx or 576xxx).');
+        return null;
+    }
+    if (phone.length !== 10) {
+        showToast('Please enter a valid 10-digit phone number', 'error');
+        document.getElementById('deliveryPhone').focus();
+        return null;
+    }
+    return {address: address, pincode: pincode, phone: phone};
+}
+
+/* -- COD -- */
+async function placeCODOrder() {
+    var delivery = await validateDelivery();
+    if (!delivery) return;
+    var items = [{product_id: currentProductId, name: currentProductName,
+                  price: currentProductPrice, quantity: qty}];
+    var res = await fetch('/api/order/cod', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({items: items, address: delivery.address,
+                               phone: delivery.phone, total: currentProductPrice * qty})
+    });
+    var data = await res.json();
+    if (data.success) {
+        closeBuyModal();
+        showToast('Order placed! Confirmation sent to your email.', 'success');
+    } else {
+        showToast(data.message, 'error');
+    }
+}
+
+/* -- Razorpay -- */
+async function placeRazorpayOrder() {
+    var delivery = await validateDelivery();
+    if (!delivery) return;
+    var total = currentProductPrice * qty;
+    var res = await fetch('/api/order/razorpay/create', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({total: total})
+    });
+    var data = await res.json();
+    if (!data.success) { showToast(data.message || 'Payment error', 'error'); return; }
+
+    var options = {
+        key: '{{ razorpay_key }}',
+        amount: data.amount,
+        currency: 'INR',
+        name: 'ChocoBite',
+        description: currentProductName,
+        order_id: data.order_id,
+        handler: async function(response) {
+            var items = [{product_id: currentProductId, name: currentProductName,
+                          price: currentProductPrice, quantity: qty}];
+            var verifyRes = await fetch('/api/order/razorpay/verify', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    items: items,
+                    address: delivery.address,
+                    phone: delivery.phone,
+                    total: total,
+                    payment_id: response.razorpay_payment_id,
+                    order_id: response.razorpay_order_id
+                })
+            });
+            var verifyData = await verifyRes.json();
+            if (verifyData.success) {
+                closeBuyModal();
+                showToast('Payment successful! Check your email for confirmation.', 'success');
+            }
+        },
+        prefill: { name: '', email: '', contact: delivery.phone },
+        theme: { color: '#d4820a' }
+    };
+    var rzp = new Razorpay(options);
+    rzp.open();
+}
+</script>
+{% endblock %}
