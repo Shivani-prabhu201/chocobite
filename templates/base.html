@@ -39,7 +39,7 @@
             <h2>Join ChocoBite</h2>
             <p class="auth-sub">Create your account to get started</p>
 
-            <input type="text"  id="regName"    placeholder="Full Name"                   class="auth-input" oninput="this.value=this.value.replace(/[0-9]/g,'')">
+            <input type="text"  id="regName"    placeholder="Full Name"                   class="auth-input" oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')">
             <input type="email" id="regEmail"   placeholder="Email Address"               class="auth-input">
             <input type="tel"   id="regPhone"   placeholder="Phone Number (10 digits)"    class="auth-input" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
             <input type="text"  id="regAddress" placeholder="Delivery Address (optional)" class="auth-input">

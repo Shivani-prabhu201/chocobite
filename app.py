@@ -12,7 +12,7 @@ except Exception:
     _admin_bp_loaded = False
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
-import uuid, datetime, smtplib, re, random, string
+import uuid, datetime, smtplib, re, random, string, socket, dns.resolver
 try:
     from seasonal_recommender import get_seasonal_offers as _ml_seasonal
     ML_AVAILABLE = True
@@ -613,6 +613,33 @@ def feedback(): return render_template("feedback.html")
 
 # ─── AUTH API ────────────────────────────────────────────────
 
+def smtp_verify_email(email):
+    """Return True only if the email domain has valid MX records
+       AND the SMTP server accepts the recipient address.
+       Falls back to True on any network/timeout error so registration
+       is never blocked by a transient connectivity issue.
+    """
+    try:
+        domain = email.split("@")[1]
+        # Step 1: resolve MX record
+        records = dns.resolver.resolve(domain, "MX", lifetime=5)
+        mx_host = sorted(records, key=lambda r: r.preference)[0].exchange.to_text().rstrip(".")
+        # Step 2: SMTP handshake — no email is sent
+        with smtplib.SMTP(timeout=8) as smtp:
+            smtp.connect(mx_host, 25)
+            smtp.ehlo_or_helo_if_needed()
+            smtp.mail("verify@chocobite.in")
+            code, _ = smtp.rcpt(email)
+            smtp.quit()
+            # 250 = exists, 251 = forwarded (both valid)
+            # 550/551/553 = mailbox does not exist
+            return code in (250, 251)
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+        return False   # domain does not exist at all
+    except Exception:
+        return True    # network/timeout: allow registration, do not block user
+
+
 @app.route("/api/register", methods=["POST"])
 def register():
     d         = request.get_json()
@@ -626,6 +653,8 @@ def register():
         return jsonify(success=False, message="Name, email and password required")
     if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
         return jsonify(success=False, message="Invalid email")
+    if not smtp_verify_email(email):
+        return jsonify(success=False, message="Email address does not exist. Please use a real email.")
     if len(password) < 6:
         return jsonify(success=False, message="Password must be at least 6 characters")
     if users_col.find_one({"email": email}):

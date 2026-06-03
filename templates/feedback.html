@@ -9,8 +9,8 @@
     <div class="feedback-grid">
         <form class="feedback-form" onsubmit="submitFeedback(event)">
             <h3>Share Your Experience</h3>
-            <input type="text" id="fbName" placeholder="Your Name" required class="form-input" oninput="this.value=this.value.replace(/[0-9]/g,'')">
-            <input type="email" id="fbEmail" placeholder="Email Address" required class="form-input">
+            <input type="text" id="fbName" placeholder="Your Name" required class="form-input" readonly style="opacity:0.7;cursor:not-allowed;" oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')">
+            <input type="email" id="fbEmail" placeholder="Email Address" required class="form-input" readonly style="opacity:0.7;cursor:not-allowed;">
             <div class="rating-selector">
                 <label>Rating</label>
                 <div class="stars-input">
@@ -118,6 +118,15 @@ async function loadMyReplies() {
         el.innerHTML = '<p style="color:var(--text-muted,#9a8060)">Log in to see replies to your reviews.</p>';
     }
 }
+function fillFbUser() {
+    if (typeof currentUser !== "undefined" && currentUser && currentUser.logged_in) {
+        document.getElementById("fbName").value  = currentUser.name  || "";
+        document.getElementById("fbEmail").value = currentUser.email || "";
+    } else if (typeof currentUser === "undefined" || currentUser === null) {
+        setTimeout(fillFbUser, 100);
+    }
+}
+fillFbUser();
 loadMyReplies();
 </script>
 {% endblock %}

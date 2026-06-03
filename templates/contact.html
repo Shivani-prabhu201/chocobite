@@ -69,8 +69,8 @@
 
             <form class="contact-form" onsubmit="submitContact(event)">
                 <h3>Send a Message</h3>
-                <input type="text"  id="contactName"    placeholder="Your Name"      required class="form-input" oninput="this.value=this.value.replace(/[0-9]/g,'')">
-                <input type="email" id="contactEmail"   placeholder="Email Address"  required class="form-input">
+                <input type="text"  id="contactName"    placeholder="Your Name"      required class="form-input" readonly style="opacity:0.7;cursor:not-allowed;" oninput="this.value=this.value.replace(/[^A-Za-z ]/g,'')">
+                <input type="email" id="contactEmail"   placeholder="Email Address"  required class="form-input" readonly style="opacity:0.7;cursor:not-allowed;">
                 <input type="text"  id="contactSubject" placeholder="Subject"         required class="form-input">
                 <textarea           id="contactMsg"     placeholder="Your message..." rows="5"  class="form-input"></textarea>
                 <button type="submit" class="auth-btn">Send Message ✉️</button>
@@ -81,15 +81,18 @@
 </section>
 
 <script>
-/* Pre-fill name/email for logged-in users; show tip for guests */
-checkLoginStatus().then(function(status) {
-    if (status && status.logged_in) {
-        if (status.name)  document.getElementById('contactName').value  = status.name;
-        if (status.email) document.getElementById('contactEmail').value = status.email;
+/* Pre-fill name/email from logged-in user — fields are readonly */
+function fillContactUser() {
+    if (typeof currentUser !== "undefined" && currentUser && currentUser.logged_in) {
+        document.getElementById("contactName").value  = currentUser.name  || "";
+        document.getElementById("contactEmail").value = currentUser.email || "";
+    } else if (typeof currentUser !== "undefined" && currentUser && !currentUser.logged_in) {
+        document.getElementById("contactGuestNote").style.display = "block";
     } else {
-        document.getElementById('contactGuestNote').style.display = 'block';
+        setTimeout(fillContactUser, 100);
     }
-}).catch(function(){});
+}
+fillContactUser();
 
 async function submitContact(e) {
     e.preventDefault();
