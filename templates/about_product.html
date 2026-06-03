@@ -512,7 +512,17 @@ function placeOnline(items, address, phone, pincode, total) {
 }
 window.addEventListener('load', () => {
     if (new URLSearchParams(window.location.search).get('buy') === '1') {
-        setTimeout(() => { if (PRODUCT.stock > 0) openPaymentModal(); }, 400);
+        // Wait for checkLoginStatus() (called in main.js DOMContentLoaded) to resolve
+        // before opening the payment modal, so requireLogin() works correctly.
+        function tryOpenBuyModal(attempts) {
+            if (attempts <= 0) return;
+            if (typeof currentUser !== 'undefined' && currentUser !== null) {
+                if (PRODUCT.stock > 0) openPaymentModal();
+            } else {
+                setTimeout(function() { tryOpenBuyModal(attempts - 1); }, 100);
+            }
+        }
+        setTimeout(function() { tryOpenBuyModal(20); }, 100);
     }
 });
 
