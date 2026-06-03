@@ -3,7 +3,7 @@
 // ============================================
 
 // ─── SESSION STATE ────────────────────────────
-let currentUser = null;
+var currentUser = null;
 
 // ─── INIT ─────────────────────────────────────
 // Clear login form if user navigates back to page with admin session
